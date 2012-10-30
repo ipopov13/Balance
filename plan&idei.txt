@@ -1,0 +1,26 @@
+Mestnostite se naimenovat po vida na terena v tqh (gori, pustini, oazisi, planini)
+Vidovete teren sa ogranicheni v opredeleni mestnosti (palmi ima v oazisite, v gorite sa drugi durveta - moje s prosto preimenovane)
+Efekta ot deistviqta (force,race) shte se opredelq ot izbranata forma (rasa) a ne ot izbran Mode
+Mode shte opredelq kak se durji geroq - agressive, stealthy, spiritual, creative - kato tova shte opredelq i deistviqta mu
+ vurhu sredata (durvo - otsichane/zapalvane(bradva/ognivo&fakla),pokatervane,izvlichane na sila,
+ otchupvane na klon za toqga/izdqlkvane na cqloto durvo)
+Realnoto deistvie v/u sredata se opredelq ot izbranata v momenta rasa, mode-a i predmeta v rucete na geroq
+
+Glaven modul GAME koito vika vsichki ostanali i izvurshva vsichki deistvia kato im podava nujnata informacia:
+- promeni po terena;
+- poqvqvane i premahvane na predmeti;
+- dvijenie na sushtestvata;
+- promeni po sushtestvata;
+- otvarqne na inventari i equipmenti i dr. ekrani za igracha;
+
+podchineni moduli:
+- Interface (vizualizaciq na vsichko - kato init_screen-a sega, no neshta kato otvarqne na vrati i tn. shte sa integrirani v suotvetnite obekti)
+	- world generation
+	- message buffer system
+
+- terain
+- item
+- creature
+- player
+- interactions system? (metodi koito opredelqt dali edno sushtestvo bi otishlo nqkude bi trqbvalo da sa metodi na sushtestvoto,
+   movement modula e nenujen)
