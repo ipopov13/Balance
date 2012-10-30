@@ -1,3 +1,5 @@
+VSICHKO V EDIN FAIL! Posle se grupirat funkciite i se otdelqt klasovete i metodite im.
+
 Mestnostite se naimenovat po vida na terena v tqh (gori, pustini, oazisi, planini)
 Vidovete teren sa ogranicheni v opredeleni mestnosti (palmi ima v oazisite, v gorite sa drugi durveta - moje s prosto preimenovane)
 Efekta ot deistviqta (force,race) shte se opredelq ot izbranata forma (rasa) a ne ot izbran Mode
