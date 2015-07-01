@@ -1,14 +1,26 @@
-class Terrain:
-    def __init__(self, name = 'dirt', world_name = 'no_world_name', id = '.', colour = 6, char = '.', mess = '',
+from collections import defaultdict
+
+class KeepRefs(object):
+    __refs__ = defaultdict(dict)
+    def __init__(self,name):
+        self.__refs__[self.__class__][name]=self
+
+    @classmethod
+    def get_instances(cls,name):
+        return cls.__refs__[cls][name]
+
+class Terrain(KeepRefs):
+    def __init__(self, name = 'dirt', world_name = 'no_world_name', the_id = '.', colour = 6, char = '.', mess = '',
                  pass_through = True, degradable = True, workable = True,
                  degrade_to = {'Nature':'.','Order':'.','Chaos':'.'}, degr_mess = {'Nature':'','Order':'','Chaos':''},
                  degrade_tool = {'Nature':[],'Order':[],'Chaos':[]}, tire = {'Nature':0,'Order':0,'Chaos':0},
                  tire_move = 0, drink = {}, loot = {'Nature':[],'Order':[],'Chaos':[]}, random_creatures = [],
-                 force_effects={'Nature':{},'Order':{},'Chaos':{}}):
+                 force_effects={'Nature':{},'Order':{},'Chaos':{}},sittable = True,drowning=False,clear_los=True):
+        super(Terrain,self).__init__(the_id)
         self.colour = colour
         self.name = name
         self.world_name = world_name
-        self.id = id
+        self.id = the_id
         self.char = char
         self.mess = mess
         self.pass_through = pass_through
@@ -23,6 +35,9 @@ class Terrain:
         self.loot = loot
         self.random_creatures = random_creatures
         self.force_effects=force_effects
+        self.sittable=sittable
+        self.drowning=drowning
+        self.clear_los=clear_los
 
 ## name = 'dirt', world_name, id = '.', colour = 6, char = '.', mess = '', pass_through = True, degradable = True, workable = True
 ## degrade_to = {modes}, degr_mess = {modes}, degrade_tool = {modes}, tire = {modes}, tire_move = 0, drink = {},
@@ -39,8 +54,8 @@ class Terrain:
 ## Spisuk na izpolzvanite tagove: " NE MOJE DA E TAG!
 ##  .,+><aAbBdDfFgiIJlLmnoOpsStTwW%#`'~:
 
-treasure1 = Terrain(id='treasure1',loot=100)
-mechka = Terrain(id='mechka',random_creatures=[[4,500]])
+treasure1 = Terrain(the_id='treasure1',loot=100)
+mechka = Terrain(the_id='mechka',random_creatures=[[4,500]])
 
 dirt = Terrain(world_name='road',degrade_to = {'Nature':'.','Order':'a','Chaos':'.'},
                 degr_mess = {'Nature':'propose_plant','Order':'dig_earth','Chaos':'dig_earth'},
@@ -95,7 +110,7 @@ tree = Terrain('tree', 'forest', 'T', 10, 'T','tree',degrade_to = {'Nature':'T',
                 force_effects={'Nature':{'Nature':{'force':0.01,'dryad':0.01,'terrain':.05},'Chaos':{'all':-.01}},
                                'Order':{'Nature':{'all':-.05},'Order':{'force':0.05,'human':0.05,'terrain':0.2}},
                                'Chaos':{'Nature':{'all':-.03},'Order':{'all':-.03},
-                                        'Chaos':{'force':0.03,'imp':0.03,'terrain':0.2,'fire_up':25}}})
+                                        'Chaos':{'force':0.03,'imp':0.03,'terrain':0.2,'fire_up':25}}},clear_los=False)
 d_grass = Terrain('diseased grass', 'plains', 'd', 8, '.',degrade_to = {'Nature':'g','Order':'.','Chaos':'.'},
                 degr_mess = {'Nature':'heal_grass','Order':'fire_grass','Chaos':'stomp_grass'},
                 degrade_tool = {'Nature':['nature healing set'],'Order':['fire'],'Chaos':['inherent']},
@@ -116,7 +131,7 @@ d_tree = Terrain('diseased tree','forest','D',8,'T','d_tree',degrade_to = {'Natu
                                'Order':{'Nature':{'all':-.02},
                                         'Order':{'force':0.01,'human':0.01,'terrain':0.2,'fire_up':25}},
                                'Chaos':{'Nature':{'all':-.02},
-                                        'Chaos':{'force':0.01,'imp':0.01,'terrain':0.05,'fire_up':25}}})
+                                        'Chaos':{'force':0.01,'imp':0.01,'terrain':0.05,'fire_up':25}}},clear_los=False)
 frozen_tree = Terrain('frozen tree', 'forest', 'F', 11, 'T','frozen_tree',degrade_to = {'Nature':'T','Order':'T','Chaos':'.'},
                 degr_mess = {'Nature':'thaw_tree','Order':'thaw_tree','Chaos':'tear_tree'},
                 degrade_tool = {'Nature':['fire'],'Order':['fire'],'Chaos':['big hammer']},
@@ -127,7 +142,7 @@ frozen_tree = Terrain('frozen tree', 'forest', 'F', 11, 'T','frozen_tree',degrad
                                'Order':{'Chaos':{'all':-.05},
                                         'Order':{'force':0.05,'spirit of order':0.05,'terrain':0.2}},
                                'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},
-                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.05}}})
+                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.05}}},clear_los=False)
 jungle = Terrain('jungle trees', 'forest', 'J', 2, 'T','jungle', False,
                  degrade_to = {'Nature':'J','Order':'T','Chaos':'.'},
                 degr_mess = {'Nature':'forage','Order':'cut_tree','Chaos':'fire_tree'},
@@ -139,7 +154,7 @@ jungle = Terrain('jungle trees', 'forest', 'J', 2, 'T','jungle', False,
                                'Order':{'Nature':{'all':-.05},
                                         'Order':{'force':0.05,'human':0.05,'terrain':0.2}},
                                'Chaos':{'Nature':{'all':-.02},'Order':{'all':-.02},
-                                        'Chaos':{'force':0.02,'imp':0.02,'terrain':0.2,'fire_up':50}}})
+                                        'Chaos':{'force':0.02,'imp':0.02,'terrain':0.2,'fire_up':50}}},clear_los=False)
 bush = Terrain('bush', '', 'b', 10, '#','bush',degrade_to = {'Nature':'b','Order':'.','Chaos':'.'},
                 degr_mess = {'Nature':'forage','Order':'root_bushes','Chaos':'fire_bush'},
                 degrade_tool = {'Nature':['inherent'],'Order':['inherent'],'Chaos':['fire']},
@@ -148,7 +163,7 @@ bush = Terrain('bush', '', 'b', 10, '#','bush',degrade_to = {'Nature':'b','Order
                 force_effects={'Nature':{'Nature':{'force':0.02,'elf':0.02},'Chaos':{'all':-.02}},
                                'Order':{'Nature':{'all':-.02},'Order':{'force':0.02,'human':0.02,'terrain':0.2}},
                                'Chaos':{'Nature':{'all':-.02},'Order':{'all':-.02},
-                                        'Chaos':{'force':0.02,'imp':0.02,'terrain':0.2,'fire_up':15}}})
+                                        'Chaos':{'force':0.02,'imp':0.02,'terrain':0.2,'fire_up':15}}},clear_los=False)
 lichen = Terrain('lichen mound', '', 'l', 10, 'o','lichen',degrade_to = {'Nature':'l','Order':'.','Chaos':'.'},
                 degr_mess = {'Nature':'call_the_seed','Order':'dig_earth','Chaos':'ravage_lichen'},
                 degrade_tool = {'Nature':['inherent'],'Order':['shovel'],'Chaos':['inherent']},
@@ -166,7 +181,7 @@ rock = Terrain('rock', 'mountains', '%', 8, '%', 'rock', False, True, True,
                 loot = {'Nature':[[1304,30,1,2]],'Order':[[1306,100,1,3],[4,100,3,8],[5,30,1,1]],'Chaos':[[4,100,1,5]]},
                 force_effects={'Nature':{'Nature':{'force':0.01,'gnome':0.01},'Chaos':{'all':-.01},'Order':{'all':-.01}},
                                'Order':{'Nature':{'all':-.05},'Order':{'force':0.05,'dwarf':0.05,'terrain':0.2}},
-                               'Chaos':{'Nature':{'all':-.05},'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2}}})
+                               'Chaos':{'Nature':{'all':-.05},'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2}}},clear_los=False)
 well = Terrain('well', 'mountains', 'O', 1, 'O', 'well_pass', True, True, True,
                degrade_to = {'Nature':'O','Order':'O','Chaos':'.'},
                 degr_mess = {'Nature':'clean_well','Order':'clean_well','Chaos':'crush_well'},
@@ -176,7 +191,7 @@ well = Terrain('well', 'mountains', 'O', 1, 'O', 'well_pass', True, True, True,
                 force_effects={'Nature':{'Nature':{'force':0.01,'fairy':0.01},'Chaos':{'all':-.01}},
                                'Order':{'Chaos':{'all':-.01},'Order':{'force':0.01,'spirit of order':0.01}},
                                'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},
-                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-2}}})
+                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-2}}},sittable=False)
 mossy_rock = Terrain('mossy rock', 'mountains', 'n', 10, '%', 'rock', False, True, True,
                degrade_to = {'Nature':'n','Order':'.','Chaos':'.'},
                 degr_mess = {'Nature':'touch_rock','Order':'break_rock','Chaos':'break_rock'},
@@ -185,7 +200,7 @@ mossy_rock = Terrain('mossy rock', 'mountains', 'n', 10, '%', 'rock', False, Tru
                 loot = {'Nature':[[1304,30,1,2]],'Order':[[4,100,3,8],[5,5,1,2]],'Chaos':[[4,100,1,5]]},
                 force_effects={'Nature':{'Nature':{'force':0.01,'gnome':0.01},'Chaos':{'all':-.01},'Order':{'all':-.01}},
                                'Order':{'Nature':{'all':-.05},'Order':{'force':0.05,'dwarf':0.05,'terrain':0.2}},
-                               'Chaos':{'Nature':{'all':-.05},'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2}}})
+                               'Chaos':{'Nature':{'all':-.05},'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2}}},clear_los=False)
 mine_rock = Terrain('rock', 'mountains', 'm', 8, '%', 'rock', False, False, True,
                degrade_to = {'Nature':'m','Order':'.','Chaos':'.'},
                 degr_mess = {'Nature':'touch_rock','Order':'break_rock','Chaos':'break_rock'},
@@ -194,7 +209,7 @@ mine_rock = Terrain('rock', 'mountains', 'm', 8, '%', 'rock', False, False, True
                 loot = {'Nature':[[1304,30,1,2]],'Order':[[4,100,3,8],[5,60,1,3]],'Chaos':[[4,100,1,5]]},
                 force_effects={'Nature':{'Nature':{'force':0.01,'gnome':0.01},'Chaos':{'all':-.01},'Order':{'all':-.01}},
                                'Order':{'Nature':{'all':-.05},'Order':{'force':0.05,'dwarf':0.05}},
-                               'Chaos':{'Nature':{'all':-.05},'Chaos':{'force':0.05,'troll':0.05}}})
+                               'Chaos':{'Nature':{'all':-.05},'Chaos':{'force':0.05,'troll':0.05}}},clear_los=False)
 wall = Terrain('wall', 'wall???', '#', 7, '#', 'wall', False, True, True,
                degrade_to = {'Nature':'#','Order':'#','Chaos':'.'},
                 degr_mess = {'Nature':'paint_wall','Order':'strenghten_wall','Chaos':'break_wall'},
@@ -204,7 +219,7 @@ wall = Terrain('wall', 'wall???', '#', 7, '#', 'wall', False, True, True,
                 force_effects={'Nature':{'Nature':{'force':0.02,'fairy':0.02,'expend':'color clay'},'Chaos':{'all':-.02}},
                                'Order':{'Chaos':{'all':-.02},'Order':{'force':0.02,'dwarf':0.02,'expend':'clay'}},
                                'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},
-                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-1}}})
+                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-1}}},clear_los=False)
 wooden_fence = Terrain('wooden fence', 'wall???', 'o', 6, '#', 'fence', False, True, True,
                degrade_to = {'Nature':'o','Order':'o','Chaos':'.'},
                 degr_mess = {'Nature':'paint_fence','Order':'strenghten_fence','Chaos':'break_fence'},
@@ -249,7 +264,8 @@ swamp = Terrain('swamp', 'swamp',"~",10,'~','swamp',
                 force_effects={'Nature':{'Chaos':{'all':-.05},
                                          'Nature':{'force':0.05,'water elemental':0.05,'terrain':0.2}},
                                'Order':{'Chaos':{'all':-.05},'Order':{'force':0.05,'human':0.05,'terrain':0.2}},
-                               'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},'Chaos':{'force':0.07,'kraken':0.07,'terrain':0.05}}})
+                               'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},'Chaos':{'force':0.07,'kraken':0.07,'terrain':0.05}}},
+                sittable=False)
 snow = Terrain('snow', 'snowy peak',"'",15,
                degrade_to = {'Nature':'.','Order':'.','Chaos':'.'},
                 degr_mess = {'Nature':'remove_snow','Order':'remove_snow','Chaos':'remove_snow'},
@@ -279,7 +295,7 @@ ice_block = Terrain('ice block', 'mountains', 'I', 11, '%', 'ice_block', False, 
                 force_effects={'Nature':{'Chaos':{'all':-.03},
                                          'Nature':{'force':0.03,'water elemental':0.03,'terrain':0.2}},
                                'Order':{'Order':{'force':0.05,'dwarf':0.05,'terrain':0.2}},
-                               'Chaos':{'Nature':{'water elemental':-0.05},'Chaos':{'force':0.05,'kraken':0.05,'terrain':0.05}}})
+                               'Chaos':{'Nature':{'water elemental':-0.05},'Chaos':{'force':0.05,'kraken':0.05,'terrain':0.05}}},clear_los=False)
 log = Terrain('log', 'log???', ':',6,':', 'log',degrade_to = {'Nature':':','Order':'.','Chaos':'.'},
                 degr_mess = {'Nature':'care_log','Order':'cut_log','Chaos':'fire_tree'},
                 degrade_tool = {'Nature':['inherent'],'Order':['axe'],'Chaos':['fire']},
@@ -298,7 +314,7 @@ water = Terrain('water', 'sea','w',1,'~','water',degrade_to = {'Nature':'w','Ord
                 force_effects={'Nature':{'Nature':{'force':0.03,'water elemental':0.03,'terrain':.05},'Chaos':{'all':-.03}},
                                'Order':{'Nature':{'all':-.05},'Order':{'force':0.05,'dwarf':0.05,'terrain':0.2}},
                                'Chaos':{'Nature':{'all':-.03},'Order':{'all':-.03},
-                                        'Chaos':{'force':0.03,'kraken':0.03,'terrain':0.2}}})
+                                        'Chaos':{'force':0.03,'kraken':0.03,'terrain':0.2}}},sittable=False,drowning=True)
 dirty_water = Terrain('dirty water', 'sea','t',8,'~','water',degrade_to = {'Nature':'w','Order':'t','Chaos':'t'},
                 degr_mess = {'Nature':'clean_water','Order':'search_water','Chaos':'contaminate_water'},
                 degrade_tool = {'Nature':['inherent'],'Order':['inherent'],'Chaos':['inherent']},
@@ -308,7 +324,7 @@ dirty_water = Terrain('dirty water', 'sea','t',8,'~','water',degrade_to = {'Natu
                 force_effects={'Nature':{'Nature':{'force':0.03,'water elemental':0.03,'terrain':.3},'Chaos':{'all':-.03}},
                                'Order':{'Nature':{'all':-.05},'Order':{'force':0.05,'dwarf':0.05,'terrain':0.05}},
                                'Chaos':{'Nature':{'all':-.03},'Order':{'all':-.03},
-                                        'Chaos':{'force':0.03,'kraken':0.03,'terrain':0.05}}})
+                                        'Chaos':{'force':0.03,'kraken':0.03,'terrain':0.05}}},sittable=False,drowning=True)
 magic_water = Terrain('magical spring', 'magic water???','W',9,'~','magic_water',
                       degrade_to = {'Nature':'W','Order':'w','Chaos':'t'},
                 degr_mess = {'Nature':'honor_water','Order':'search_water','Chaos':'contaminate_water'},
@@ -319,7 +335,7 @@ magic_water = Terrain('magical spring', 'magic water???','W',9,'~','magic_water'
                 force_effects={'Nature':{'Nature':{'force':0.03,'water elemental':0.03,'terrain':.05},'Chaos':{'all':-.05}},
                                'Order':{'Nature':{'all':-.05},'Order':{'force':0.05,'dwarf':0.05,'terrain':0.2}},
                                'Chaos':{'Nature':{'all':-.03},'Order':{'all':-.03},
-                                        'Chaos':{'force':0.03,'kraken':0.03,'terrain':0.2}}})
+                                        'Chaos':{'force':0.03,'kraken':0.03,'terrain':0.2}}},sittable=False)
 waterfall = Terrain('waterfall', 'river','f',11,'~',pass_through=False,
                       degrade_to = {'Nature':'f','Order':'%','Chaos':'w'},
                 degr_mess = {'Nature':'clean_water','Order':'stop_waterfall','Chaos':'destroy_waterfall'},
@@ -329,7 +345,7 @@ waterfall = Terrain('waterfall', 'river','f',11,'~',pass_through=False,
                 force_effects={'Nature':{'Nature':{'force':0.03,'water elemental':0.03,'terrain':.05},'Chaos':{'all':-.03}},
                                'Order':{'Nature':{'all':-.05},'Order':{'force':0.05,'dwarf':0.05,'terrain':0.2}},
                                'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},
-                                        'Chaos':{'force':0.05,'kraken':0.05,'terrain':0.2}}})
+                                        'Chaos':{'force':0.05,'kraken':0.05,'terrain':0.2}}},clear_los=False)
 lava = Terrain('lava', 'lava','L',12,'~','lava',pass_through=False,degradable=False,
                       degrade_to = {'Nature':'L','Order':'L','Chaos':'L'},
                 degr_mess = {'Nature':'ritual_calm_fire','Order':'ritual_suppress_fire','Chaos':'ritual_awaken_fire'},
@@ -360,7 +376,7 @@ wood_door_c = Terrain('wooden door','door_c','+',6,'+','',False,True,True,
                 force_effects={'Nature':{'Nature':{'force':0.01,'fairy':0.01,'terrain':0.05,'expend':'flowers'},'Chaos':{'all':-.01}},
                                'Order':{'Chaos':{'all':-.02},'Order':{'expend':'wood','force':0.02,'spirit of order':0.02}},
                                'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},
-                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-1}}})
+                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-1}}},clear_los=False)
 wood_door_o = Terrain('wooden door','door_o','`',6,'`','',True,True,True,
                degrade_to = {'door':'+','Nature':'`','Order':'`','Chaos':'.'},
                 degr_mess = {'Nature':'paint_door','Order':'strenghten_door','Chaos':'break_door'},
@@ -380,7 +396,7 @@ stone_door_c = Terrain('stone door','door_c','s',7,'+','',False,True,True,
                 force_effects={'Nature':{'Nature':{'force':0.01,'fairy':0.01,'terrain':0.05,'expend':'flowers'},'Chaos':{'all':-.01}},
                                'Order':{'Chaos':{'all':-.02},'Order':{'expend':'clay','force':0.02,'spirit of order':0.02}},
                                'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},
-                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-1}}})
+                                        'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-1}}},clear_los=False)
 stone_door_o = Terrain('stone door','door_o','S',7,'`','',True,True,True,
                degrade_to = {'door':'s','Nature':'S','Order':'S','Chaos':'.'},
                 degr_mess = {'Nature':'paint_door','Order':'strenghten_door','Chaos':'break_door'},
@@ -391,16 +407,14 @@ stone_door_o = Terrain('stone door','door_o','S',7,'`','',True,True,True,
                                'Order':{'Chaos':{'all':-.02},'Order':{'expend':'clay','force':0.02,'spirit of order':0.02}},
                                'Chaos':{'Nature':{'all':-.05},'Order':{'all':-.05},
                                         'Chaos':{'force':0.05,'troll':0.05,'terrain':0.2,'population':-1}}})
-up_stair = Terrain('staircase going up','','>',7,'>','up_stair',True,False,False)
-down_stair = Terrain('staircase going down','','<',7,'<','down_stair',True,False,False)
+up_stair = Terrain('staircase going up','','>',7,'>','up_stair',True,False,False,clear_los=False)
+down_stair = Terrain('staircase going down','','<',7,'<','down_stair',True,False,False,clear_los=False)
 
-unsittable = ('w','W','O','~','t') ## ID na terenite na koito ne moje da se sedi,no moje da se minava prez tqh
-drowning = ('w','t')
+T = Terrain.__refs__[Terrain]
 
-## ***************************************UPDATE LOS TOO!*********************************************
-all = (dirt,grass,tree,rock,mine_rock,wall,pavement,sand,snow,log,water,magic_water,waterfall,up_stair,down_stair,mechka,
-       wood_door_c,wood_door_o,stone_door_o,stone_door_c,treasure1,mossy_rock,bush,lichen,jungle,ice,ice_block,
-       frozen_tree,d_grass,d_tree,lava,bones,well,farmland,wooden_fence,swamp,dirty_water,lava_rock)
-T = {}
-for i in all:
-    T[i.id] = (i)
+##all_terr = (dirt,grass,tree,rock,mine_rock,wall,pavement,sand,snow,log,water,magic_water,waterfall,up_stair,down_stair,mechka,
+##       wood_door_c,wood_door_o,stone_door_o,stone_door_c,treasure1,mossy_rock,bush,lichen,jungle,ice,ice_block,
+##       frozen_tree,d_grass,d_tree,lava,bones,well,farmland,wooden_fence,swamp,dirty_water,lava_rock)
+##T = {}
+##for i in all_terr:
+##    T[i.id] = (i)

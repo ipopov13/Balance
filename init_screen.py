@@ -1,5 +1,5 @@
 import Console
-import terrain
+from terrain import T
 import player
 import msvcrt
 import pickle
@@ -194,12 +194,12 @@ def redraw_screen():
     for x in range(1,24):
         c.pos(21, x)
         for y in range(21,79):
-            c.scroll((y,x,y+1,x+1), 1, 1, terrain.T[land[x-1][y-21]].colour, terrain.T[land[x-1][y-21]].char)
+            c.scroll((y,x,y+1,x+1), 1, 1, T[land[x-1][y-21]].colour, T[land[x-1][y-21]].char)
     for x in player.ch.land_effects.keys():
         if player.ch.land_effects[x][1]=='on_fire':
             fxy=player.ch.land_effects[x][3]
             if player.ch.land_effects[x][0]==0:
-                c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, terrain.T[land[fxy[1]-1][fxy[0]-21]].colour, terrain.T[land[fxy[1]-1][fxy[0]-21]].char)
+                c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, T[land[fxy[1]-1][fxy[0]-21]].colour, T[land[fxy[1]-1][fxy[0]-21]].char)
                 continue
             fire_color=random.choice([4,12,14])
             c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, fire_color*16+player.ch.land_effects[x][5],player.ch.land_effects[x][4])
@@ -220,7 +220,7 @@ def redraw_screen():
 
 def draw_move(ch, x, y):
 ##    try:
-    c.scroll((x, y, x+1, y+1), 1, 1, terrain.T[land[y-1][x-21]].colour, terrain.T[land[y-1][x-21]].char)
+    c.scroll((x, y, x+1, y+1), 1, 1, T[land[y-1][x-21]].colour, T[land[y-1][x-21]].char)
 ##    except:
 ##        print x, y, land[y-1][x-21]
     if current_area == 'world':
@@ -235,7 +235,7 @@ def draw_move(ch, x, y):
 def hide(ch):
     x = ch.xy[0]
     y = ch.xy[1]
-    c.scroll((x, y, x+1, y+1), 1, 1, terrain.T[land[y-1][x-21]].colour, terrain.T[land[y-1][x-21]].char)
+    c.scroll((x, y, x+1, y+1), 1, 1, T[land[y-1][x-21]].colour, T[land[y-1][x-21]].char)
 
 def build_terr(new_ter):
     ok = 0
@@ -650,7 +650,7 @@ def create(ground_items):
         return ground_items
 
 def dryad_grow():
-    if terrain.T[land[player.ch.xy[1]-1][player.ch.xy[0]-21]].id == 'T':
+    if T[land[player.ch.xy[1]-1][player.ch.xy[0]-21]].id == 'T':
         c.page()
         si=[None,None]
         i=''
@@ -727,56 +727,56 @@ def dryad_grow():
 
 def degrade_terr(old_ter, xy, c_x, c_y):
     ok = 0
-    if ((player.ch.hunger > 79) or (player.ch.thirst > 79)) and terrain.T[old_ter].degr_mess[player.ch.mode]!='forage':
+    if ((player.ch.hunger > 79) or (player.ch.thirst > 79)) and T[old_ter].degr_mess[player.ch.mode]!='forage':
         return -4
     while 1:
-        if (player.ch.energy < terrain.T[old_ter].tire[player.ch.mode]) and (player.ch.work == 0):
-            if player.ch.max_energy < terrain.T[old_ter].tire[player.ch.mode]:
+        if (player.ch.energy < T[old_ter].tire[player.ch.mode]) and (player.ch.work == 0):
+            if player.ch.max_energy < T[old_ter].tire[player.ch.mode]:
                 return -2
             else:
                 return -1
         elif ok != 1:
-            player.ch.work = terrain.T[old_ter].tire[player.ch.mode]
-        for i in terrain.T[old_ter].degrade_tool[player.ch.mode]:
+            player.ch.work = T[old_ter].tire[player.ch.mode]
+        for i in T[old_ter].degrade_tool[player.ch.mode]:
             if i in player.ch.tool_tags:
                 ok = 1
-                if 'dryad2' in player.ch.tool_tags and terrain.T[old_ter].id==':' and player.ch.mode=='Nature':
+                if 'dryad2' in player.ch.tool_tags and T[old_ter].id==':' and player.ch.mode=='Nature':
                     message.message('dryad_heal_tree')
                 else:
-                    message.message(terrain.T[old_ter].degr_mess[player.ch.mode])
+                    message.message(T[old_ter].degr_mess[player.ch.mode])
                 hostiles=player.game_time('0')
                 if hostiles==2:
                     player.ch.work=0
                     return -3
                 if player.ch.work == 0:
-                    if terrain.T[land[xy[1]-1][xy[0]-21]].degradable:
-                        if 'dryad2' in player.ch.tool_tags and terrain.T[old_ter].id==':' and player.ch.mode=='Nature':
+                    if T[land[xy[1]-1][xy[0]-21]].degradable:
+                        if 'dryad2' in player.ch.tool_tags and T[old_ter].id==':' and player.ch.mode=='Nature':
                             land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + 'T' + land[xy[1]-1][xy[0]-20:]
                         else:
-                            land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + terrain.T[old_ter].degrade_to[player.ch.mode] + land[xy[1]-1][xy[0]-20:]
+                            land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + T[old_ter].degrade_to[player.ch.mode] + land[xy[1]-1][xy[0]-20:]
                     found_loot=0
-                    if xy not in player.ch.worked_places[player.ch.mode] or terrain.T[old_ter].id=='m':
-                        player.effect('force',terrain.T[old_ter].force_effects[player.ch.mode],xy,terrain.T[old_ter].char)
-                        if 'dryad2' in player.ch.tool_tags and terrain.T[old_ter].id==':' and player.ch.mode=='Nature':
-                            player.effect('force',terrain.T[old_ter].force_effects[player.ch.mode],xy,terrain.T[old_ter].char)
+                    if xy not in player.ch.worked_places[player.ch.mode] or T[old_ter].id=='m':
+                        player.effect('force',T[old_ter].force_effects[player.ch.mode],xy,T[old_ter].char)
+                        if 'dryad2' in player.ch.tool_tags and T[old_ter].id==':' and player.ch.mode=='Nature':
+                            player.effect('force',T[old_ter].force_effects[player.ch.mode],xy,T[old_ter].char)
                         player.ch.worked_places[player.ch.mode].append(xy[:])
-                        if 'gnome2' in player.ch.tool_tags and terrain.T[old_ter].id in ['%','n','m'] and player.ch.mode=='Nature':
+                        if 'gnome2' in player.ch.tool_tags and T[old_ter].id in ['%','n','m'] and player.ch.mode=='Nature':
                             found_loot+=inventory.put_item([['gnome_touch',5,1,1]], xy)
                             if found_loot:
                                 message.message('gnome_touch')
-                        elif 'fairy1' in player.ch.tool_tags and terrain.T[old_ter].id in ['g','O'] and player.ch.mode=='Nature':
+                        elif 'fairy1' in player.ch.tool_tags and T[old_ter].id in ['g','O'] and player.ch.mode=='Nature':
                             found_loot+=inventory.put_item([['fairy_flowers',5,1,1]], xy)
                             if found_loot:
                                 message.message('fairy_flowers')
-                        if terrain.T[land[xy[1]-1][xy[0]-21]].pass_through:
-                            found_loot+=inventory.put_item(terrain.T[old_ter].loot[player.ch.mode], xy)
+                        if T[land[xy[1]-1][xy[0]-21]].pass_through:
+                            found_loot+=inventory.put_item(T[old_ter].loot[player.ch.mode], xy)
                         else:
-                            found_loot+=inventory.put_item(terrain.T[old_ter].loot[player.ch.mode], [c_x,c_y])
+                            found_loot+=inventory.put_item(T[old_ter].loot[player.ch.mode], [c_x,c_y])
                     if not found_loot:
-                        c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, terrain.T[land[xy[1]-1][xy[0]-21]].colour, terrain.T[land[xy[1]-1][xy[0]-21]].char)
+                        c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[land[xy[1]-1][xy[0]-21]].colour, T[land[xy[1]-1][xy[0]-21]].char)
                     draw_items(xy)
                     return 1
-                elif ((player.ch.hunger > 79) or (player.ch.thirst > 79)) and terrain.T[old_ter].degr_mess[player.ch.mode]!='forage':
+                elif ((player.ch.hunger > 79) or (player.ch.thirst > 79)) and T[old_ter].degr_mess[player.ch.mode]!='forage':
                     player.ch.work = 0
                     return -4
         if ok == 0:
@@ -793,7 +793,7 @@ def work(i):
         y = xy[1]
         for a in range(2):
                 xy[a] = xy[a] + md[i][a]
-        if terrain.T[land[xy[1]-1][xy[0]-21]].workable:
+        if T[land[xy[1]-1][xy[0]-21]].workable:
             d = degrade_terr(land[xy[1]-1][xy[0]-21], xy, x, y)
             if d == 1:
                 xy[0] = x
@@ -816,7 +816,7 @@ def work(i):
                 xy[0] = x
                 xy[1] = y
             else:
-                message.tool_msg('no_tool',terrain.T[land[xy[1]-1][xy[0]-21]].degrade_tool[player.ch.mode])
+                message.tool_msg('no_tool',T[land[xy[1]-1][xy[0]-21]].degrade_tool[player.ch.mode])
                 xy[0] = x
                 xy[1] = y
         else:
@@ -1591,23 +1591,23 @@ def game_over():
 ##                return 1
 
 def drink(xy):
-    if terrain.T[land[xy[1]-1][xy[0]-21]].drink != {}:
+    if T[land[xy[1]-1][xy[0]-21]].drink != {}:
         if player.ch.thirst == 0:
-            message.use('over_drink',terrain.T[land[xy[1]-1][xy[0]-21]])            
+            message.use('over_drink',T[land[xy[1]-1][xy[0]-21]])            
             return 1
-        message.use('drink',terrain.T[land[xy[1]-1][xy[0]-21]])
-        if terrain.T[land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in player.ch.tool_tags:
+        message.use('drink',T[land[xy[1]-1][xy[0]-21]])
+        if T[land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in player.ch.tool_tags:
             for k,v in {'energy':10,'thirst':5}.items():
                 player.effect(k,v)
         else:
-            for k,v in terrain.T[land[xy[1]-1][xy[0]-21]].drink.items():
+            for k,v in T[land[xy[1]-1][xy[0]-21]].drink.items():
                 player.effect(k,v)
     elif player.ch.possessed:
         if player.ch.thirst>20 or player.ch.hunger>20:
             to_eat={'wild horse':'gb','squirrel':'T','snake':'b','poison snake':'b','camel':'Tb','giant lizard':'.,',
                     'penguin':'wW','monkey':'T','polar bear':'wW','bear':'b','cattle':'gb','chicken':'g.','fish':'wW',
                     'plant':'.g'}
-            if terrain.T[land[xy[1]-1][xy[0]-21]].id in to_eat.get(player.ch.possessed[0].race,''):
+            if T[land[xy[1]-1][xy[0]-21]].id in to_eat.get(player.ch.possessed[0].race,''):
                 if player.ch.equipment['Right hand'] and player.ch.possessed[0].name in player.ch.equipment['Right hand'].effect:
                     player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]\
                                                =min([100,player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]+0.1])
@@ -1658,7 +1658,7 @@ def find_to_open(xy):
     containers = []
     for i in range(1, 10):
         search = [xy[0]+md[i][0], xy[1]+md[i][1]]
-        if 'door_' in terrain.T[land[search[1]-1][search[0]-21]].world_name:
+        if 'door_' in T[land[search[1]-1][search[0]-21]].world_name:
             doors.append(search[:])
         for bag in ground_items:
             if search == bag[:2] and 'container' in bag[2].type:
@@ -1668,9 +1668,9 @@ def find_to_open(xy):
         return 0
     elif len(doors)+len(containers) == 1:
         if len(doors):
-            if terrain.T[land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_c'):
+            if T[land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_c'):
                 open_door(doors[0], land[doors[0][1]-1][doors[0][0]-21])
-            elif terrain.T[land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_o'):
+            elif T[land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_o'):
                 close_door(doors[0], land[doors[0][1]-1][doors[0][0]-21])
             return 0
         else:
@@ -1688,9 +1688,9 @@ def find_to_open(xy):
                 return 0
             target = [xy[0]+md[i][0], xy[1]+md[i][1]]
             if target in doors:
-                if terrain.T[land[target[1]-1][target[0]-21]].world_name.endswith('_c'):
+                if T[land[target[1]-1][target[0]-21]].world_name.endswith('_c'):
                     open_door(target, land[target[1]-1][target[0]-21])
-                elif terrain.T[land[target[1]-1][target[0]-21]].world_name.endswith('_o'):
+                elif T[land[target[1]-1][target[0]-21]].world_name.endswith('_o'):
                     close_door(target, land[target[1]-1][target[0]-21])
                 return 0
             else:
@@ -1839,13 +1839,13 @@ def open_container(chest):
     return 1
 
 def open_door(xy, door_id):
-    land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + terrain.T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
-    c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, terrain.T[land[xy[1]-1][xy[0]-21]].colour, terrain.T[land[xy[1]-1][xy[0]-21]].char)
+    land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
+    c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[land[xy[1]-1][xy[0]-21]].colour, T[land[xy[1]-1][xy[0]-21]].char)
     message.message('open_door')
     
 def creature_open_door(xy, door_id):
-    land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + terrain.T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
-    c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, terrain.T[land[xy[1]-1][xy[0]-21]].colour, terrain.T[land[xy[1]-1][xy[0]-21]].char)
+    land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
+    c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[land[xy[1]-1][xy[0]-21]].colour, T[land[xy[1]-1][xy[0]-21]].char)
 
 def close_door(xy, door_id):
     blocked = 0
@@ -1858,8 +1858,8 @@ def close_door(xy, door_id):
     if blocked:
         message.message('blocked_door')
     else:
-        land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + terrain.T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
-        c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, terrain.T[land[xy[1]-1][xy[0]-21]].colour, terrain.T[land[xy[1]-1][xy[0]-21]].char)
+        land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
+        c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[land[xy[1]-1][xy[0]-21]].colour, T[land[xy[1]-1][xy[0]-21]].char)
         message.message('close_door')
 
 def cook():
@@ -2178,7 +2178,7 @@ def look():
                     xy[1] -= md[key][1]
                 message.message('')
                 c.pos(*xy)
-                message.look(xy, player.all_beings, terrain.T, player.ch.known_areas)
+                message.look(xy, player.all_beings, T, player.ch.known_areas)
                 c.pos(*xy)
             except:
                 pass

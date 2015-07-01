@@ -1,4 +1,4 @@
-import terrain
+from terrain import T
 import player
 import msvcrt
 import init_screen
@@ -172,7 +172,7 @@ while i:
                                     cr.mode='fearfull'
                     i='0'
                 else:
-                    if terrain.T[init_screen.land[player.ch.xy[1]-1][player.ch.xy[0]-21]].id in terrain.unsittable:
+                    if not T[init_screen.land[player.ch.xy[1]-1][player.ch.xy[0]-21]].sittable:
                         message.message('no_sit')
                         i = '0'
                     else:

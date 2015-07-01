@@ -1,7 +1,7 @@
 import message
 import msvcrt
 import init_screen
-import terrain
+from terrain import T
 import random
 from inventory import put_item
 from inventory import stone
@@ -1010,11 +1010,11 @@ def effect(k,v,xy=[],ot=''):
                                     effect('force',{'Chaos':{'lava_fire':15}},[y1,x1])
                 elif y=='fire_up':
                     spot_id=ot
-                    spot_color=terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].colour
+                    spot_color=T[init_screen.land[xy[1]-1][xy[0]-21]].colour
                     ch.land_effects[ch.turn]=[v[x][y],'on_fire',init_screen.current_area,xy[:],spot_id,spot_color,2]
                 elif y=='lava_fire':
-                    spot_id=terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].char
-                    spot_color=terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].colour
+                    spot_id=T[init_screen.land[xy[1]-1][xy[0]-21]].char
+                    spot_color=T[init_screen.land[xy[1]-1][xy[0]-21]].colour
                     if init_screen.land[xy[1]-1][xy[0]-21] in ['T','g',':','J']:
                         init_screen.land[xy[1]-1] = init_screen.land[xy[1]-1][:xy[0]-21]+'.'+init_screen.land[xy[1]-1][xy[0]-20:]
                     if ch.land_effects.keys():
@@ -1173,7 +1173,7 @@ def effect(k,v,xy=[],ot=''):
             msvcrt.getch()
             return 0
     elif k=='gnome_gem':
-        if terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in v[0] and 'gnome2' in ch.tool_tags:
+        if T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in v[0] and 'gnome2' in ch.tool_tags:
             if 'ruby' not in v[1] and 'sapphire' not in v[1] and 'amethyst' not in v[1]:
                 message.message(v[1])
             if 'topaz' in v[1]:
@@ -1265,8 +1265,8 @@ def game_time(i = '0'):
             if x.mode != 'not_appeared':
                 if x.life < 1:
                     init_screen.c.scroll((x.xy[0], x.xy[1], x.xy[0]+1, x.xy[1]+1), 1, 1,
-                                         terrain.T[init_screen.land[x.xy[1]-1][x.xy[0]-21]].colour,
-                                         terrain.T[init_screen.land[x.xy[1]-1][x.xy[0]-21]].char)
+                                         T[init_screen.land[x.xy[1]-1][x.xy[0]-21]].colour,
+                                         T[init_screen.land[x.xy[1]-1][x.xy[0]-21]].char)
                     all_creatures.remove(x)
                     all_beings.remove(x)
         for x in all_creatures:
@@ -1340,19 +1340,19 @@ def game_time(i = '0'):
                 else:
                     ch.attr_colors[attr] = 7
         init_screen.draw_hud()
-        if 'water elemental1' in ch.tool_tags and terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wWt':
+        if 'water elemental1' in ch.tool_tags and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wWt':
             if 'waterform' not in ch.effects:
                 ch.effects['invisible']=2
                 if 'water elemental2' in ch.tool_tags:
-                    if terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wW':
+                    if T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wW':
                         ch.hunger=max([0,ch.hunger-1])
                         ch.thirst=max([0,ch.thirst-1])
                         message.message('good_water')
-                    elif terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id=='t':
+                    elif T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id=='t':
                         ch.hunger=min([100,ch.hunger+10])
                         ch.thirst=min([100,ch.thirst+10])
                         message.message('bad_water')
-            elif terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id=='W' and 'waterform' in ch.effects:
+            elif T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id=='W' and 'waterform' in ch.effects:
                 ch.life=1
                 ch.hunger=90
                 ch.thirst=90
@@ -1418,11 +1418,11 @@ def game_time(i = '0'):
                         effect('force',{'Chaos':{'terrain':1}})
                         for i2 in range(100):
                             place=[random.randint(22,78),random.randint(2,23)]
-                            dest=terrain.T[init_screen.land[place[1]-1][place[0]-21]].degrade_to['Chaos']
+                            dest=T[init_screen.land[place[1]-1][place[0]-21]].degrade_to['Chaos']
                             if dest in ['`','+','s','S']:
                                 dest='.'
                             init_screen.land[place[1]-1] = init_screen.land[place[1]-1][:place[0]-21]+dest+init_screen.land[place[1]-1][place[0]-20:]
-                            init_screen.c.scroll((place[0],place[1],place[0]+1,place[1]+1), 1, 1, terrain.T[init_screen.land[place[1]-1][place[0]-21]].colour, terrain.T[init_screen.land[place[1]-1][place[0]-21]].char)
+                            init_screen.c.scroll((place[0],place[1],place[0]+1,place[1]+1), 1, 1, T[init_screen.land[place[1]-1][place[0]-21]].colour, T[init_screen.land[place[1]-1][place[0]-21]].char)
                         msvcrt.getch()
                 if ch.land_effects[x][1]=='dryad song':
                     effect('force',{'Nature':{'dryad':.01,'terrain':.4,'force':.01},'Chaos':{'all':-0.02},'Order':{'all':-0.01}})
@@ -1431,11 +1431,11 @@ def game_time(i = '0'):
                         place=[random.randint(22,78),random.randint(2,23)]
                         growing={'.':'g','B':'g','g':'b','a':'g','T':'J','F':'T','b':'T','%':'n','m':'n','#':'n','o':'b',
                                  'p':'g',',':'g','~':'b','+':'T','`':'T',}
-                        dest=terrain.T[init_screen.land[place[1]-1][place[0]-21]].id
+                        dest=T[init_screen.land[place[1]-1][place[0]-21]].id
                         if dest in growing:
                             dest=growing[dest]
                         init_screen.land[place[1]-1] = init_screen.land[place[1]-1][:place[0]-21]+dest+init_screen.land[place[1]-1][place[0]-20:]
-                        init_screen.c.scroll((place[0],place[1],place[0]+1,place[1]+1), 1, 1, terrain.T[init_screen.land[place[1]-1][place[0]-21]].colour, terrain.T[init_screen.land[place[1]-1][place[0]-21]].char)
+                        init_screen.c.scroll((place[0],place[1],place[0]+1,place[1]+1), 1, 1, T[init_screen.land[place[1]-1][place[0]-21]].colour, T[init_screen.land[place[1]-1][place[0]-21]].char)
                         if ch.land_effects[x][3]>1:
                             ch.land_effects[ch.turn]=[1,'dryad song',init_screen.current_area,ch.land_effects[x][3]-2]
                 if ch.land_effects[x][1]=='plant':
@@ -1450,7 +1450,7 @@ def game_time(i = '0'):
                 if ch.land_effects[x][1]=='on_fire':
                     fxy=ch.land_effects[x][3]
                     if ch.land_effects[x][0]==0:
-                        init_screen.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, terrain.T[init_screen.land[fxy[1]-1][fxy[0]-21]].colour, terrain.T[init_screen.land[fxy[1]-1][fxy[0]-21]].char)
+                        init_screen.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, T[init_screen.land[fxy[1]-1][fxy[0]-21]].colour, T[init_screen.land[fxy[1]-1][fxy[0]-21]].char)
                     else:
                         for cr in all_creatures:
                             if cr.mode != 'not_appeared':
@@ -1458,8 +1458,8 @@ def game_time(i = '0'):
                                     cr.life-=ch.land_effects[x][6]
                                 if cr.life < 1:
                                     init_screen.c.scroll((cr.xy[0], cr.xy[1], cr.xy[0]+1, cr.xy[1]+1), 1, 1,
-                                                         terrain.T[init_screen.land[cr.xy[1]-1][cr.xy[0]-21]].colour,
-                                                         terrain.T[init_screen.land[cr.xy[1]-1][cr.xy[0]-21]].char)
+                                                         T[init_screen.land[cr.xy[1]-1][cr.xy[0]-21]].colour,
+                                                         T[init_screen.land[cr.xy[1]-1][cr.xy[0]-21]].char)
                                     all_creatures.remove(cr)
                                     all_beings.remove(cr)
                                     init_screen.combat_buffer+=' The %s dies in the flames!' %(cr.name)

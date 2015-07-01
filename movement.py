@@ -1,4 +1,4 @@
-import terrain
+from terrain import T
 import player
 import init_screen
 import random
@@ -161,7 +161,7 @@ def shoot(attacker):
                 fall_spot[1] = 23
         attack_path=direct_path(attacker.xy,fall_spot)[1:]
         for spot in attack_path:
-            if terrain.T[init_screen.land[spot[1]-1][spot[0]-21]].id in "i:wWtL`S.gBaTdDFblOop,~'":
+            if T[init_screen.land[spot[1]-1][spot[0]-21]].id in "i:wWtL`S.gBaTdDFblOop,~'":
                 for creature in player.all_beings:
                     if creature not in player.hidden and creature.xy==spot:
                         dodge_chance=creature.attr['Dex']*attack_path.index(spot)/2
@@ -241,12 +241,12 @@ def shoot(attacker):
                     init_screen.ground_items.append([attack_path[attack_path.index(spot)][0],attack_path[attack_path.index(spot)][1],bullet])
                     return 0
                 else:
-                    init_screen.c.scroll((x, y, x+1, y+1), 1, 1, terrain.T[init_screen.land[spot[1]-1][spot[0]-21]].colour,terrain.T[init_screen.land[spot[1]-1][spot[0]-21]].char)
+                    init_screen.c.scroll((x, y, x+1, y+1), 1, 1, T[init_screen.land[spot[1]-1][spot[0]-21]].colour,T[init_screen.land[spot[1]-1][spot[0]-21]].char)
                     for be in player.all_beings:
                         if be.xy==spot:
                             init_screen.draw_move(be,be.xy[0],be.xy[1])
                             break
-                if terrain.T[init_screen.land[spot[1]-1][spot[0]-21]].id in 'TDFboO':
+                if T[init_screen.land[spot[1]-1][spot[0]-21]].id in 'TDFboO':
                     chance=random.randint(0,100)-(attacker.attr['Dex']-attack_path.index(spot))*10
                     if chance>shot_chance:
                         init_screen.ground_items.append([spot[0],spot[1],bullet])
@@ -276,8 +276,8 @@ def defender_dead(defender,add_dmg,attacker):
         elif defender.race=='water elemental':
             player.effect('force',{'Chaos':{'kraken':0.02}})
         init_screen.c.scroll((defender.xy[0], defender.xy[1], defender.xy[0]+1, defender.xy[1]+1), 1, 1,
-                             terrain.T[init_screen.land[defender.xy[1]-1][defender.xy[0]-21]].colour,
-                             terrain.T[init_screen.land[defender.xy[1]-1][defender.xy[0]-21]].char)
+                             T[init_screen.land[defender.xy[1]-1][defender.xy[0]-21]].colour,
+                             T[init_screen.land[defender.xy[1]-1][defender.xy[0]-21]].char)
         if add_dmg:
             message.creature('crit_kill',defender)
         else:
@@ -329,8 +329,8 @@ def combat(attacker,defender,second_swing=0):
                 damage = 0
             if attacker.tag == '@':
                 if 'kraken2' in attacker.tool_tags and \
-                       terrain.T[init_screen.land[attacker.xy[1]-1][attacker.xy[0]-21]].id in "wWt" and \
-                       terrain.T[init_screen.land[defender.xy[1]-1][defender.xy[0]-21]].id in "wWt" and \
+                       T[init_screen.land[attacker.xy[1]-1][attacker.xy[0]-21]].id in "wWt" and \
+                       T[init_screen.land[defender.xy[1]-1][defender.xy[0]-21]].id in "wWt" and \
                        player.ch.turn%2400>1200:
                     damage += defender.life+5
                     message.creature('kraken_death',defender)
@@ -395,12 +395,12 @@ def check_passage(xy, x, y, riding=0):
             xy[1] = y
             travel = init_screen.change_place('area%s' %(init_screen.directions[direction]),direction)
         return 1
-    elif (terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or \
-         ('spirit of order1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
-         ('spirit of chaos1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
-         ('gnome1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%') or \
+    elif (T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or \
+         ('spirit of order1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
+         ('spirit of chaos1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
+         ('gnome1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%') or \
          'waterform' in player.ch.effects) and \
-         not (player.ch.possessed and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in player.ch.possessed[0].terr_restr):
+         not (player.ch.possessed and T[init_screen.land[xy[1]-1][xy[0]-21]].id in player.ch.possessed[0].terr_restr):
         if 'waterform' in player.ch.effects:
             return 0
         for a in player.all_creatures:
@@ -487,72 +487,72 @@ def check_passage(xy, x, y, riding=0):
                     xy[0] = x
                     xy[1] = y
                     return 1
-        if (terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move > player.ch.energy) and not \
-           ('kraken1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~') and not \
-           ('winterwalk' in player.ch.effects and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i") and not \
-           ('summerwalk' in player.ch.effects and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in ",") and not \
-           (player.ch.possessed and player.ch.possessed[0].race=='fish' and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
+        if (T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move > player.ch.energy) and not \
+           ('kraken1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~') and not \
+           ('winterwalk' in player.ch.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i") and not \
+           ('summerwalk' in player.ch.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in ",") and not \
+           (player.ch.possessed and player.ch.possessed[0].race=='fish' and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
             message.emotion('tired')
-            if terrain.T[init_screen.land[player.ch.xy[1]-1][player.ch.xy[0]-21]].id in terrain.drowning:
+            if T[init_screen.land[player.ch.xy[1]-1][player.ch.xy[0]-21]].drowning:
                 player.ch.life -= 1
                 message.message('drown')
             xy[0] = x
             xy[1] = y
-        elif not (player.ch.possessed and player.ch.possessed[0].race=='fish' and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
-            if ('kraken1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~'):
+        elif not (player.ch.possessed and player.ch.possessed[0].race=='fish' and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
+            if ('kraken1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~'):
                 message.message('kraken_move')
-            elif ('winterwalk' in player.ch.effects and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i"):
-                message.message('fairy_%smove' %(terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].name))
-            elif ('summerwalk' in player.ch.effects and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in ","):
-                message.message('fairy_%smove' %(terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].name))
-            elif ('gnome1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
-                player.ch.energy -= terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                if terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id != 'n':
+            elif ('winterwalk' in player.ch.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i"):
+                message.message('fairy_%smove' %(T[init_screen.land[xy[1]-1][xy[0]-21]].name))
+            elif ('summerwalk' in player.ch.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in ","):
+                message.message('fairy_%smove' %(T[init_screen.land[xy[1]-1][xy[0]-21]].name))
+            elif ('gnome1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
+                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                if T[init_screen.land[xy[1]-1][xy[0]-21]].id != 'n':
                     init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'n'+init_screen.land[xy[1]-1][xy[0]-20:]
                     player.effect('force',{'Nature':{'force':0.01,'gnome':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                 message.message('gnome_move')
-            elif ('spirit of nature1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'd'):
-                player.ch.energy -= terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+            elif ('spirit of nature1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'd'):
+                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
                 init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'g'+init_screen.land[xy[1]-1][xy[0]-20:]
                 player.effect('force',{'Nature':{'force':0.01,'spirit of nature':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                 message.message('nature_spirit_move')
-            elif ('fairy1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in '.a'):
-                player.ch.energy -= terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+            elif ('fairy1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '.a'):
+                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
                 init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'g'+init_screen.land[xy[1]-1][xy[0]-20:]
                 player.effect('force',{'Nature':{'force':0.01,'fairy':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                 message.message('fairy_move')
-            elif ('dryad1' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'D'):
-                player.ch.energy -= terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+            elif ('dryad1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'D'):
+                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
                 init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'T'+init_screen.land[xy[1]-1][xy[0]-20:]
                 player.effect('force',{'Nature':{'force':0.01,'dryad':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                 message.message('dryad_move')
-            elif ('goblin2' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wW'):
-                player.ch.energy -= terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+            elif ('goblin2' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wW'):
+                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
                 init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'t'+init_screen.land[xy[1]-1][xy[0]-20:]
                 player.effect('force',{'Chaos':{'force':0.01,'goblin':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
                 message.message('goblin_move')
-            elif ('spirit of chaos2' in player.ch.tool_tags and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'gT'):
-                player.ch.energy -= terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                if terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id=='g':
+            elif ('spirit of chaos2' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'gT'):
+                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                if T[init_screen.land[xy[1]-1][xy[0]-21]].id=='g':
                     init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'d'+init_screen.land[xy[1]-1][xy[0]-20:]
-                elif terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id=='T':
+                elif T[init_screen.land[xy[1]-1][xy[0]-21]].id=='T':
                     init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'D'+init_screen.land[xy[1]-1][xy[0]-20:]
                 player.effect('force',{'Chaos':{'force':0.01,'spirit of chaos':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
                 message.message('chaos_spirit_move')
             else:
-                player.ch.energy -= terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                message.message(terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
+                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                message.message(T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
             for item in init_screen.ground_items:
                 if item[:2] == xy:
                     message.use('gr_item',item[2],item[2].qty,xy)
                     break
-    elif 'door_' in terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].world_name:
+    elif 'door_' in T[init_screen.land[xy[1]-1][xy[0]-21]].world_name:
         init_screen.open_door(xy, init_screen.land[xy[1]-1][xy[0]-21])
         xy[0] = x
         xy[1] = y
     else:
-        if not terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through:
-            message.message(terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
+        if not T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through:
+            message.message(T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
         xy[0] = x
         xy[1] = y
 
@@ -566,11 +566,11 @@ def creature_passage(ch, x, y):
         ch.xy[0] = x
         ch.xy[1] = y
         return 1
-    elif terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in ch.terr_restr and not ch.mode=='standing_hostile':
+    elif T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in ch.terr_restr and not ch.mode=='standing_hostile':
         ch.xy[0] = x
         ch.xy[1] = y
         return 1
-    elif terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].pass_through or (ch.race=='spirit of order' and init_screen.current_place['Order']>30 and terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in '#o+`sS') or (ch.race=='spirit of chaos' and init_screen.current_place['Chaos']>30 and terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in '#o+`sS') or (ch.race=='gnome' and init_screen.current_place['Nature']>30 and terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'nmA%'):
+    elif T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].pass_through or (ch.race=='spirit of order' and init_screen.current_place['Order']>30 and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in '#o+`sS') or (ch.race=='spirit of chaos' and init_screen.current_place['Chaos']>30 and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in '#o+`sS') or (ch.race=='gnome' and init_screen.current_place['Nature']>30 and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'nmA%'):
         for a in player.all_beings:
             if a.xy == ch.xy and a.game_id != ch.game_id:
                 ch.xy[0] = x
@@ -578,26 +578,26 @@ def creature_passage(ch, x, y):
                 if (ch.mode=='guarding' and a.mode=='hostile') or (a.mode=='guarding' and ch.mode=='hostile') or (a.xy == player.ch.xy and ch.mode in ['hostile','standing_hostile'] and 'waterform' not in player.ch.effects):
                     combat(ch,a)
 		return 1
-        if terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].tire_move>ch.energy:
-            if terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in terrain.drowning and ch.race!='fish':
+        if T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].tire_move>ch.energy:
+            if T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].drowning and ch.race!='fish':
                 ch.life -= 1
             ch.xy[0] = x
             ch.xy[1] = y
-        elif not (ch.race=='kraken' and init_screen.current_place['Chaos']>30 and terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wWt~')\
-             and not (ch.race=='fairy' and init_screen.current_place['Nature']>60 and terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in "'i,")\
-             and not (ch.race=='fish' and terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in "Wwt~"):
-            ch.energy-=terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].tire_move
+        elif not (ch.race=='kraken' and init_screen.current_place['Chaos']>30 and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wWt~')\
+             and not (ch.race=='fairy' and init_screen.current_place['Nature']>60 and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in "'i,")\
+             and not (ch.race=='fish' and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in "Wwt~"):
+            ch.energy-=T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].tire_move
         if ch.mode=='standing_hostile':
             ch.xy[0] = x
             ch.xy[1] = y
-    elif 'door_' in terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].world_name:
+    elif 'door_' in T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].world_name:
         init_screen.creature_open_door(ch.xy, init_screen.land[ch.xy[1]-1][ch.xy[0]-21])
         ch.xy[0] = x
         ch.xy[1] = y
     else:
           ch.xy[0] = x
           ch.xy[1] = y
-##  elif terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].degradable:
+##  elif T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].degradable:
 ##        d = init_screen.degrade_terr(init_screen.land[ch.xy[1]-1][ch.xy[0]-21], ch.xy)
 ##        if d == 1:
 ##            ch.xy[0] = x
@@ -783,7 +783,7 @@ def creature_move(ch):
     else:
         if player_los or (init_screen.current_place['Nature']>=33 and init_screen.current_place['Temperature']>=33 and 'elf2' in player.ch.tool_tags):
             init_screen.draw_move(ch, x, y)
-        if ch.race=='water elemental' and terrain.T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wWt':
+        if ch.race=='water elemental' and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wWt':
             ch.attr['invisible']=2
         if 'invisible' in ch.attr:
             init_screen.hide(ch)
@@ -851,14 +851,14 @@ def create_path(path, a, b, change,times,direction = [1,1]): ## Ne se izpolzva v
 ##                if creature.xy == step:
 ##                    no_pass = 1
 ##                    break
-##            if terrain.T[init_screen.land[step[1]-1][step[0]-21]].pass_through and not no_pass:
+##            if T[init_screen.land[step[1]-1][step[0]-21]].pass_through and not no_pass:
 ##                pass
 ##            else:
 ##                if path[path.index(step)-1][0]-path[path.index(step)+1][0]<path[path.index(step)-1][1]-path[path.index(step)+1][1]:
 ##                    change = 0
 ##                else:
 ##                    change = 1
-##                while not terrain.T[init_screen.land[step[1]-1][step[0]-21]].pass_through or no_pass:
+##                while not T[init_screen.land[step[1]-1][step[0]-21]].pass_through or no_pass:
 ##                    if changes[0] > 1:
 ##                        change = 1
 ##                        step = step_record[:]
@@ -906,7 +906,7 @@ def create_path(path, a, b, change,times,direction = [1,1]): ## Ne se izpolzva v
 ##            if creature.xy == step and creature.game_id != a.game_id:
 ##                no_pass = 1
 ##                break
-##        if (not terrain.T[init_screen.land[step[1]-1][step[0]-21]].pass_through or no_pass):
+##        if (not T[init_screen.land[step[1]-1][step[0]-21]].pass_through or no_pass):
 ##            again = 1
 ##            times += 1
 ##            break
@@ -929,7 +929,7 @@ def clear_path(thing,a,b):
         if creature.xy == xy and creature.game_id != thing.game_id:
             no_pass = 1
             break
-    if not terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or no_pass or terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in thing.terr_restr:
+    if not T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or no_pass or T[init_screen.land[xy[1]-1][xy[0]-21]].id in thing.terr_restr:
         return 0
     while xy != b:
         xy[0] += cmp(b[0],xy[0])
@@ -939,7 +939,7 @@ def clear_path(thing,a,b):
             if creature.xy == xy and creature.game_id != thing.game_id:
                 no_pass = 1
                 break
-        if not terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or no_pass or terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in thing.terr_restr:
+        if not T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or no_pass or T[init_screen.land[xy[1]-1][xy[0]-21]].id in thing.terr_restr:
             return 0
     return 1
 
@@ -954,16 +954,16 @@ def good_path(thing,path):
             if creature.xy == xy and creature.game_id != thing.game_id:
                 no_pass = 1
                 break
-        if (not terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or no_pass or terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in thing.terr_restr) and not (thing.race=='spirit of order' and init_screen.current_place['Order']>30 and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') and not (thing.race=='spirit of chaos' and init_screen.current_place['Chaos']>30 and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') and not (thing.race=='gnome' and init_screen.current_place['Nature']>30 and terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
+        if (not T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or no_pass or T[init_screen.land[xy[1]-1][xy[0]-21]].id in thing.terr_restr) and not (thing.race=='spirit of order' and init_screen.current_place['Order']>30 and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') and not (thing.race=='spirit of chaos' and init_screen.current_place['Chaos']>30 and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') and not (thing.race=='gnome' and init_screen.current_place['Nature']>30 and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
             return 0
     return 1
 
 def clear_los(path):
     if len(path)>2:
         for xy in path[1:-1]:
-            if terrain.T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'T%m#f+s><DFJbnI':
+            if not T[init_screen.land[xy[1]-1][xy[0]-21]].clear_los:
                 return 0
-    if terrain.T[init_screen.land[path[-1][1]-1][path[-1][0]-21]].id=='#':
+    if not T[init_screen.land[path[-1][1]-1][path[-1][0]-21]].pass_through:
         return 0
     return 1
 
@@ -973,7 +973,7 @@ def good_place(thing,place):
         if creature.xy == place and not (creature.mode=='hostile' and thing.mode=='guarding') and not (thing.mode=='hostile' and creature.mode=='guarding'):
             no_pass = 1
             break
-    if (not terrain.T[init_screen.land[place[1]-1][place[0]-21]].pass_through or no_pass or (terrain.T[init_screen.land[place[1]-1][place[0]-21]].id in thing.terr_restr and thing.mode!='standing_hostile')) and not (thing.race=='spirit of order' and init_screen.current_place['Order']>30 and terrain.T[init_screen.land[place[1]-1][place[0]-21]].id in '#o+s') and not (thing.race=='spirit of chaos' and init_screen.current_place['Chaos']>30 and terrain.T[init_screen.land[place[1]-1][place[0]-21]].id in '#o+s') and not (thing.race=='gnome' and init_screen.current_place['Nature']>30 and terrain.T[init_screen.land[place[1]-1][place[0]-21]].id in 'nmA%') and not ('door_' in terrain.T[init_screen.land[place[1]-1][place[0]-21]].world_name and thing.t=='sentient'):
+    if (not T[init_screen.land[place[1]-1][place[0]-21]].pass_through or no_pass or (T[init_screen.land[place[1]-1][place[0]-21]].id in thing.terr_restr and thing.mode!='standing_hostile')) and not (thing.race=='spirit of order' and init_screen.current_place['Order']>30 and T[init_screen.land[place[1]-1][place[0]-21]].id in '#o+s') and not (thing.race=='spirit of chaos' and init_screen.current_place['Chaos']>30 and T[init_screen.land[place[1]-1][place[0]-21]].id in '#o+s') and not (thing.race=='gnome' and init_screen.current_place['Nature']>30 and T[init_screen.land[place[1]-1][place[0]-21]].id in 'nmA%') and not ('door_' in T[init_screen.land[place[1]-1][place[0]-21]].world_name and thing.t=='sentient'):
         return 0
     return 1
 

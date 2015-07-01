@@ -1,6 +1,6 @@
 import msvcrt
 import init_screen
-import terrain
+from terrain import T
 import player
 import pickle
 import inventory
@@ -29,7 +29,7 @@ def load_terr(f):
     for x in range(1,24):
         init_screen.c.pos(21, x)
         for y in range(21,79):
-            init_screen.c.scroll((y,x,y+1,x+1), 1, 1, terrain.T[init_screen.land[x-1][y-21]].colour, terrain.T[init_screen.land[x-1][y-21]].char)
+            init_screen.c.scroll((y,x,y+1,x+1), 1, 1, T[init_screen.land[x-1][y-21]].colour, T[init_screen.land[x-1][y-21]].char)
     player.ch = pickle.load(terr)
     player.ch.inventory = pickle.load(terr)
     player.ch.equipment = pickle.load(terr)
@@ -181,13 +181,13 @@ def unknown_terrain(coords,direction):
     init_screen.land=generate_terr(coords)
     for x in range(1,24):
         for y in range(21,79):
-            init_screen.c.scroll((y,x,y+1,x+1), 1, 1, terrain.T[init_screen.land[x-1][y-21]].colour, terrain.T[init_screen.land[x-1][y-21]].char)
+            init_screen.c.scroll((y,x,y+1,x+1), 1, 1, T[init_screen.land[x-1][y-21]].colour, T[init_screen.land[x-1][y-21]].char)
     init_screen.map_coords = '47 22;47 2;77 12;22 12;0 0;0 0'
     new_coords = init_screen.map_coords.split(';')
     for i in range(6):
         new_coords[i] = new_coords[i].split(' ')
     spot=[int(new_coords[direction][0]),int(new_coords[direction][1])]
-    while not terrain.T[init_screen.land[spot[1]-1][spot[0]-21]].pass_through:
+    while not T[init_screen.land[spot[1]-1][spot[0]-21]].pass_through:
         if direction==0:
             spot[1]-=1
         elif direction==1:
@@ -243,13 +243,13 @@ def unknown_Bterrain(coords,direction):
     init_screen.land=generate_terr(coords)
     for x in range(1,24):
         for y in range(21,79):
-            init_screen.c.scroll((y,x,y+1,x+1), 1, 1, terrain.T[init_screen.land[x-1][y-21]].colour, terrain.T[init_screen.land[x-1][y-21]].char)
+            init_screen.c.scroll((y,x,y+1,x+1), 1, 1, T[init_screen.land[x-1][y-21]].colour, T[init_screen.land[x-1][y-21]].char)
     init_screen.map_coords = '47 22;47 2;77 12;22 12;0 0;0 0'
     new_coords = init_screen.map_coords.split(';')
     for i in range(6):
         new_coords[i] = new_coords[i].split(' ')
     spot=[int(new_coords[direction][0]),int(new_coords[direction][1])]
-    while not terrain.T[init_screen.land[spot[1]-1][spot[0]-21]].pass_through:
+    while not T[init_screen.land[spot[1]-1][spot[0]-21]].pass_through:
         if direction==0:
             spot[1]-=1
         elif direction==1:
@@ -283,13 +283,13 @@ def generate_terr(starting_point):
         amount=(1334*tp[f])/100
         for x in range(amount):
             add_terr=random.choice(range(len(terrain_selection[f])))
-            if not terrain.T[terrain_selection[f][add_terr]].pass_through and random.random()>0.25:
+            if not T[terrain_selection[f][add_terr]].pass_through and random.random()>0.25:
                 other_terr=terrain_selection[f][:]
                 other_terr.remove(terrain_selection[f][add_terr])
                 add_terr=random.choice(other_terr)
                 all_land+=add_terr
                 done_lands+=1
-            elif terrain.T[terrain_selection[f][add_terr]].pass_through:
+            elif T[terrain_selection[f][add_terr]].pass_through:
                 if random.random()>(add_terr+tp['Population']/10)/10.:
                     all_land+=terrain_selection[f][add_terr]
                     done_lands+=1
@@ -355,7 +355,7 @@ def generate_terr(starting_point):
                 game_id = i+1
                 x = random.randint(21,78)
                 y = random.randint(1,23)
-                while [x,y] in creature_coords or not terrain.T[lands[y-1][x-21]].pass_through or terrain.T[lands[y-1][x-21]].id in thing.terr_restr:
+                while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in thing.terr_restr:
                     x = random.randint(21,78)
                     y = random.randint(1,23)
                 creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
@@ -431,7 +431,7 @@ def generate_terr(starting_point):
                 game_ids.append(game_id)
                 x = random.randint(21,78)
                 y = random.randint(1,23)
-                while [x,y] in creature_coords or not terrain.T[lands[y-1][x-21]].pass_through or terrain.T[lands[y-1][x-21]].id in player.wood.terr_restr:
+                while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in player.wood.terr_restr:
                     x = random.randint(21,78)
                     y = random.randint(1,23)
                 creation = player.wood.duplicate(x,y,game_id,c_force,c_race,True)
@@ -460,9 +460,9 @@ def generate_terr(starting_point):
                 game_ids.append(game_id)
                 x = random.randint(21,78)
                 y = random.randint(1,23)
-                while [x,y] in creature_coords or not terrain.T[lands[y-1][x-21]].pass_through or \
-                      (terrain.T[lands[y-1][x-21]].id in thing.terr_restr and thing.race!='plant') or \
-                      terrain.T[lands[y-1][x-21]].id in ['pa']:
+                while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or \
+                      (T[lands[y-1][x-21]].id in thing.terr_restr and thing.race!='plant') or \
+                      T[lands[y-1][x-21]].id in ['pa']:
                     x = random.randint(21,78)
                     y = random.randint(1,23)
                 creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
@@ -521,7 +521,7 @@ def generate_terr(starting_point):
                     game_ids.append(game_id)
                     x = random.randint(21,78)
                     y = random.randint(1,23)
-                    while [x,y] in creature_coords or not terrain.T[lands[y-1][x-21]].pass_through or terrain.T[lands[y-1][x-21]].id in player.wood.terr_restr:
+                    while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in player.wood.terr_restr:
                         x = random.randint(21,78)
                         y = random.randint(1,23)
                     creation = player.wood_perm.duplicate(x,y,game_id,c_force,c_race,False)
@@ -625,7 +625,7 @@ def new_terr(area,direction,f=''):
         player.all_creatures = pickle.load(terr)
         for x in range(1,24):
             for y in range(21,79):
-                init_screen.c.scroll((y,x,y+1,x+1), 1, 1, terrain.T[init_screen.land[x-1][y-21]].colour, terrain.T[init_screen.land[x-1][y-21]].char)
+                init_screen.c.scroll((y,x,y+1,x+1), 1, 1, T[init_screen.land[x-1][y-21]].colour, T[init_screen.land[x-1][y-21]].char)
 ##        init_screen.map_coords = terr.readline()
 ##        new_coords = init_screen.map_coords[:len(init_screen.map_coords)-1].split(';')
                 
@@ -634,7 +634,7 @@ def new_terr(area,direction,f=''):
         for i in range(6):
             new_coords[i] = new_coords[i].split(' ')
         spot=[int(new_coords[direction][0]),int(new_coords[direction][1])]
-        while not terrain.T[init_screen.land[spot[1]-1][spot[0]-21]].pass_through:
+        while not T[init_screen.land[spot[1]-1][spot[0]-21]].pass_through:
             if direction==0:
                 spot[1]-=1
             elif direction==1:
@@ -702,9 +702,9 @@ def new_terr(area,direction,f=''):
                         game_ids.append(game_id)
                         x = random.randint(21,78)
                         y = random.randint(1,23)
-                        while [x,y] in creature_coords or not terrain.T[init_screen.land[y-1][x-21]].pass_through or \
-                              (terrain.T[init_screen.land[y-1][x-21]].id in thing.terr_restr and thing.race!='plant') or \
-                              terrain.T[init_screen.land[y-1][x-21]].id in ['pa']:
+                        while [x,y] in creature_coords or not T[init_screen.land[y-1][x-21]].pass_through or \
+                              (T[init_screen.land[y-1][x-21]].id in thing.terr_restr and thing.race!='plant') or \
+                              T[init_screen.land[y-1][x-21]].id in ['pa']:
                             x = random.randint(21,78)
                             y = random.randint(1,23)
                         creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
@@ -732,7 +732,7 @@ def new_terr(area,direction,f=''):
                         game_ids.append(game_id)
                         x = random.randint(21,78)
                         y = random.randint(1,23)
-                        while [x,y] in creature_coords or not terrain.T[init_screen.land[y-1][x-21]].pass_through or terrain.T[init_screen.land[y-1][x-21]].id in player.wood.terr_restr:
+                        while [x,y] in creature_coords or not T[init_screen.land[y-1][x-21]].pass_through or T[init_screen.land[y-1][x-21]].id in player.wood.terr_restr:
                             x = random.randint(21,78)
                             y = random.randint(1,23)
                         creation = player.wood.duplicate(x,y,game_id,c_force,c_race,True)
@@ -754,7 +754,7 @@ def new_terr(area,direction,f=''):
                         game_ids.append(game_id)
                         x = random.randint(21,78)
                         y = random.randint(1,23)
-                        while [x,y] in creature_coords or not terrain.T[init_screen.land[y-1][x-21]].pass_through or terrain.T[init_screen.land[y-1][x-21]].id in thing.terr_restr:
+                        while [x,y] in creature_coords or not T[init_screen.land[y-1][x-21]].pass_through or T[init_screen.land[y-1][x-21]].id in thing.terr_restr:
                             x = random.randint(21,78)
                             y = random.randint(1,23)
                         creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
@@ -805,7 +805,7 @@ def new_terr(area,direction,f=''):
             else:
                 x = random.randint(max([player.ch.xy[0]-3,21]),min([78,player.ch.xy[0]+3]))
                 y = random.randint(max([player.ch.xy[1]-3,1]),min([23,player.ch.xy[1]+3]))
-                while [x,y] in creature_coords or not terrain.T[init_screen.land[y-1][x-21]].pass_through or terrain.T[init_screen.land[y-1][x-21]].id in fol.terr_restr:
+                while [x,y] in creature_coords or not T[init_screen.land[y-1][x-21]].pass_through or T[init_screen.land[y-1][x-21]].id in fol.terr_restr:
                     x = random.randint(max([player.ch.xy[0]-3,21]),min([78,player.ch.xy[0]+3]))
                     y = random.randint(max([player.ch.xy[1]-3,1]),min([23,player.ch.xy[1]+3]))
             fol.xy=[x,y]
@@ -814,41 +814,4 @@ def new_terr(area,direction,f=''):
             player.all_creatures.append(fol)
             fol.game_id=max_id+1
             max_id+=1
-    return 1
-
-def world():
-    f = 'terrain.dat'
-    terr = open(f, 'r')
-    init_screen.c.page()
-    init_screen.land = []
-    places = {}
-    place_descriptions = {}
-    line = ''
-    while 'world' not in line:
-        line = terr.readline()
-    init_screen.directions = line[:len(line)-1].split(' ')[1:]
-    for i in range(23):
-        init_screen.land.append(terr.read(58))
-        terr.read(1)
-
-    areas = terr.readline()
-    if int(areas):
-        for i in range(int(areas)):
-            line = terr.readline()
-            chop = line[:len(line)-1].split(':')
-            xy = [int(chop[1]),int(chop[2])]
-            if init_screen.current_area == 'area'+chop[0]:
-                player.ch.xy[0] = xy[0]
-                player.ch.xy[1] = xy[1]
-            init_screen.world_places['area'+chop[0]] = xy
-            if not chop[4]:
-                init_screen.top_world_places[str(xy)] = chop[3]
-            init_screen.place_descriptions['area'+chop[0]] = chop[3]
-
-    init_screen.ground_items = []
-    player.all_beings = [player.ch]
-    player.all_creatures = []
-    player.hidden = []
-
-    terr.close()
     return 1
