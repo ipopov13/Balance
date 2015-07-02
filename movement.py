@@ -7,48 +7,6 @@ import msvcrt
 from inventory import put_item
 from time import sleep
 
-def force_attack(attacker,defender):
-    ## Force effects based on mode and enemy
-    if attacker.mode=='Nature':
-        if defender.force=='Nature':
-            if attacker.hunger>60 and defender.t=='animal':
-                player.effect('force',{'Nature':{'force':0.01,'elf':0.01},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
-            else:
-                player.effect('force',{'Nature':{'all':-0.02},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
-        elif defender.force=='Order':
-            if init_screen.current_place['Chaos']>=init_screen.current_place['Nature']:
-                player.effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
-            else:
-                player.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
-        elif defender.force=='Chaos':
-            player.effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'force':0.01}})
-    elif attacker.mode=='Chaos':
-        if defender.force=='Nature':
-            player.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
-        elif defender.force=='Order':
-            player.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
-        elif defender.force=='Chaos':
-            player.effect('force',{'Chaos':{'ork':0.01}})
-    elif attacker.mode=='Order':
-        if defender.force=='Nature':
-            if defender.t=='animal':
-                player.effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
-            else:
-                if init_screen.current_place['Chaos']>=init_screen.current_place['Order']:
-                    player.effect('force',{'Nature':{'all':-0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
-                else:
-                    player.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
-        elif defender.force=='Order':
-            if defender.t=='animal':
-                player.effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
-            else:
-                player.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.1},'Order':{'all':-0.02}})
-        elif defender.force=='Chaos':
-            if defender.t=='animal':
-                player.effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
-            else:
-                player.effect('force',{'Nature':{'force':0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
-
 def attack(attacker,defender):
     if attacker.tag == '@' or defender.tag == '@':
         if attacker.tag == '@' and (player.ch.equipment['Right hand'] and 'ranged' in player.ch.equipment['Right hand'].type) or (player.ch.equipment['Left hand'] and 'ranged' in player.ch.equipment['Left hand'].type):
@@ -87,7 +45,7 @@ def attack(attacker,defender):
                 else:
                     player.ch.weapon_skills[player.ch.equipment['Left hand'].weapon_type.capitalize()] += 0.1*max([against/player.ch.weapon_skill,0.1])
     if attacker.tag == '@':
-        force_attack(attacker,defender)
+        player.ch.force_attack(defender)
         ## Ako bronqta teji poveche ot polovinata maksimalno teglo se namalqva efektivnoto umenie
         if attacker.armour_weight:
             armour_mod = min([float(attacker.max_weight)/attacker.armour_weight, 2]) - 1
@@ -173,7 +131,7 @@ def shoot(attacker):
                                 dodge_chance+=80
                         if random.randint(1,100)>dodge_chance:
                             if attacker.tag=='@':
-                                force_attack(attacker,creature)
+                                player.ch.force_attack(creature)
                                 creature.mode='hostile'
                             add_dmg = 0
                             crit = random.randint(1,100)
@@ -291,6 +249,7 @@ def defender_dead(defender,add_dmg,attacker):
     player.all_beings.remove(defender)
     if defender in player.ch.followers:
         player.ch.followers.remove(defender)
+    del(defender)
 
 
 def combat(attacker,defender,second_swing=0):
@@ -367,201 +326,14 @@ def combat(attacker,defender,second_swing=0):
             if attacker.equiped_weaps == 2:
                 combat(attacker,defender,1)
 
-def check_passage(xy, x, y, riding=0):
-    if (xy[0] == 20) or (xy[0] == 79) or (xy[1] == 0) or (xy[1] == 24):
-        if (xy[0] == 20):
-            direction = 2
-        elif (xy[0] == 79):
-            direction = 3
-        elif (xy[1] == 0):
-            direction = 0
-        elif (xy[1] == 24):
-            direction = 1
-        if not int(init_screen.directions[direction]) and init_screen.current_area != 'world':
-            message.message('leave_world')
-            xy[0] = x
-            xy[1] = y
-            return 1
-##       ##World movement disabled!
-##            else:
-##                init_screen.current_area, entered = init_screen.world(init_screen.current_area)
-##                init_screen.redraw_screen()
-        elif not int(init_screen.directions[direction]) and init_screen.current_area == 'world':
-            xy[0] = x
-            xy[1] = y
-            message.message('nowhere_togo')
-        else:
-            xy[0] = x
-            xy[1] = y
-            travel = init_screen.change_place('area%s' %(init_screen.directions[direction]),direction)
-        return 1
-    elif (T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or \
-         ('spirit of order1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
-         ('spirit of chaos1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
-         ('gnome1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%') or \
-         'waterform' in player.ch.effects) and \
-         not (player.ch.possessed and T[init_screen.land[xy[1]-1][xy[0]-21]].id in player.ch.possessed[0].terr_restr):
-        if 'waterform' in player.ch.effects:
-            return 0
-        for a in player.all_creatures:
-            if (a.xy == xy) and (a not in player.hidden):
-                if a.mode in ['hostile','standing_hostile']:
-                    if not riding:
-                        if not player.ch.ride:
-                            combat(player.ch, a)
-                        else:
-                            message.message('no_riding_fighting')
-                    else:
-                        message.message('no_riding_fighting')
-                    xy[0] = x
-                    xy[1] = y
-                    return 1
-                else:
-                    if a.t=='sentient' and not player.ch.possessed:
-                        message.creature('talk',a)
-                        answer=msvcrt.getch()
-                        if answer.lower()=='y':
-                            xy[0] = x
-                            xy[1] = y
-                            init_screen.talk(a)
-                            return 1
-                        else:
-                            message.message('')
-                            if 'goblin1' in player.ch.tool_tags:
-                                message.creature('steal',a)
-                                answer=msvcrt.getch()
-                                if answer.lower()=='y':
-                                    player.effect('force',{'Chaos':{'force':0.02,'goblin':0.02},'Nature':{'all':-.01},'Order':{'all':-.01}})
-                                    xy[0] = x
-                                    xy[1] = y
-                                    init_screen.pickpocket(a)
-                                    return 1
-                                else:
-                                    message.message('')
-                    elif 'tame' in a.attr and 'tame' not in a.name and 'human2' in player.ch.tool_tags\
-                          and not player.ch.possessed:
-                        message.creature('tame',a)
-                        answer=msvcrt.getch()
-                        if answer.lower()=='y':
-                            player.effect('force',{'Order':{'force':0.02,'human':0.02}})
-                            init_screen.tame(a)
-                            xy[0] = x
-                            xy[1] = y
-                            return 1
-                        else:
-                            message.message('')
-                    elif a in player.ch.followers and 'human2' in player.ch.tool_tags\
-                          and not player.ch.possessed:
-                        message.creature('tamed_use',a)
-                        answer=msvcrt.getch()
-                        if answer.lower()=='y':
-                            player.effect('force',{'Order':{'force':0.01,'human':0.01}})
-                            init_screen.command_tamed(a)
-                            xy[0] = x
-                            xy[1] = y
-                            return 1
-                        else:
-                            message.message('')
-                    elif 'spirit of nature2' in player.ch.tool_tags and not player.ch.possessed and not player.ch.ride:
-                        message.creature('possess',a)
-                        answer=msvcrt.getch()
-                        if answer.lower()=='y':
-                            player.effect('force',{'Nature':{'force':0.03,'spirit of nature':0.03}})
-                            init_screen.possess(a)
-                            xy[0] = x
-                            xy[1] = y
-                            return 1
-                        else:
-                            message.message('')
-                    if not player.ch.ride:
-                        message.creature('attack',a)
-                        answer=msvcrt.getch()
-                        if answer.lower()=='y':
-                            a.mode='hostile'
-                            for each_other in player.all_creatures:
-                                if each_other.force==a.force and (a.t=='sentient' and each_other.t=='sentient') and not (a.force=='Chaos' and (player.ch.mode=='Chaos' or ('spirit of order3' in player.ch.tool_tags and random.randint(1,30)>each_other.attr['Mnd']))):
-                                    each_other.mode='hostile'
-                            combat(player.ch, a)
-                        else:
-                            message.message('')
-                    xy[0] = x
-                    xy[1] = y
-                    return 1
-        if (T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move > player.ch.energy) and not \
-           ('kraken1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~') and not \
-           ('winterwalk' in player.ch.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i") and not \
-           ('summerwalk' in player.ch.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in ",") and not \
-           (player.ch.possessed and player.ch.possessed[0].race=='fish' and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
-            message.emotion('tired')
-            if T[init_screen.land[player.ch.xy[1]-1][player.ch.xy[0]-21]].drowning:
-                player.ch.life -= 1
-                message.message('drown')
-            xy[0] = x
-            xy[1] = y
-        elif not (player.ch.possessed and player.ch.possessed[0].race=='fish' and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
-            if ('kraken1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~'):
-                message.message('kraken_move')
-            elif ('winterwalk' in player.ch.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i"):
-                message.message('fairy_%smove' %(T[init_screen.land[xy[1]-1][xy[0]-21]].name))
-            elif ('summerwalk' in player.ch.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in ","):
-                message.message('fairy_%smove' %(T[init_screen.land[xy[1]-1][xy[0]-21]].name))
-            elif ('gnome1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
-                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                if T[init_screen.land[xy[1]-1][xy[0]-21]].id != 'n':
-                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'n'+init_screen.land[xy[1]-1][xy[0]-20:]
-                    player.effect('force',{'Nature':{'force':0.01,'gnome':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
-                message.message('gnome_move')
-            elif ('spirit of nature1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'd'):
-                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'g'+init_screen.land[xy[1]-1][xy[0]-20:]
-                player.effect('force',{'Nature':{'force':0.01,'spirit of nature':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
-                message.message('nature_spirit_move')
-            elif ('fairy1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '.a'):
-                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'g'+init_screen.land[xy[1]-1][xy[0]-20:]
-                player.effect('force',{'Nature':{'force':0.01,'fairy':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
-                message.message('fairy_move')
-            elif ('dryad1' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'D'):
-                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'T'+init_screen.land[xy[1]-1][xy[0]-20:]
-                player.effect('force',{'Nature':{'force':0.01,'dryad':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
-                message.message('dryad_move')
-            elif ('goblin2' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wW'):
-                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'t'+init_screen.land[xy[1]-1][xy[0]-20:]
-                player.effect('force',{'Chaos':{'force':0.01,'goblin':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
-                message.message('goblin_move')
-            elif ('spirit of chaos2' in player.ch.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'gT'):
-                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                if T[init_screen.land[xy[1]-1][xy[0]-21]].id=='g':
-                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'d'+init_screen.land[xy[1]-1][xy[0]-20:]
-                elif T[init_screen.land[xy[1]-1][xy[0]-21]].id=='T':
-                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'D'+init_screen.land[xy[1]-1][xy[0]-20:]
-                player.effect('force',{'Chaos':{'force':0.01,'spirit of chaos':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
-                message.message('chaos_spirit_move')
-            else:
-                player.ch.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                message.message(T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
-            for item in init_screen.ground_items:
-                if item[:2] == xy:
-                    message.use('gr_item',item[2],item[2].qty,xy)
-                    break
-    elif 'door_' in T[init_screen.land[xy[1]-1][xy[0]-21]].world_name:
-        init_screen.open_door(xy, init_screen.land[xy[1]-1][xy[0]-21])
-        xy[0] = x
-        xy[1] = y
-    else:
-        if not T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through:
-            message.message(T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
-        xy[0] = x
-        xy[1] = y
-
 def creature_passage(ch, x, y):
+    ## Check if creature is in its allowed area
     if (ch.area != []):
         if (ch.xy[0] < ch.area[0]) or (ch.xy[0] > ch.area[2]) or (ch.xy[1] < ch.area[1]) or (ch.xy[1] > ch.area[3]):
             ch.xy[0] = x
             ch.xy[1] = y
             return 1
+    ## Check if creature has moved beyond the screen boundaries
     if (ch.xy[0] == 20) or (ch.xy[0] == 79) or (ch.xy[1] == 0) or (ch.xy[1] == 24):
         ch.xy[0] = x
         ch.xy[1] = y
@@ -611,37 +383,6 @@ def creature_passage(ch, x, y):
 ##            ch.xy[0] = x
 ##            ch.xy[1] = y
 ##            
-
-def move(key,ch,riding=0):
-    md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
-          '6':[1,0], '7':[-1,-1], '8':[0,-1], '9':[1,-1], '0':[0,0]}
-    x = ch.xy[0]
-    y = ch.xy[1]
-    a = 0
-##    try:
-    if (key == '0'):
-        return 1
-    if 'troll2' in player.ch.tool_tags and player.ch.turn%2 and player.ch.turn%2400<1200:
-        message.message('day_troll')
-        return 1
-    if (key == '5'):
-        message.message('')
-        message.message('wait')
-        if (ch.energy < ch.max_energy) and not (ch.hunger>79 or ch.thirst>79):
-            ch.energy += 1
-    elif player.ch.possessed and 'spirit of nature3' in player.ch.tool_tags:
-        if player.ch.equipment['Right hand'] and player.ch.possessed[0].name in player.ch.equipment['Right hand'].effect:
-            player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]\
-                                       =min([33,player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]+0.01])
-        elif player.ch.equipment['Left hand'] and player.ch.possessed[0].name in player.ch.equipment['Left hand'].effect:
-            player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]\
-                                       =min([33,player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]+0.01])
-    for a in range(2):
-        ch.xy[a] = ch.xy[a] + md[key][a]
-    check_passage(ch.xy, x, y, riding)
-    init_screen.draw_move(ch, x, y)
-##    except KeyError:
-##        message.message('movement_error')
 
 def creature_move(ch):
     md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
@@ -791,137 +532,6 @@ def creature_move(ch):
             if ch.attr['invisible']==0:
                 del(ch.attr['invisible'])
 
-def create_path(path, a, b, change,times,direction = [1,1]): ## Ne se izpolzva v momenta
-    borders = [[21,79],[1,24]]
-    new_path = path[:]
-    for i in range(1,len(path)-1):
-        if not good_place(a, path[i]):
-            if times == 0:
-                if abs(path[0][0]-path[len(path)-1][0]) > abs(path[0][1]-path[len(path)-1][1]):
-                    change = 1
-                else:
-                    change = 0
-            for step in new_path[1:len(new_path)-1]:       ## mrudvame stupkite do dobri pozicii
-                rounds = 0
-                while not good_place(a, step):
-                    step[change] += direction[change]
-                    if step[change] not in range(*borders[change]):
-                        step[change] -= direction[change]
-                        direction[change] = -1*direction[change]
-                        rounds += 1
-                    if rounds == 2:
-                        path = []
-                        return path
-            step_index = 0
-            second_path = new_path[:]
-            index_diff = 0
-            for step_index in range(len(new_path)-1):       ## svurzvame mrudnatite stupki
-                if abs(new_path[step_index][0] - new_path[step_index+1][0]) > 1 or abs(new_path[step_index][1] - new_path[step_index+1][1]) > 1:
-                    addition = direct_path(new_path[step_index], new_path[step_index+1])
-                    second_path = second_path[:step_index+index_diff+1]+addition[1:len(addition)-1][:]+new_path[step_index+1:]
-                    index_diff = len(second_path)-len(new_path)
-            last_path = second_path[:]
-            index_diff = 0
-            for step_index in range(len(second_path)-2):  ## izrqzvame izlishnite parcheta ot putq
-                connection=0
-                for step_index2 in range(step_index+2, len(second_path)):
-                    if clear_path(a,second_path[step_index],second_path[step_index2]):
-                        connection = step_index2
-                if connection > step_index:
-                    addition = direct_path(second_path[step_index], second_path[connection])
-                    if len(addition) == 1:
-                        last_path = last_path[:step_index+index_diff]+second_path[connection+1:]
-                    else:
-                        last_path = last_path[:step_index+index_diff+1]+addition[1:len(addition)-1][:]+second_path[connection:]
-                    index_diff = len(last_path)-len(second_path)
-
-    if not good_path(a, new_path):
-        if change:
-            path = create_path(new_path, a, b, 0, 1)
-        else:
-            path = create_path(new_path, a, b, 1, 1)
-    return path
-    
-##    changes = [0,0]
-##    for step in path[1:len(path)-1]:
-##        step_record = step[:]
-##        if (step != a.xy) and (step != b):
-##            no_pass = 0
-##            for creature in player.all_beings:
-##                if creature.xy == step:
-##                    no_pass = 1
-##                    break
-##            if T[init_screen.land[step[1]-1][step[0]-21]].pass_through and not no_pass:
-##                pass
-##            else:
-##                if path[path.index(step)-1][0]-path[path.index(step)+1][0]<path[path.index(step)-1][1]-path[path.index(step)+1][1]:
-##                    change = 0
-##                else:
-##                    change = 1
-##                while not T[init_screen.land[step[1]-1][step[0]-21]].pass_through or no_pass:
-##                    if changes[0] > 1:
-##                        change = 1
-##                        step = step_record[:]
-##                    elif changes[1] > 1:
-##                        change = 0
-##                        step = step_record[:]
-##                    step[change] += direction[change]
-##                    no_pass = 0
-##                    for creature in player.all_beings:
-##                        if creature.xy == step:
-##                            no_pass =1
-##                            break
-##                    if (step[0] == 79) or (step[0] == 20):
-##                        step[0] -= 1
-##                        direction[0] = -1*direction[0]
-##                        changes[0] += 1
-##                    if (step[1] == 24) or (step[1] == 0):
-##                        step[1] -= 1
-##                        direction[1] = -1*direction[1]
-##                        changes[1] += 1
-##                    if changes[0] > 0 and changes[1] > 0:
-##                        path = []
-##                        return path
-##    for step in path[:len(path)-1]:
-##        if (abs(step[0] - path[path.index(step)+1][0]) > 1) or (abs(step[1] - path[path.index(step)+1][1]) > 1):
-##            addition = direct_path(step,path[path.index(step)+1])
-##            path = path[:path.index(step)+1]+addition[1:len(addition)-1][:]+path[path.index(step)+1:]
-##    for step in path[:len(path)-1]:
-##        connection=0
-##        step_index = path.index(step)+1
-##        for i in range(step_index, len(path)):
-##            if clear_path(a,step,path[i]):
-##                connection = i
-##        if connection > step_index:
-##            addition = direct_path(step, path[connection])
-##            if len(addition) == 1:
-##                path = path[:step_index]+path[connection+1:]
-##            else:
-##                path = path[:path.index(step)+1]+addition[1:len(addition)-1][:]+path[connection:]
-##            break
-##    again = 0
-##    for step in path[1:len(path)-1]:
-##        no_pass = 0
-##        for creature in player.all_beings:
-##            if creature.xy == step and creature.game_id != a.game_id:
-##                no_pass = 1
-##                break
-##        if (not T[init_screen.land[step[1]-1][step[0]-21]].pass_through or no_pass):
-##            again = 1
-##            times += 1
-##            break
-##    if change:
-##        change = 0
-##    else:
-##        change = 1
-##    if times > 10:
-##        times = 0
-##        direction[0] = -1*direction[0]
-##        direction[1] = -1*direction[1]
-##    if again:
-##        path = create_path(path,a,b,change,times,direction)
-##    return path    
-
 def clear_path(thing,a,b):
     xy = a[:]
     no_pass = 0
@@ -1000,47 +610,6 @@ def direct_path(a,b):
         path.append(point[:])
     return path
     
-##    path = [a[:]]
-##    xy = a[:]
-##    d_x = abs(a[0]-b[0])
-##    d_y = abs(a[1]-b[1])
-##    if d_y:
-##        div_x = float(d_x)/d_y
-##    else:
-##        div_x = d_x
-##    if d_x:
-##        div_y = float(d_y)/d_x
-##    else:
-##        div_y = d_y
-##    to_do = [0,0]
-##    added = [0,0]
-##    while xy != b:
-##        if to_do[0] < 1:
-##            to_do[0]+=div_x
-##        if to_do[1] < 1:
-##            to_do[1]+=div_y
-##        for z in range(int(max(to_do))):
-####        while to_do[0] >= 1 or to_do[1] >= 1:
-##            if to_do[0] >= 1:
-##                xy[0] += cmp(b[0],xy[0])
-##                to_do[0] -= 1
-##                added[0] += 1
-##            if to_do[1] >= 1:
-##                xy[1] += cmp(b[1],xy[1])
-##                to_do[1] -= 1
-##                added[1] += 1
-##            path.append(xy[:])
-##            if not added[0]:
-##                to_do[0]+=div_x
-##            if not added[1]:
-##                to_do[1]+=div_y
-##            added = [0,0]
-##            if [abs(xy[p]-b[p]) for p in [0,1]] == [1,1]:
-##                path.append(b[:])
-##                xy = b
-##                break
-##    return path
-
 def highlight_path(way):
     if way != []:
         for step in way[1:]:
@@ -1050,5 +619,3 @@ def highlight_path(way):
                 init_screen.c.scroll((x, y, x+1, y+1), 1, 1, 14,'*')
             else:
                 init_screen.c.scroll((x, y, x+1, y+1), 1, 1, 4,'*')
-##    check = msvcrt.getch()
-##    init_screen.redraw_screen()

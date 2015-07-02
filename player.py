@@ -7,6 +7,7 @@ from inventory import put_item
 from inventory import stone
 from inventory import wood_arrow
 from inventory import wood_bolt
+from movement import combat
 
 race_attrs={'elf':              {'Str':15,'End':16,'Dex':20,'Int':17,'Cre':5, 'Mnd':15},
             'gnome':            {'Str':12,'End':14,'Dex':14,'Int':20,'Cre':14,'Mnd':15},
@@ -101,6 +102,223 @@ class Player:
         self.possessed=[]
         self.marked_stone=[]
 
+    def move(self,key):
+        md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
+              '6':[1,0], '7':[-1,-1], '8':[0,-1], '9':[1,-1], '0':[0,0]}
+        x = self.xy[0]
+        y = self.xy[1]
+        a = 0
+    ##    try:
+        if (key == '0'):
+            return 1
+        if 'troll2' in self.tool_tags and self.turn%2 and self.turn%2400<1200:
+            message.message('day_troll')
+            return 1
+        if (key == '5'):
+            message.message('')
+            message.message('wait')
+            if (self.energy < self.max_energy) and not (self.hunger>79 or self.thirst>79):
+                self.energy += 1
+        elif self.possessed and 'spirit of nature3' in self.tool_tags:
+            if self.equipment['Right hand'] and self.possessed[0].name in self.equipment['Right hand'].effect:
+                self.equipment['Right hand'].effect[self.possessed[0].name]\
+                                           =min([33,self.equipment['Right hand'].effect[self.possessed[0].name]+0.01])
+            elif self.equipment['Left hand'] and self.possessed[0].name in self.equipment['Left hand'].effect:
+                self.equipment['Left hand'].effect[self.possessed[0].name]\
+                                           =min([33,self.equipment['Left hand'].effect[self.possessed[0].name]+0.01])
+        for a in range(2):
+            self.xy[a] = self.xy[a] + md[key][a]
+        self.check_passage(self.xy, x, y)
+        init_screen.draw_move(self, x, y)
+    ##    except KeyError:
+    ##        message.message('movement_error')
+
+    def check_passage(self,xy, x, y):
+        if (xy[0] == 20) or (xy[0] == 79) or (xy[1] == 0) or (xy[1] == 24):
+            if (xy[0] == 20):
+                direction = 2
+            elif (xy[0] == 79):
+                direction = 3
+            elif (xy[1] == 0):
+                direction = 0
+            elif (xy[1] == 24):
+                direction = 1
+            if not int(init_screen.directions[direction]) and init_screen.current_area != 'world':
+                message.message('leave_world')
+                xy[0] = x
+                xy[1] = y
+                return 1
+    ##       ##World movement disabled!
+    ##            else:
+    ##                init_screen.current_area, entered = init_screen.world(init_screen.current_area)
+    ##                init_screen.redraw_screen()
+            elif not int(init_screen.directions[direction]) and init_screen.current_area == 'world':
+                xy[0] = x
+                xy[1] = y
+                message.message('nowhere_togo')
+            else:
+                xy[0] = x
+                xy[1] = y
+                travel = init_screen.change_place('area%s' %(init_screen.directions[direction]),direction)
+            return 1
+        elif (T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or \
+             ('spirit of order1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
+             ('spirit of chaos1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
+             ('gnome1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%') or \
+             'waterform' in self.effects) and \
+             not (self.possessed and T[init_screen.land[xy[1]-1][xy[0]-21]].id in self.possessed[0].terr_restr):
+            if 'waterform' in self.effects:
+                return 0
+            for a in all_creatures:
+                if (a.xy == xy) and (a not in hidden):
+                    if a.mode in ['hostile','standing_hostile']:
+                        if not self.ride:
+                            movement.combat(self, a)
+                        else:
+                            message.message('no_riding_fighting')
+                        xy[0] = x
+                        xy[1] = y
+                        return 1
+                    else:
+                        if a.t=='sentient' and not self.possessed:
+                            message.creature('talk',a)
+                            answer=msvcrt.getch()
+                            if answer.lower()=='y':
+                                xy[0] = x
+                                xy[1] = y
+                                init_screen.talk(a)
+                                return 1
+                            else:
+                                message.message('')
+                                if 'goblin1' in self.tool_tags:
+                                    message.creature('steal',a)
+                                    answer=msvcrt.getch()
+                                    if answer.lower()=='y':
+                                        effect('force',{'Chaos':{'force':0.02,'goblin':0.02},'Nature':{'all':-.01},'Order':{'all':-.01}})
+                                        xy[0] = x
+                                        xy[1] = y
+                                        init_screen.pickpocket(a)
+                                        return 1
+                                    else:
+                                        message.message('')
+                        elif 'tame' in a.attr and 'tame' not in a.name and 'human2' in self.tool_tags\
+                              and not self.possessed:
+                            message.creature('tame',a)
+                            answer=msvcrt.getch()
+                            if answer.lower()=='y':
+                                effect('force',{'Order':{'force':0.02,'human':0.02}})
+                                init_screen.tame(a)
+                                xy[0] = x
+                                xy[1] = y
+                                return 1
+                            else:
+                                message.message('')
+                        elif a in self.followers and 'human2' in self.tool_tags\
+                              and not self.possessed:
+                            message.creature('tamed_use',a)
+                            answer=msvcrt.getch()
+                            if answer.lower()=='y':
+                                effect('force',{'Order':{'force':0.01,'human':0.01}})
+                                init_screen.command_tamed(a)
+                                xy[0] = x
+                                xy[1] = y
+                                return 1
+                            else:
+                                message.message('')
+                        elif 'spirit of nature2' in self.tool_tags and not self.possessed and not self.ride:
+                            message.creature('possess',a)
+                            answer=msvcrt.getch()
+                            if answer.lower()=='y':
+                                effect('force',{'Nature':{'force':0.03,'spirit of nature':0.03}})
+                                init_screen.possess(a)
+                                xy[0] = x
+                                xy[1] = y
+                                return 1
+                            else:
+                                message.message('')
+                        if not self.ride:
+                            message.creature('attack',a)
+                            answer=msvcrt.getch()
+                            if answer.lower()=='y':
+                                a.mode='hostile'
+                                for each_other in all_creatures:
+                                    if each_other.force==a.force and (a.t=='sentient' and each_other.t=='sentient') and not (a.force=='Chaos' and (self.mode=='Chaos' or ('spirit of order3' in self.tool_tags and random.randint(1,30)>each_other.attr['Mnd']))):
+                                        each_other.mode='hostile'
+                                movement.combat(self, a)
+                            else:
+                                message.message('')
+                        xy[0] = x
+                        xy[1] = y
+                        return 1
+            if (T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move > self.energy) and not \
+               ('kraken1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~') and not \
+               ('winterwalk' in self.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i") and not \
+               ('summerwalk' in self.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in ",") and not \
+               (self.possessed and self.possessed[0].race=='fish' and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
+                message.emotion('tired')
+                if T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].drowning:
+                    self.life -= 1
+                    message.message('drown')
+                xy[0] = x
+                xy[1] = y
+            elif not (self.possessed and self.possessed[0].race=='fish' and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
+                if ('kraken1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~'):
+                    message.message('kraken_move')
+                elif ('winterwalk' in self.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i"):
+                    message.message('fairy_%smove' %(T[init_screen.land[xy[1]-1][xy[0]-21]].name))
+                elif ('summerwalk' in self.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in ","):
+                    message.message('fairy_%smove' %(T[init_screen.land[xy[1]-1][xy[0]-21]].name))
+                elif ('gnome1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
+                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                    if T[init_screen.land[xy[1]-1][xy[0]-21]].id != 'n':
+                        init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'n'+init_screen.land[xy[1]-1][xy[0]-20:]
+                        effect('force',{'Nature':{'force':0.01,'gnome':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
+                    message.message('gnome_move')
+                elif ('spirit of nature1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'd'):
+                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'g'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    effect('force',{'Nature':{'force':0.01,'spirit of nature':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
+                    message.message('nature_spirit_move')
+                elif ('fairy1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '.a'):
+                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'g'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    effect('force',{'Nature':{'force':0.01,'fairy':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
+                    message.message('fairy_move')
+                elif ('dryad1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'D'):
+                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'T'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    effect('force',{'Nature':{'force':0.01,'dryad':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
+                    message.message('dryad_move')
+                elif ('goblin2' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wW'):
+                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'t'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    effect('force',{'Chaos':{'force':0.01,'goblin':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
+                    message.message('goblin_move')
+                elif ('spirit of chaos2' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'gT'):
+                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                    if T[init_screen.land[xy[1]-1][xy[0]-21]].id=='g':
+                        init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'d'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    elif T[init_screen.land[xy[1]-1][xy[0]-21]].id=='T':
+                        init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'D'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    effect('force',{'Chaos':{'force':0.01,'spirit of chaos':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
+                    message.message('chaos_spirit_move')
+                else:
+                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
+                    message.message(T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
+                for item in init_screen.ground_items:
+                    if item[:2] == xy:
+                        message.use('gr_item',item[2],item[2].qty,xy)
+                        break
+        elif 'door_' in T[init_screen.land[xy[1]-1][xy[0]-21]].world_name:
+            init_screen.open_door(xy, init_screen.land[xy[1]-1][xy[0]-21])
+            xy[0] = x
+            xy[1] = y
+        else:
+            if not T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through:
+                message.message(T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
+            xy[0] = x
+            xy[1] = y
+
     def pick_up(self,ground):
         it = 0
         pile = []
@@ -114,8 +332,8 @@ class Player:
             for i in range(len(pile)):
                 print ' '+chr(i+97)+')  ', pile[i][2].name+', %d x %s stones' %(pile[i][2].qty,str(pile[i][2].weight))
                 init_screen.c.text(4,i+3,pile[i][2].tag,pile[i][2].color)
-            print '\n You can carry %s more stones.\n Your backpack can take %s more stones.' %(str(ch.max_weight - ch.weight),
-                                                                                                str(ch.backpack))
+            print '\n You can carry %s more stones.\n Your backpack can take %s more stones.' %(str(self.max_weight - self.weight),
+                                                                                                str(self.backpack))
             i1 = ' '
             while 1:
                 if msvcrt.kbhit():
@@ -233,52 +451,52 @@ class Player:
                 if self.equipment[self.equip_tags[item]].effect['invisibility']<=0:
                     self.equipment[self.equip_tags[item]].name+=' (depleted)'
                     self.equipment[self.equip_tags[item]].effect.pop('invisibility')
-                if 'invisible' in ch.effects:
+                if 'invisible' in self.effects:
                     del(self.effects['invisible'])
             if 'winterwalk' in self.equipment[self.equip_tags[item]].effect:
                 self.equipment[self.equip_tags[item]].effect['winterwalk']-=1
                 if self.equipment[self.equip_tags[item]].effect['winterwalk']<=0:
                     self.equipment[self.equip_tags[item]].name+=' (depleted)'
                     self.equipment[self.equip_tags[item]].effect.pop('winterwalk')
-                if 'winterwalk' in ch.effects:
+                if 'winterwalk' in self.effects:
                     del(self.effects['winterwalk'])
             if 'summerwalk' in self.equipment[self.equip_tags[item]].effect:
                 self.equipment[self.equip_tags[item]].effect['summerwalk']-=1
                 if self.equipment[self.equip_tags[item]].effect['summerwalk']<=0:
                     self.equipment[self.equip_tags[item]].name+=' (depleted)'
                     self.equipment[self.equip_tags[item]].effect.pop('summerwalk')
-                if 'summerwalk' in ch.effects:
+                if 'summerwalk' in self.effects:
                     del(self.effects['summerwalk'])
             if 'fairyland' in self.equipment[self.equip_tags[item]].effect:
                 self.equipment[self.equip_tags[item]].effect['fairyland']-=1
                 if self.equipment[self.equip_tags[item]].effect['fairyland']<=0:
                     self.equipment[self.equip_tags[item]].name+=' (withered)'
                     self.equipment[self.equip_tags[item]].effect.pop('fairyland')
-                if 'fairyland' in ch.effects:
+                if 'fairyland' in self.effects:
                     del(self.effects['fairyland'])
             if 'midnight fears' in self.equipment[self.equip_tags[item]].effect:
                 self.equipment[self.equip_tags[item]].effect['midnight fears']-=1
                 if self.equipment[self.equip_tags[item]].effect['midnight fears']<=0:
                     self.equipment[self.equip_tags[item]].name+=' (withered)'
                     self.equipment[self.equip_tags[item]].effect.pop('midnight fears')
-                if 'midnight fears' in ch.effects:
+                if 'midnight fears' in self.effects:
                     del(self.effects['midnight fears'])
             if 'sun armour' in self.equipment[self.equip_tags[item]].effect:
                 self.equipment[self.equip_tags[item]].effect['sun armour']-=1
                 if self.equipment[self.equip_tags[item]].effect['sun armour']<=0:
                     self.equipment[self.equip_tags[item]].name+=' (withered)'
                     self.equipment[self.equip_tags[item]].effect.pop('sun armour')
-                if 'sun armour' in ch.effects:
+                if 'sun armour' in self.effects:
                     del(self.effects['sun armour'])
                     if self.sun_armour:
-                        self.armour-=ch.sun_armour
+                        self.armour-=self.sun_armour
                         self.sun_armour=0
         if 'totem' in self.equipment[self.equip_tags[item]].type:
             for cr in game_creatures:
                 if cr.name==self.equipment[self.equip_tags[item]].name[:-6]:
                     break
             temps=[]
-            for ats in ch.attr:
+            for ats in self.attr:
                 the_at=int(cr.attr[ats]*self.equipment[self.equip_tags[item]].effect[cr.name]/100.)
                 if the_at:
                     temps.append([ats,the_at])
@@ -358,27 +576,27 @@ class Player:
             for v in item.effect['temp_attr']:
                 used = effect('temp_attr',v)
         if 'invisibility' in item.effect and self.equip_tags[slot] in item.type:
-            ch.effects['invisible']=10
+            self.effects['invisible']=10
         if 'winterwalk' in item.effect and self.equip_tags[slot] in item.type:
-            ch.effects['winterwalk']=1
+            self.effects['winterwalk']=1
         if 'summerwalk' in item.effect and self.equip_tags[slot] in item.type:
-            ch.effects['summerwalk']=1
+            self.effects['summerwalk']=1
         if 'fairyland' in item.effect and self.equip_tags[slot] in item.type:
-            ch.effects['fairyland']=1
+            self.effects['fairyland']=1
         if 'midnight fears' in item.effect and self.equip_tags[slot] in item.type:
-            if ch.turn%2400<1200:
+            if self.turn%2400<1200:
                 item.effect['midnight fears']=0
             else:
-                ch.effects['midnight fears']=1200-ch.turn%1200
+                self.effects['midnight fears']=1200-ch.turn%1200
             if item.effect['midnight fears']==0:
                 item.name+=' (withered)'
                 item.effect.pop('midnight fears')
         if 'sun armour' in item.effect and self.equip_tags[slot] in item.type:
-            if ch.turn%2400>=1200:
+            if self.turn%2400>=1200:
                 item.effect['sun armour']=0
             else:
-                ch.effects['sun armour']=1200-ch.turn%2400
-                ch.sun_armour=0
+                self.effects['sun armour']=1200-ch.turn%2400
+                self.sun_armour=0
             if item.effect['sun armour']==0:
                 item.name+=' (withered)'
                 item.effect.pop('sun armour')
@@ -436,7 +654,51 @@ class Player:
             if i1 in items:
                 self.equip(self.inventory[ord(i1)-97],slot)
             return 0
-            
+
+    def force_attack(self,defender):
+        ## Force effects based on mode and enemy
+        if self.mode=='Nature':
+            if defender.force=='Nature':
+                if self.hunger>60 and defender.t=='animal':
+                    effect('force',{'Nature':{'force':0.01,'elf':0.01},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
+                else:
+                    effect('force',{'Nature':{'all':-0.02},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+            elif defender.force=='Order':
+                if init_screen.current_place['Chaos']>=init_screen.current_place['Nature']:
+                    effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
+                else:
+                    effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+            elif defender.force=='Chaos':
+                effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'force':0.01}})
+        elif self.mode=='Chaos':
+            if defender.force=='Nature':
+                effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+            elif defender.force=='Order':
+                effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+            elif defender.force=='Chaos':
+                effect('force',{'Chaos':{'ork':0.01}})
+        elif self.mode=='Order':
+            if defender.force=='Nature':
+                if defender.t=='animal':
+                    effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
+                else:
+                    if init_screen.current_place['Chaos']>=init_screen.current_place['Order']:
+                        effect('force',{'Nature':{'all':-0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
+                    else:
+                        effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+            elif defender.force=='Order':
+                if defender.t=='animal':
+                    effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
+                else:
+                    effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.1},'Order':{'all':-0.02}})
+            elif defender.force=='Chaos':
+                if defender.t=='animal':
+                    effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
+                else:
+                    effect('force',{'Nature':{'force':0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
+
+
+    
 class Human:
     def __init__(self,xy,area,path,terr_restr,emotion,fear,tag,name,mode,id,attr,WD,armour,f,r,game_id=0):
         self.xy = xy[:]
@@ -1252,7 +1514,7 @@ def game_time(i = '0'):
             if ch.work < 0:
                 ch.work = 0
         else:
-            movement.move(i,ch)
+            ch.move(i)
             if 'human3' in ch.tool_tags and ch.research_race!='human':
                 if init_screen.current_place[ch.research_force]==max([init_screen.current_place['Chaos'],init_screen.current_place['Order'],init_screen.current_place['Nature'],]) and init_screen.current_place[ch.research_force]>=ch.research_forces[ch.research_force]:
                     effect('research',{ch.research_force:{'force':0.01}})

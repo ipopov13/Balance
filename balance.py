@@ -6,7 +6,6 @@ import os
 import pickle
 import message
 from movement import shoot
-from movement import move
 from glob import glob
 
 def save():
@@ -76,7 +75,7 @@ while i:
         i = msvcrt.getch()
         if player.ch.ride and player.ch.ride[0].food>24 and i in ['1','2','3','4','5','6','7','8','9']:
             if riding:
-                move(i,player.ch,riding)
+                player.ch.move(i)
                 player.ch.ride[0].food-=1
                 riding=0
                 continue
@@ -334,5 +333,5 @@ if '%s' %(player.ch.name) not in local_files:
     for f in all_files:
         os.system('del %s' %(f))
     os.system('rd %s_dir' %(player.ch.name))
-raw_input("If you got an error, please send it to the creator!\nOtherwise press ENTER to exit (no pun intended).")
+raw_input("\nIf you got an error, please send it to the creator!\nOtherwise press ENTER to exit (no pun intended).")
 os._exit(0)
