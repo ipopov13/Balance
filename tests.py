@@ -19,10 +19,14 @@
 ##x = X("x")
 ##y = X("y")
 
-with open('load.py','r') as infile:
-    i=1
-    for l in infile:
-        l=l.replace('terrain.T','')
-        if 'terrain.' in l:
-            print i
-        i+=1
+import glob
+
+files=glob.glob('*.py')
+for f in files:
+    with open(f,'r') as infile:
+        i=1
+        for l in infile:
+            if 'import movement' in l or 'from movement' in l:
+                print f,i
+                break
+            i+=1

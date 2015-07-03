@@ -86,6 +86,7 @@ class Player:
         self.weapon_skill = float(self.attr['Dex'])
         self.armour = 0
         self.armour_weight = 0
+        self.armour_mod=1
         self.emotion = 7
         self.weight = 0
         self.thirst = 0
@@ -442,6 +443,10 @@ class Player:
         if 'armour' in self.equipment[self.equip_tags[item]].type and self.equip_tags[item] in self.equipment[self.equip_tags[item]].type:
             self.armour -= self.equipment[self.equip_tags[item]].armour
             self.armour_weight -= self.equipment[self.equip_tags[item]].weight
+            if self.armour_weight:
+                self.armour_mod = min([float(self.max_weight)/self.armour_weight, 2]) - 1
+            else:
+                self.armour_mod=1
         if self.equip_tags[item] in self.equipment[self.equip_tags[item]].type:
             if 'temp_attr' in self.equipment[self.equip_tags[item]].effect:
                 for v in self.equipment[self.equip_tags[item]].effect['temp_attr']:
@@ -572,6 +577,7 @@ class Player:
         elif 'armour' in item.type and self.equip_tags[slot] in item.type:
             self.armour += item.armour
             self.armour_weight += item.weight
+            self.armour_mod = min([float(self.max_weight)/self.armour_weight, 2]) - 1
         if 'temp_attr' in item.effect and self.equip_tags[slot] in item.type:
             for v in item.effect['temp_attr']:
                 used = effect('temp_attr',v)
@@ -697,9 +703,195 @@ class Player:
                 else:
                     effect('force',{'Nature':{'force':0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
 
+class NPC(object):
+    def creature_move(self):
+        md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
+              '6':[1,0], '7':[-1,-1], '8':[0,-1], '9':[1,-1], '0':[0,0]}
+        place_keys={'1':['1','2','4','3','7','8','6','9'],
+                    '2':['2','1','3','4','6','7','9','8'],
+                    '3':['3','2','6','1','9','4','8','7'],
+                    '6':['6','3','9','2','8','1','7','4'],
+                    '9':['9','6','8','3','7','2','4','1'],
+                    '8':['8','9','7','6','4','3','1','2'],
+                    '7':['7','8','4','9','1','6','2','3'],
+                    '4':['4','7','1','8','2','9','3','6'],
+                    '5':['1','2','3','4','6','7','8','9'],
+                    '0':['0']}
+        x = self.xy[0]
+        y = self.xy[1]
+        a = 0
+        key = '0'
+        mode = self.mode
+        creature_sight=init_screen.direct_path(self.xy, ch.xy)
+        creature_los = init_screen.clear_los(creature_sight)
+        player_los = init_screen.clear_los(init_screen.direct_path(ch.xy,self.xy))
+        if self.t=='sentient':
+            if float(self.fear)/(self.fear+(self.attr['Int']+self.attr['Mnd'])*10)>random.random():
+                mode='fearfull'
+        if self.race=='troll' and init_screen.current_place['Chaos']>=60 and ch.turn%2 and ch.turn%2400<1200:
+            self.path=[]
+            mode='wander'
+        if mode in ['follow','hostile','fearfull_hide','fearfull'] and ('invisible' in ch.effects or not creature_los):
+            mode = 'wander'
+        if mode in ['hostile','standing_hostile','fearfull_hide','fearfull'] and 'stealthy' in ch.tool_tags and creature_los:
+            hide_chance=ch.attr['Dex']*3+ch.attr['Int']-self.attr['Int']+len(creature_sight)
+            if random.randint(1,100)<hide_chance:
+                if mode=='standing_hostile':
+                    mode='standing'
+                else:
+                    mode='wander'
+        if 'ork1' in ch.tool_tags and self.mode=='hostile' and creature_los:
+            if ('human3' in ch.tool_tags and random.random()<ch.research_races['Chaos']['ork']/(2*(max([init_screen.current_place['Order'],init_screen.current_place['Nature']])+ch.research_races['Chaos']['ork']))) or (random.random()<ch.races['Chaos']['ork']/(2*(max([init_screen.current_place['Order'],init_screen.current_place['Nature']])+ch.races['Chaos']['ork']))):
+                    mode='fearfull'
+        ## wander, follow, hostile, fearfull_hide, standing_hostile, standing, guarding, fearfull
+        if mode == 'guarding':
+            fighting=0
+            if 'target' in self.attr and self.attr['target']!=[] and self.attr['target'] in all_creatures:
+                if len(init_screen.direct_path(self.attr['target'].xy,ch.xy))<5:
+                    fighting=1
+                    self.path=init_screen.direct_path(self.xy,self.attr['target'].xy)
+                else:
+                    ch.attr['target']=[]
+            if not fighting:
+                for enemy in all_creatures:
+                    if enemy.mode=='hostile' and len(init_screen.direct_path(enemy.xy,ch.xy))<3 and init_screen.clear_los(init_screen.direct_path(self.xy,enemy.xy)):
+                        fighting=1
+                        self.attr['target']=enemy
+                        self.path=init_screen.direct_path(self.xy,ch.attr['target'].xy)
+            if not fighting:
+                mode='follow'
+        if mode == 'wander':
+            if self.path:
+                try:
+                    if init_screen.good_place(self,self.path[1]):
+                        self.xy = self.path[1]
+                        self.path = self.path[1:]
+                    else:
+                        self.path=[]
+                except IndexError:
+                    self.path=[]
+                key = '5'
+            else:
+                if self.race=='troll' and init_screen.current_place['Chaos']>=60 and ch.turn%2 and ch.turn%2400<1200: 
+                    key='5'
+                else:
+                    key = str(random.randint(1,9))
+        if mode == 'follow' or mode == 'hostile' or mode=='standing_hostile' or mode=='guarding':
+            if mode != 'guarding':
+                self.path = init_screen.direct_path(self.xy, ch.xy)
+            shot=0
+            if mode=='hostile' and 'shoot' in self.attr:
+                if random.randint(1,40)<self.attr['Dex'] and len(self.path)>2:
+                    shoot(self)
+                    key='5'
+                    shot=1
+            if not shot:
+                try:
+                    if init_screen.good_place(self,self.path[1]):
+                        self.xy = self.path[1]
+                        self.path = self.path[1:]
+                        key = '5'
+                    else:
+                        direction=[self.path[1][0]-self.xy[0],self.path[1][1]-self.xy[1]]
+                        the_key='5'
+                        for mdx in md:
+                            if md[mdx]==direction:
+                                the_key=mdx
+                                break
+                        found_good=0
+                        breaker=0
+                        while not found_good:
+                            breaker+=1
+                            if breaker==10:
+                                key='5'
+                                break
+                            key = place_keys[mdx][(place_keys[mdx].index(the_key)+1)%len(place_keys[mdx])]
+                            if init_screen.good_place(self,[self.xy[a]+md[key][a] for a in range(2)]):
+                                found_good=1
+                            else:
+                                the_key=key
+                except IndexError:
+                    key = str(random.randint(1,9))
+        if mode == 'fearfull':
+            self.xy[0] -= cmp(ch.xy[0],x)
+            self.xy[1] -= cmp(ch.xy[1],y)
+            key='0'
+        if mode == 'fearfull_hide':
+            if (abs(ch.xy[0]-x) + abs(ch.xy[1]-y)) < 7:
+                self.xy[0] += cmp(self.area[4],x)
+                self.xy[1] += cmp(self.area[5],y)
+                if ((cmp(self.area[4],x) == 0) and (cmp(self.area[5],y) == 0)) and (self not in hidden):
+                    hidden.append(self)
+                key = '0'
+            else:
+                key = str(random.randint(1,9))
+            if (self in hidden) and ([x,y] != self.area[4:]):
+                hidden.remove(self)
+        if mode == 'standing':
+            key='5'
+        for a in range(2):            
+            self.xy[a] = self.xy[a] + md[key][a]
+        self.creature_passage(x, y)
+        if self in hidden:
+            if ch.xy != self.xy:
+                init_screen.hide(self)
+        else:
+            if player_los or (init_screen.current_place['Nature']>=33 and init_screen.current_place['Temperature']>=33 and 'elf2' in ch.tool_tags):
+                init_screen.draw_move(self, x, y)
+            if self.race=='water elemental' and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in 'wWt':
+                self.attr['invisible']=2
+            if 'invisible' in self.attr:
+                init_screen.hide(self)
+                self.attr['invisible']-=1
+                if self.attr['invisible']==0:
+                    del(self.attr['invisible'])
+
+    def creature_passage(self, x, y):
+        ## Check if creature is in its allowed area
+        if (self.area != []):
+            if (self.xy[0] < self.area[0]) or (self.xy[0] > self.area[2]) or (self.xy[1] < self.area[1]) or (self.xy[1] > self.area[3]):
+                self.xy[0] = x
+                self.xy[1] = y
+                return 1
+        ## Check if creature has moved beyond the screen boundaries
+        if (self.xy[0] == 20) or (self.xy[0] == 79) or (self.xy[1] == 0) or (self.xy[1] == 24):
+            self.xy[0] = x
+            self.xy[1] = y
+            return 1
+        elif T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in self.terr_restr and not self.mode=='standing_hostile':
+            self.xy[0] = x
+            self.xy[1] = y
+            return 1
+        elif T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].pass_through or (self.race=='spirit of order' and init_screen.current_place['Order']>30 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in '#o+`sS') or (self.race=='spirit of chaos' and init_screen.current_place['Chaos']>30 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in '#o+`sS') or (self.race=='gnome' and init_screen.current_place['Nature']>30 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in 'nmA%'):
+            for a in all_beings:
+                if a.xy == self.xy and a.game_id != self.game_id:
+                    self.xy[0] = x
+                    self.xy[1] = y
+                    if (self.mode=='guarding' and a.mode=='hostile') or (a.mode=='guarding' and self.mode=='hostile') or (a.xy == ch.xy and self.mode in ['hostile','standing_hostile'] and 'waterform' not in ch.effects):
+                        movement.combat(self,a)
+                    return 1
+            if T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].tire_move>self.energy:
+                if T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].drowning and self.race!='fish':
+                    self.life -= 1
+                self.xy[0] = x
+                self.xy[1] = y
+            elif not (self.race=='kraken' and init_screen.current_place['Chaos']>30 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in 'wWt~')\
+                 and not (self.race=='fairy' and init_screen.current_place['Nature']>60 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in "'i,")\
+                 and not (self.race=='fish' and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in "Wwt~"):
+                self.energy-=T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].tire_move
+            if self.mode=='standing_hostile':
+                self.xy[0] = x
+                self.xy[1] = y
+        elif 'door_' in T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].world_name:
+            init_screen.creature_open_door(self.xy, init_screen.land[self.xy[1]-1][self.xy[0]-21])
+            self.xy[0] = x
+            self.xy[1] = y
+        else:
+              self.xy[0] = x
+              self.xy[1] = y
 
     
-class Human:
+class Human(NPC):
     def __init__(self,xy,area,path,terr_restr,emotion,fear,tag,name,mode,id,attr,WD,armour,f,r,game_id=0):
         self.xy = xy[:]
         self.area = area[:]
@@ -715,6 +907,7 @@ class Human:
         self.attr = attr.copy()
         self.weapon_dmg = WD
         self.armour = int(armour)
+        self.armour_mod=1
         self.weapon_skill = ((self.armour/3+max([1,WD])*40)/2)/20.0*self.attr['Dex']
         self.game_id = game_id
         self.force = f
@@ -777,7 +970,7 @@ class Human:
             duplica.appearance=0
         return duplica
 
-class Animal:
+class Animal(NPC):
     def __init__(self,xy,area,path,terr_restr,emotion,tag,name,mode,id,life,attr,WS,armour,f,r,game_id=0):
         self.xy = xy[:]
         self.area = area[:]
@@ -794,6 +987,7 @@ class Animal:
         self.weapon_dmg = 0
         self.weapon_skill = WS
         self.armour = armour
+        self.armour_mod=1
         self.game_id = game_id
         self.force = f
         self.race = r
@@ -807,6 +1001,8 @@ class Animal:
         duplica = Animal(xy,self.area,self.path,self.terr_restr,self.emotion,self.tag,self.name,
                          self.mode,self.id,self.life,self.attr,self.weapon_skill,self.armour,f,r,game_id=g_id)
         duplica.learning=0
+        if self.mode in ['hostile','fearfull_hide','fearfull'] and 'elf1' in ch.tool_tags and self.t=='animal':
+            duplica.mode = 'wander'
         if rand:
             duplica.random = True
             duplica.appearance=ch.turn
@@ -1468,7 +1664,7 @@ def effect(k,v,xy=[],ot=''):
             elif 'sapphire' in v[1]:
                 for x in all_creatures:
                     if x.mode=='hostile':
-                        if movement.clear_los(movement.direct_path(ch.xy,x.xy)):
+                        if init_screen.clear_los(init_screen.direct_path(ch.xy,x.xy)):
                             x.life-=max([(ch.races['Nature']['gnome']-60)/4,1])
                             message.creature('sapphired',x)
             elif 'ruby' in v[1]:
@@ -1480,7 +1676,7 @@ def effect(k,v,xy=[],ot=''):
                         found_fire=1
                         for x in all_creatures:
                             if x.mode=='hostile':
-                                if movement.clear_los(movement.direct_path(ch.xy,x.xy)):
+                                if init_screen.clear_los(init_screen.direct_path(ch.xy,x.xy)):
                                     x.life-=max([(ch.races['Nature']['gnome']-60)/2,1])
                                     message.creature('rubied',x)
                         break
@@ -1537,8 +1733,8 @@ def game_time(i = '0'):
             if x.mode != 'not_appeared':
                 if x in ch.ride or x in ch.possessed or (x in ch.followers and x.xy==ch.xy):
                     continue
-                movement.creature_move(x)
-            if movement.clear_los(movement.direct_path(ch.xy,x.xy)):
+                x.creature_move()
+            if init_screen.clear_los(init_screen.direct_path(ch.xy,x.xy)):
                 if x.mode=='hostile':
                     hostile_in_sight=2
                 if 'human3' in ch.tool_tags and ch.research_race!='human':

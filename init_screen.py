@@ -7,9 +7,6 @@ import message
 import inventory
 import random
 import load
-from movement import clear_los
-from movement import direct_path
-from movement import highlight_path
 from os import curdir
 from os import mkdir
 
@@ -2425,3 +2422,55 @@ def world(current_area):
         if entered == -1:
             entered = 0
     return current_area, entered
+
+def direct_path(a,b):
+    path=[a[:]]
+    dif=[abs(a[0]-b[0]),abs(a[1]-b[1])]
+    dirxy=[0,0]
+    if abs(a[0]-b[0]):
+        dirxy[0]=(b[0]-a[0])/abs(a[0]-b[0])
+    if abs(a[1]-b[1]):
+        dirxy[1]=(b[1]-a[1])/abs(a[1]-b[1])
+    longer=dif.index(max(dif))
+    shorter=[0,1]
+    shorter.remove(longer)
+    shorter=shorter[0]
+    if dif[longer]:
+        floater=float(dif[shorter])/dif[longer]
+    else:
+        return [a[:],b[:]]
+    for x in range(dif[longer]):
+        point=a[:]
+        point[longer]+=(x+1)*dirxy[longer]
+        point[shorter]+=int(round((x+1)*floater))*dirxy[shorter]
+        path.append(point[:])
+    return path
+
+def clear_los(path):
+    if len(path)>2:
+        for xy in path[1:-1]:
+            if not T[land[xy[1]-1][xy[0]-21]].clear_los:
+                return 0
+    if not T[land[path[-1][1]-1][path[-1][0]-21]].pass_through:
+        return 0
+    return 1
+    
+def highlight_path(way):
+    if way != []:
+        for step in way[1:]:
+            x = step[0]
+            y = step[1]
+            if way.index(step)<=player.ch.attr['Dex']:
+                c.scroll((x, y, x+1, y+1), 1, 1, 14,'*')
+            else:
+                c.scroll((x, y, x+1, y+1), 1, 1, 4,'*')
+
+def good_place(thing,place):
+    no_pass = 0
+    for creature in player.all_creatures:
+        if creature.xy == place and not (creature.mode=='hostile' and thing.mode=='guarding') and not (thing.mode=='hostile' and creature.mode=='guarding'):
+            no_pass = 1
+            break
+    if (not T[land[place[1]-1][place[0]-21]].pass_through or no_pass or (T[land[place[1]-1][place[0]-21]].id in thing.terr_restr and thing.mode!='standing_hostile')) and not (thing.race=='spirit of order' and current_place['Order']>30 and T[land[place[1]-1][place[0]-21]].id in '#o+s') and not (thing.race=='spirit of chaos' and current_place['Chaos']>30 and T[land[place[1]-1][place[0]-21]].id in '#o+s') and not (thing.race=='gnome' and current_place['Nature']>30 and T[land[place[1]-1][place[0]-21]].id in 'nmA%') and not ('door_' in T[land[place[1]-1][place[0]-21]].world_name and thing.t=='sentient'):
+        return 0
+    return 1
