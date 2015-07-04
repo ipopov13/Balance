@@ -5,7 +5,6 @@ import init_screen
 import os
 import pickle
 import message
-from movement import shoot
 from glob import glob
 
 def save():
@@ -203,7 +202,7 @@ while i:
                                 handed='Left hand'
                             if player.ch.equipment['Ammunition']:
                                 if player.ch.equipment['Ammunition'].effect['shoot']==player.ch.equipment[handed].effect['shoot']:
-                                    shoot(player.ch)
+                                    init_screen.shoot(player.ch)
                                 else:
                                     message.message('wrong_ammo')
                             else:

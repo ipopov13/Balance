@@ -142,7 +142,7 @@ def draw_terr(start_force):
     if starter:
         starting_point=starter[-1][1:]
     else:
-        starting_point=[random.randint(1,mapsize),random.randint(1,mapsize)]
+        starting_point=[random.randint(1,map_size),random.randint(1,map_size)]
     direction = 2
     if T_matrix[starting_point[0]][starting_point[1]]['Population']<60:
         T_matrix[starting_point[0]][starting_point[1]]['Population']=60

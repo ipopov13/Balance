@@ -26,7 +26,7 @@ for f in files:
     with open(f,'r') as infile:
         i=1
         for l in infile:
-            if 'take_effect(' in l:
+            if 'movement' in l:
                 print f,i
                 break
             i+=1

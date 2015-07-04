@@ -7,8 +7,6 @@ from inventory import put_item
 from inventory import stone
 from inventory import wood_arrow
 from inventory import wood_bolt
-from movement import combat
-from movement import shoot
 
 race_attrs={'elf':              {'Str':15,'End':16,'Dex':20,'Int':17,'Cre':5, 'Mnd':15},
             'gnome':            {'Str':12,'End':14,'Dex':14,'Int':20,'Cre':14,'Mnd':15},
@@ -178,7 +176,7 @@ class Player:
                 if (a.xy == xy) and (a not in hidden):
                     if a.mode in ['hostile','standing_hostile']:
                         if not self.ride:
-                            movement.combat(self, a)
+                            init_screen.combat(self, a)
                         else:
                             message.message('no_riding_fighting')
                         xy[0] = x
@@ -249,7 +247,7 @@ class Player:
                                 for each_other in all_creatures:
                                     if each_other.force==a.force and (a.t=='sentient' and each_other.t=='sentient') and not (a.force=='Chaos' and (self.mode=='Chaos' or ('spirit of order3' in self.tool_tags and random.randint(1,30)>each_other.attr['Mnd']))):
                                         each_other.mode='hostile'
-                                movement.combat(self, a)
+                                init_screen.combat(self, a)
                             else:
                                 message.message('')
                         xy[0] = x
@@ -747,7 +745,8 @@ class NPC(object):
                 else:
                     mode='wander'
         if 'ork1' in ch.tool_tags and self.mode=='hostile' and creature_los:
-            if ('human3' in ch.tool_tags and random.random()<ch.research_races['Chaos']['ork']/(2*(max([init_screen.current_place['Order'],init_screen.current_place['Nature']])+ch.research_races['Chaos']['ork']))) or (random.random()<ch.races['Chaos']['ork']/(2*(max([init_screen.current_place['Order'],init_screen.current_place['Nature']])+ch.races['Chaos']['ork']))):
+            if ('human3' in ch.tool_tags and random.random()<ch.research_races['Chaos']['ork']/(2*(max([init_screen.current_place['Order'],init_screen.current_place['Nature']])+ch.research_races['Chaos']['ork'])))\
+               or (random.random()<ch.races['Chaos']['ork']/(2*(max([init_screen.current_place['Order'],init_screen.current_place['Nature']])+ch.races['Chaos']['ork']))):
                     mode='fearfull'
         ## wander, follow, hostile, fearfull_hide, standing_hostile, standing, guarding, fearfull
         if mode == 'guarding':
@@ -757,7 +756,7 @@ class NPC(object):
                     fighting=1
                     self.path=init_screen.direct_path(self.xy,self.attr['target'].xy)
                 else:
-                    ch.attr['target']=[]
+                    self.attr['target']=[]
             if not fighting:
                 for enemy in all_creatures:
                     if enemy.mode=='hostile' and len(init_screen.direct_path(enemy.xy,ch.xy))<3 and init_screen.clear_los(init_screen.direct_path(self.xy,enemy.xy)):
@@ -782,13 +781,13 @@ class NPC(object):
                     key='5'
                 else:
                     key = str(random.randint(1,9))
-        if mode == 'follow' or mode == 'hostile' or mode=='standing_hostile' or mode=='guarding':
+        if mode in ['follow','hostile','standing_hostile','guarding']:
             if mode != 'guarding':
                 self.path = init_screen.direct_path(self.xy, ch.xy)
             shot=0
             if mode=='hostile' and 'shoot' in self.attr:
                 if random.randint(1,40)<self.attr['Dex'] and len(self.path)>2:
-                    shoot(self)
+                    init_screen.shoot(self)
                     key='5'
                     shot=1
             if not shot:
@@ -874,7 +873,7 @@ class NPC(object):
                     self.xy[0] = x
                     self.xy[1] = y
                     if (self.mode=='guarding' and a.mode=='hostile') or (a.mode=='guarding' and self.mode=='hostile') or (a.xy == ch.xy and self.mode in ['hostile','standing_hostile'] and 'waterform' not in ch.effects):
-                        movement.combat(self,a)
+                        init_screen.combat(self,a)
                     return 1
             if T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].tire_move>self.energy:
                 if T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].drowning and self.race!='fish':
@@ -1719,8 +1718,6 @@ def effect(k,v,xy=[],ot=''):
             return 0
     else:
         return 0
-        
-import movement
 
 def game_time(i = '0'):
     hostile_in_sight=1
