@@ -26,7 +26,7 @@ for f in files:
     with open(f,'r') as infile:
         i=1
         for l in infile:
-            if 'import movement' in l or 'from movement' in l:
+            if 'shoot(' in l:
                 print f,i
                 break
             i+=1

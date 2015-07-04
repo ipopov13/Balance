@@ -1,4 +1,11 @@
-VSICHKO V EDIN FAIL! Posle se grupirat funkciite i se otdelqt klasovete i metodite im.
+Paradigma za obedinenie
+
+Init_screen se prevrushta v Game class, zaedno s vsichki svobodni promenlivi. balance.py se vliva v nego. Pri startirane na igrata
+nujnite dopulnitelni obekti (Player,Creature,Animal) se inicializirat s argument - instansa na igrata, taka che da imat dostup do
+nujnata infrastruktura (land, tereni, predmeti, etc.). Cqlata komunikacia se vodi prez Game, zashtoto vsichki drugi obekti sa
+negovi atributi.
+
+Podobreniq
  
 Mestnostite se naimenovat po vida na terena v tqh (gori, pustini, oazisi, planini)
 Vidovete teren sa ogranicheni v opredeleni mestnosti (palmi ima v oazisite, v gorite sa drugi durveta - moje s prosto preimenovane)
