@@ -49,8 +49,7 @@ def save():
     pickle.dump(init_screen.current_area, f)
     pickle.dump(init_screen.current_place, f)
     pickle.dump(init_screen.treasure_modifier, f)
-    from load import T_matrix
-    pickle.dump(T_matrix, f)
+    pickle.dump(init_screen.T_matrix, f)
     f.close()
     ## area files update
     os.chdir(os.curdir+r'\%s_dir' %(player.ch.name))
@@ -232,7 +231,7 @@ while i:
                     i = '0'
                 if i == 'b' and not player.ch.ride:
                     if 'human1' in player.ch.tool_tags or 'dwarf1' in player.ch.tool_tags:
-                        init_screen.ground_items=init_screen.build(init_screen.ground_items)
+                        init_screen.build()
                     else:
                         message.message('need_human1&dwarf1')
                     continue
@@ -245,7 +244,7 @@ while i:
                     continue
                     i = '0'
                 if i == 'C' and not player.ch.ride:
-                    init_screen.ground_items=init_screen.create(init_screen.ground_items)
+                    init_screen.create()
                     i = '0'
                 if i == '+' and init_screen.current_area != 'world':
                     opened = init_screen.find_to_open(player.ch.xy)
@@ -305,6 +304,7 @@ while i:
 ##            else:
 ##                message.message('no_stairs')
 ##                i = '0'
+##          ## Possible map function
 ##        if i == 'W':
 ##            if init_screen.world_places[init_screen.current_area] == [1,1]:
 ##                message.message('no_exit')
