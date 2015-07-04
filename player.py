@@ -123,12 +123,7 @@ class Player:
             if (self.energy < self.max_energy) and not (self.hunger>79 or self.thirst>79):
                 self.energy += 1
         elif self.possessed and 'spirit of nature3' in self.tool_tags:
-            if self.equipment['Right hand'] and self.possessed[0].name in self.equipment['Right hand'].effect:
-                self.equipment['Right hand'].effect[self.possessed[0].name]\
-                                           =min([33,self.equipment['Right hand'].effect[self.possessed[0].name]+0.01])
-            elif self.equipment['Left hand'] and self.possessed[0].name in self.equipment['Left hand'].effect:
-                self.equipment['Left hand'].effect[self.possessed[0].name]\
-                                           =min([33,self.equipment['Left hand'].effect[self.possessed[0].name]+0.01])
+            init_screen.possession_score(33,self)
         for a in range(2):
             self.xy[a] = self.xy[a] + md[key][a]
         self.check_passage(self.xy, x, y)
@@ -313,7 +308,7 @@ class Player:
                         message.use('gr_item',item[2],item[2].qty,xy)
                         break
         elif 'door_' in T[init_screen.land[xy[1]-1][xy[0]-21]].world_name:
-            init_screen.open_door(xy, init_screen.land[xy[1]-1][xy[0]-21])
+            init_screen.open_door(xy,self)
             xy[0] = x
             xy[1] = y
         else:
@@ -888,7 +883,7 @@ class NPC(object):
                 self.xy[0] = x
                 self.xy[1] = y
         elif 'door_' in T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].world_name:
-            init_screen.creature_open_door(self.xy, init_screen.land[self.xy[1]-1][self.xy[0]-21])
+            init_screen.open_door(self.xy,self)
             self.xy[0] = x
             self.xy[1] = y
         else:

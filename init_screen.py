@@ -1532,7 +1532,7 @@ class Game:
             msvcrt.getch()
         self.redraw_screen()
 
-    def get_price(x,merch,sell):
+    def get_price(self,x,merch,sell):
         item_types={'tool':5,'weapon':20,'container':20,'talisman':30,'armour':20,'craftmat':2,'cookmat':2,
                     'food':10,'drink':10,'treasure':100,'ancient':1000,'seed':5,'ore':3,'Ammunition':5,'spice':10}
         materials={'wood':5,'iron':5,'copper':1,'silver':10,'gold':100,'leather':8,'ivory':50,'cloth':3,
@@ -1548,20 +1548,20 @@ class Game:
         return price
                             
 
-    def find_place(a,b):
+    def find_place(self,a,b):
         good_coords=[]
         max_score=0
-        for x in range(len(T_matrix)):
-            for y in range(len(T_matrix)):
+        for x in range(len(self.T_matrix)):
+            for y in range(len(self.T_matrix)):
                 if x==0 and y==0:
                     continue
                 else:
-                    if T_matrix[x][y][a]+T_matrix[x][y][b]>max_score:
-                        max_score=T_matrix[x][y][a]+T_matrix[x][y][b]
+                    if self.T_matrix[x][y][a]+self.T_matrix[x][y][b]>max_score:
+                        max_score=self.T_matrix[x][y][a]+self.T_matrix[x][y][b]
                         good_coords=[x,y]
         return good_coords
 
-    def random_name(f):
+    def random_name(self,f):
         engraving = ''
         vowel = {'Nature':'aoeiuy','Order':'aoeiuy','Chaos':'eiuy'}
         consonant = {'Nature':'lkhgfdscvbnm','Order':'rtplkhgfdszxcvbnmw','Chaos':'rtplkhgfdszxvbnmw'}
@@ -1578,47 +1578,37 @@ class Game:
                     engraving+=random.choice(z)
         return engraving
 
-    def game_over():
-        c.page()
-        c.pos(30,14)
-        c.write('Your life is 0! GAME OVER!')
-    ##    c.text(35,16,'(r)estart',7)
-        c.text(35,17,'(q)uit',7)
+    def game_over(self):
+        self.c.page()
+        self.c.pos(30,14)
+        self.c.write('Your life is 0! GAME OVER!')
+        self.c.text(35,17,'(q)uit',7)
         i = ''
         while 1:
             if msvcrt.kbhit():
                 i = msvcrt.getch()
                 if i == 'q' or i == 'Q':
                     return 0
-    ##            elif i == 'r' or i == 'R':
-    ##                reinitialize()
-    ##                start_game()
-    ##                return 1
 
-    def drink(xy):
-        if T[land[xy[1]-1][xy[0]-21]].drink != {}:
+    def drink(self,xy):
+        if T[self.land[xy[1]-1][xy[0]-21]].drink != {}:
             if player.ch.thirst == 0:
-                message.use('over_drink',T[land[xy[1]-1][xy[0]-21]])            
+                message.use('over_drink',T[self.land[xy[1]-1][xy[0]-21]])            
                 return 1
-            message.use('drink',T[land[xy[1]-1][xy[0]-21]])
-            if T[land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in player.ch.tool_tags:
+            message.use('drink',T[self.land[xy[1]-1][xy[0]-21]])
+            if T[self.land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in player.ch.tool_tags:
                 for k,v in {'energy':10,'thirst':5}.items():
                     player.effect(k,v)
             else:
-                for k,v in T[land[xy[1]-1][xy[0]-21]].drink.items():
+                for k,v in T[self.land[xy[1]-1][xy[0]-21]].drink.items():
                     player.effect(k,v)
         elif player.ch.possessed:
             if player.ch.thirst>20 or player.ch.hunger>20:
                 to_eat={'wild horse':'gb','squirrel':'T','snake':'b','poison snake':'b','camel':'Tb','giant lizard':'.,',
                         'penguin':'wW','monkey':'T','polar bear':'wW','bear':'b','cattle':'gb','chicken':'g.','fish':'wW',
                         'plant':'.g'}
-                if T[land[xy[1]-1][xy[0]-21]].id in to_eat.get(player.ch.possessed[0].race,''):
-                    if player.ch.equipment['Right hand'] and player.ch.possessed[0].name in player.ch.equipment['Right hand'].effect:
-                        player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]\
-                                                   =min([100,player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]+0.1])
-                    elif player.ch.equipment['Left hand'] and player.ch.possessed[0].name in player.ch.equipment['Left hand'].effect:
-                        player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]\
-                                                   =min([100,player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]+0.1])
+                if T[self.land[xy[1]-1][xy[0]-21]].id in to_eat.get(player.ch.possessed[0].race,''):
+                    self.possession_score(100,player.ch)
                     if player.ch.xy not in player.ch.worked_places[player.ch.mode]:
                         for k,v in {'energy':10,'thirst':5,'hunger':5}.items():
                             player.effect(k,v)
@@ -1629,7 +1619,7 @@ class Game:
                         message.message('no_food_%s' %(player.ch.possessed[0].race.replace(' ','_')))
                 elif player.ch.possessed[0].race in ['grizzly','wolf','dog','polar wolf','hyena']:
                     found_meat=0
-                    for x in ground_items:
+                    for x in self.ground_items:
                         if [x[0],x[1]]==player.ch.xy and 'meat' in x[2].name:
                             found_meat=1
                             for k,v in {'energy':10,'thirst':10,'hunger':25}.items():
@@ -1639,14 +1629,9 @@ class Game:
                         if x[2].qty>1:
                             x[2].qty-=1
                         else:
-                            ground_items.remove(x)
+                            self.ground_items.remove(x)
                         message.message('eating_carnivore')
-                        if player.ch.equipment['Right hand'] and player.ch.possessed[0].name in player.ch.equipment['Right hand'].effect:
-                            player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]\
-                                                       =min([100,player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]+0.1])
-                        elif player.ch.equipment['Left hand'] and player.ch.possessed[0].name in player.ch.equipment['Left hand'].effect:
-                            player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]\
-                                                       =min([100,player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]+0.1])
+                        self.possession_score(100,player.ch)
                     else:
                         message.message('no_food_carnivore')
                 else:
@@ -1656,16 +1641,24 @@ class Game:
         else:
             message.message('no_drink')
 
-    def find_to_open(xy):
+    def possession_score(self,threshold,possessor):
+        if possessor.equipment['Right hand'] and possessor.possessed[0].name in possessor.equipment['Right hand'].effect:
+            possessor.equipment['Right hand'].effect[possessor.possessed[0].name]\
+                                       =min([100,possessor.equipment['Right hand'].effect[possessor.possessed[0].name]+0.1])
+        elif possessor.equipment['Left hand'] and possessor.possessed[0].name in possessor.equipment['Left hand'].effect:
+            possessor.equipment['Left hand'].effect[possessor.possessed[0].name]\
+                                       =min([100,possessor.equipment['Left hand'].effect[possessor.possessed[0].name]+0.1])
+            
+    def find_to_open(self,xy):
         md = {1:[-1,1], 2:[0,1], 3:[1,1], 4:[-1,0], 5:[0,0],
               6:[1,0], 7:[-1,-1], 8:[0,-1], 9:[1,-1]}
         doors = []
         containers = []
         for i in range(1, 10):
             search = [xy[0]+md[i][0], xy[1]+md[i][1]]
-            if 'door_' in T[land[search[1]-1][search[0]-21]].world_name:
+            if 'door_' in T[self.land[search[1]-1][search[0]-21]].world_name:
                 doors.append(search[:])
-            for bag in ground_items:
+            for bag in self.ground_items:
                 if search == bag[:2] and 'container' in bag[2].type:
                     containers.append(bag)
         if len(doors)+len(containers) == 0:
@@ -1673,13 +1666,13 @@ class Game:
             return 0
         elif len(doors)+len(containers) == 1:
             if len(doors):
-                if T[land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_c'):
-                    open_door(doors[0], land[doors[0][1]-1][doors[0][0]-21])
-                elif T[land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_o'):
-                    close_door(doors[0], land[doors[0][1]-1][doors[0][0]-21])
+                if T[self.land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_c'):
+                    self.open_door(doors[0],player.ch)
+                elif T[self.land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_o'):
+                    self.close_door(doors[0], land[doors[0][1]-1][doors[0][0]-21])
                 return 0
             else:
-                success = open_container(containers[0][2])
+                success = self.open_container(containers[0][2])
                 return success
         else:
             message.message('which_open')
@@ -1693,10 +1686,10 @@ class Game:
                     return 0
                 target = [xy[0]+md[i][0], xy[1]+md[i][1]]
                 if target in doors:
-                    if T[land[target[1]-1][target[0]-21]].world_name.endswith('_c'):
-                        open_door(target, land[target[1]-1][target[0]-21])
-                    elif T[land[target[1]-1][target[0]-21]].world_name.endswith('_o'):
-                        close_door(target, land[target[1]-1][target[0]-21])
+                    if T[self.land[target[1]-1][target[0]-21]].world_name.endswith('_c'):
+                        self.open_door(target,player.ch)
+                    elif T[self.land[target[1]-1][target[0]-21]].world_name.endswith('_o'):
+                        self.close_door(target, land[target[1]-1][target[0]-21])
                     return 0
                 else:
                     nothing = 1
@@ -1708,13 +1701,13 @@ class Game:
                         message.message('no_open')
                         return 0
                     else:
-                        success = open_container(cont[2])
+                        success = self.open_container(cont[2])
                         return success
             except KeyError:
                 message.message('direction')
                 return 0
 
-    def open_container(chest):
+    def open_container(self,chest):
         if 'locked' in chest.type: ##Lockpicking se uchi samo kogato uspeesh!
             if 'lockpick' in player.ch.tool_tags:
                 lock_atts = (player.ch.attr['Dex']+player.ch.attr['Int'])/2.0
@@ -1739,25 +1732,25 @@ class Game:
                 message.use('no_lockpick',chest)
                 msvcrt.getch()
                 return 0
-        c.page()
+        self.c.page()
         print ' You open the %s and look inside.\n (t) take item (p) put item\n' %(chest.name)
         for i in range(len(chest.effect['contains'])):
             print ' %s)   %s %d x %s stones' %(chr(i+97),chest.effect['contains'][i].name.capitalize(),chest.effect['contains'][i].qty,
                                              str(chest.effect['contains'][i].weight))
-            c.text(4,i+3,chest.effect['contains'][i].tag,chest.effect['contains'][i].color)
+            self.c.text(4,i+3,chest.effect['contains'][i].tag,chest.effect['contains'][i].color)
         print '\n You can carry %s more stones, %s more will fit in your backpack.' %(str(player.ch.max_weight-player.ch.weight),
                                                                                       str(player.ch.backpack))
         i1 = msvcrt.getch()
         i1 = i1.lower()
         if i1 == 't' and len(chest.effect['contains']):
-            c.rectangle((0,0,79,1))
-            c.pos(0,0)
-            c.write(' Which item do you want to take out?')
+            self.c.rectangle((0,0,79,1))
+            self.c.pos(0,0)
+            self.c.write(' Which item do you want to take out?')
             while 1:
                 if msvcrt.kbhit():
                     take = msvcrt.getch()
                     break
-            c.rectangle((0,0,79,1))
+            self.c.rectangle((0,0,79,1))
             try:
                 item = chest.effect['contains'][ord(take)-97]
                 if item.qty > 1 and player.ch.equipment['Backpack'] != []:
@@ -1767,11 +1760,11 @@ class Game:
                     while ord(i) != 13:
                         i = msvcrt.getch()
                         if ord(i) in range(48,58):
-                            c.write(i)
+                            self.c.write(i)
                             a += i
                     message.message('')
                     if a =='':
-                        open_container(chest)
+                        self.open_container(chest)
                         return 1
                     a=int(a)
                 else:
@@ -1818,9 +1811,9 @@ class Game:
                         msvcrt.getch()
             except IndexError:
                 pass
-            open_container(chest)
+            self.open_container(chest)
         elif i1 == 'p':
-            item = draw_inv(1, chest)
+            item = self.draw_inv(1, chest)
             if item:
                 dropped = 0
                 for i in chest.effect['contains']:
@@ -1840,31 +1833,28 @@ class Game:
                             chest.effect[tal]=item.effect['talisman'][tal][:]
                         else:
                             chest.effect[tal] += item.effect['talisman'][tal][:]
-            open_container(chest)
+            self.open_container(chest)
         return 1
 
-    def open_door(xy, door_id):
-        land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
-        c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[land[xy[1]-1][xy[0]-21]].colour, T[land[xy[1]-1][xy[0]-21]].char)
-        message.message('open_door')
-        
-    def creature_open_door(xy, door_id):
-        land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
-        c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[land[xy[1]-1][xy[0]-21]].colour, T[land[xy[1]-1][xy[0]-21]].char)
+    def open_door(self,xy,opener):
+        self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21] + T[self.land[xy[1]-1][xy[0]-21]].degrade_to['door'] + self.land[xy[1]-1][xy[0]-20:]
+        self.c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[self.land[xy[1]-1][xy[0]-21]].colour, T[self.land[xy[1]-1][xy[0]-21]].char)
+        if opener.tag=='@':
+            message.message('open_door')
 
-    def close_door(xy, door_id):
+    def close_door(self,xy, door_id):
         blocked = 0
         for cr in player.all_beings:
             if cr.xy == xy:
                 blocked = 1
-        for i in ground_items:
+        for i in self.ground_items:
             if i[:2] == xy:
                 blocked = 1
         if blocked:
             message.message('blocked_door')
         else:
-            land[xy[1]-1] = land[xy[1]-1][:xy[0]-21] + T[door_id].degrade_to['door'] + land[xy[1]-1][xy[0]-20:]
-            c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[land[xy[1]-1][xy[0]-21]].colour, T[land[xy[1]-1][xy[0]-21]].char)
+            self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21] + T[door_id].degrade_to['door'] + self.land[xy[1]-1][xy[0]-20:]
+            self.c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[self.land[xy[1]-1][xy[0]-21]].colour, T[self.land[xy[1]-1][xy[0]-21]].char)
             message.message('close_door')
 
     def cook():
@@ -2609,12 +2599,7 @@ class Game:
                 if 'invisible' in combatant.effects:
                     del(combatant.effects['invisible'])
                 if combatant.possessed and 'spirit of nature3' in combatant.tool_tags:
-                    if combatant.equipment['Right hand'] and combatant.possessed[0].name in combatant.equipment['Right hand'].effect:
-                        combatant.equipment['Right hand'].effect[combatant.possessed[0].name]\
-                                                   =min([66,combatant.equipment['Right hand'].effect[combatant.possessed[0].name]+0.1])
-                    elif combatant.equipment['Left hand'] and combatant.possessed[0].name in combatant.equipment['Left hand'].effect:
-                        combatant.equipment['Left hand'].effect[combatant.possessed[0].name]\
-                                                   =min([66,combatant.equipment['Left hand'].effect[combatant.possessed[0].name]+0.1])
+                    self.possession_score(66,combatant)
         if attacker.energy > 50:
             if attack(attacker, defender):
                 add_dmg = 0
