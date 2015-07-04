@@ -8,6 +8,7 @@ from inventory import stone
 from inventory import wood_arrow
 from inventory import wood_bolt
 from movement import combat
+from movement import shoot
 
 race_attrs={'elf':              {'Str':15,'End':16,'Dex':20,'Int':17,'Cre':5, 'Mnd':15},
             'gnome':            {'Str':12,'End':14,'Dex':14,'Int':20,'Cre':14,'Mnd':15},
@@ -76,6 +77,9 @@ class Player:
         self.free_hands = 2
         self.equiped_weaps = 0
         self.weapon_weight = 0
+        self.battle_att=0
+        self.att_att=''
+        self.def_att=''
         self.skills = {}
         self.spells = {}
         self.spell_cast = 0
@@ -522,6 +526,7 @@ class Player:
             self.weapon_dmg -= self.equipment[self.equip_tags[item]].dmg
         if self.equip_tags[item] in ['Right hand','Left hand']:
             self.weapon_weight -= self.equipment[self.equip_tags[item]].weight
+            take_effect()
             if self.equipment['Backpack'] != []:
                 self.free_hands += 1
                 if 'two_handed' in self.equipment[self.equip_tags[item]].type:
@@ -548,6 +553,7 @@ class Player:
             self.inventory.remove(item)
         if self.equip_tags[slot] in ['Right hand','Left hand']:
             self.weapon_weight += item.weight
+            take_effect()
             if 'two_handed' in item.type:
                 if self.equip_tags[slot] == 'Right hand' and self.equipment['Left hand'] != []:
                     self.take_off(self.equip_tags.index('Left hand'))
@@ -1222,6 +1228,21 @@ def take_effect():
     ch.max_energy = ch.attr['End']*100
     ch.max_life = ch.attr['End'] + ch.attr['End']/4
     ch.dmg = max([ch.attr['Str'] / 5, 1])
+    if ch.weapon_weight < 6:
+        ch.att_att = 'Dex'
+        ch.def_att = 'Dex'
+        ch.battle_att = ch.attr['Dex']
+    elif ch.weapon_weight < 10:
+    ## Ako orujieto e sredno maksimalnata stoinost na umenieto stava 100 pri balans na Dex i Str
+        the_max=max([ch.attr['Dex'],ch.attr['Str']])
+        the_min=min([ch.attr['Dex'],ch.attr['Str']])
+        ch.battle_att = min([the_max+(the_min-the_max*2/3),20])
+        ch.att_att = 'Str'
+        ch.def_att = 'Dex'
+    else:
+        ch.battle_att = ch.attr['Str']
+        ch.att_att = 'Str'
+        ch.def_att = 'Str'
 
 def take_force_effect():
     for f in ch.races:
