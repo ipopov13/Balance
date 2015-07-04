@@ -245,16 +245,19 @@ def defender_dead(defender,add_dmg,attacker):
 
 
 def combat(attacker,defender,second_swing=0):
-    if attacker.tag=='@' or defender.tag=='@':
-        if 'invisible' in player.ch.effects:
-            del(player.ch.effects['invisible'])
-        if player.ch.possessed and 'spirit of nature3' in player.ch.tool_tags:
-            if player.ch.equipment['Right hand'] and player.ch.possessed[0].name in player.ch.equipment['Right hand'].effect:
-                player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]\
-                                           =min([66,player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]+0.1])
-            elif player.ch.equipment['Left hand'] and player.ch.possessed[0].name in player.ch.equipment['Left hand'].effect:
-                player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]\
-                                           =min([66,player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]+0.1])
+    if attacker.tag=='@':
+        pc=attacker
+    elif defender.tag=='@':
+        pc=defender
+    if 'invisible' in player.ch.effects:
+        del(player.ch.effects['invisible'])
+    if player.ch.possessed and 'spirit of nature3' in player.ch.tool_tags:
+        if player.ch.equipment['Right hand'] and player.ch.possessed[0].name in player.ch.equipment['Right hand'].effect:
+            player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]\
+                                       =min([66,player.ch.equipment['Right hand'].effect[player.ch.possessed[0].name]+0.1])
+        elif player.ch.equipment['Left hand'] and player.ch.possessed[0].name in player.ch.equipment['Left hand'].effect:
+            player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]\
+                                       =min([66,player.ch.equipment['Left hand'].effect[player.ch.possessed[0].name]+0.1])
     if attacker.energy > 50:
         if attack(attacker, defender):
             add_dmg = 0
