@@ -2,12 +2,14 @@ import message
 import msvcrt
 from terrain import T
 import random
-from inventory import put_item
 from inventory import stone
 from inventory import wood_arrow
 from inventory import wood_bolt
 
-race_attrs={'elf':              {'Str':15,'End':16,'Dex':20,'Int':17,'Cre':5, 'Mnd':15},
+class Player:
+    def __init__(self, xy, race,force,start_force,game):
+        self.race_attrs={
+            'elf':              {'Str':15,'End':16,'Dex':20,'Int':17,'Cre':5, 'Mnd':15},
             'gnome':            {'Str':12,'End':14,'Dex':14,'Int':20,'Cre':14,'Mnd':15},
             'spirit of nature': {'Str':12,'End':10,'Dex':18,'Int':18,'Cre':8, 'Mnd':20},
             'dryad':            {'Str':10,'End':10,'Dex':20,'Int':17,'Cre':13,'Mnd':15},
@@ -25,14 +27,10 @@ race_attrs={'elf':              {'Str':15,'End':16,'Dex':20,'Int':17,'Cre':5, 'M
             'kraken':           {'Str':19,'End':17,'Dex':14,'Int':15,'Cre':4, 'Mnd':13},
             'imp':              {'Str':10,'End':15,'Dex':16,'Int':15,'Cre':8, 'Mnd':15}}
 
-
-class Player:
-    def __init__(self, xy, race,force,game):
         self.game=game
         self.xy = xy
-        self.base_attr = race_attrs[race]
+        self.base_attr = self.race_attrs[race]
         self.attr = {}
-        start_force = 34.
         for x in self.base_attr:
             self.attr[x] = int(self.base_attr[x] * start_force/100.)
         self.max_attr = self.attr.copy()
@@ -109,7 +107,6 @@ class Player:
         x = self.xy[0]
         y = self.xy[1]
         a = 0
-    ##    try:
         if (key == '0'):
             return 1
         if 'troll2' in self.tool_tags and self.turn%2 and self.turn%2400<1200:
@@ -121,13 +118,11 @@ class Player:
             if (self.energy < self.max_energy) and not (self.hunger>79 or self.thirst>79):
                 self.energy += 1
         elif self.possessed and 'spirit of nature3' in self.tool_tags:
-            init_screen.possession_score(33,self)
+            self.game.possession_score(33,self)
         for a in range(2):
             self.xy[a] = self.xy[a] + md[key][a]
         self.check_passage(self.xy, x, y)
-        init_screen.draw_move(self, x, y)
-    ##    except KeyError:
-    ##        message.message('movement_error')
+        self.game.draw_move(self, x, y)
 
     def check_passage(self,xy, x, y):
         if (xy[0] == 20) or (xy[0] == 79) or (xy[1] == 0) or (xy[1] == 24):
@@ -139,29 +134,29 @@ class Player:
                 direction = 0
             elif (xy[1] == 24):
                 direction = 1
-            if not int(init_screen.directions[direction]) and init_screen.current_area != 'world':
+            if not int(self.game.directions[direction]) and self.game.current_area != 'world':
                 message.message('leave_world')
                 xy[0] = x
                 xy[1] = y
                 return 1
-            elif not int(init_screen.directions[direction]) and init_screen.current_area == 'world':
+            elif not int(self.game.directions[direction]) and self.game.current_area == 'world':
                 xy[0] = x
                 xy[1] = y
                 message.message('nowhere_togo')
             else:
                 xy[0] = x
                 xy[1] = y
-                travel = init_screen.change_place('area%s' %(init_screen.directions[direction]),direction)
+                travel = self.game.change_place('area%s' %(self.game.directions[direction]),direction)
             return 1
-        elif (T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through or \
-             ('spirit of order1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
-             ('spirit of chaos1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
-             ('gnome1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%') or \
+        elif (T[self.game.land[xy[1]-1][xy[0]-21]].pass_through or \
+             ('spirit of order1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
+             ('spirit of chaos1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
+             ('gnome1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'nmA%') or \
              'waterform' in self.effects) and \
-             not (self.possessed and T[init_screen.land[xy[1]-1][xy[0]-21]].id in self.possessed[0].terr_restr):
+             not (self.possessed and T[self.game.land[xy[1]-1][xy[0]-21]].id in self.possessed[0].terr_restr):
             if 'waterform' in self.effects:
                 return 0
-            for a in all_creatures:
+            for a in self.game.all_creatures:
                 if (a.xy == xy) and (a not in hidden):
                     if a.mode in ['hostile','standing_hostile']:
                         if not self.ride:
@@ -178,7 +173,7 @@ class Player:
                             if answer.lower()=='y':
                                 xy[0] = x
                                 xy[1] = y
-                                init_screen.talk(a)
+                                self.game.talk(a)
                                 return 1
                             else:
                                 message.message('')
@@ -189,7 +184,7 @@ class Player:
                                         effect('force',{'Chaos':{'force':0.02,'goblin':0.02},'Nature':{'all':-.01},'Order':{'all':-.01}})
                                         xy[0] = x
                                         xy[1] = y
-                                        init_screen.pickpocket(a)
+                                        self.game.pickpocket(a)
                                         return 1
                                     else:
                                         message.message('')
@@ -199,7 +194,7 @@ class Player:
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 effect('force',{'Order':{'force':0.02,'human':0.02}})
-                                init_screen.tame(a)
+                                self.game.tame(a)
                                 xy[0] = x
                                 xy[1] = y
                                 return 1
@@ -211,7 +206,7 @@ class Player:
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 effect('force',{'Order':{'force':0.01,'human':0.01}})
-                                init_screen.command_tamed(a)
+                                self.game.command_tamed(a)
                                 xy[0] = x
                                 xy[1] = y
                                 return 1
@@ -222,7 +217,7 @@ class Player:
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 effect('force',{'Nature':{'force':0.03,'spirit of nature':0.03}})
-                                init_screen.possess(a)
+                                self.game.possess(a)
                                 xy[0] = x
                                 xy[1] = y
                                 return 1
@@ -233,37 +228,38 @@ class Player:
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 a.mode='hostile'
-                                for each_other in all_creatures:
-                                    if each_other.force==a.force and (a.t=='sentient' and each_other.t=='sentient') and not (a.force=='Chaos' and (self.mode=='Chaos' or ('spirit of order3' in self.tool_tags and random.randint(1,30)>each_other.attr['Mnd']))):
+                                for each_other in self.game.all_creatures:
+                                    if each_other.force==a.force and (a.t=='sentient' and each_other.t=='sentient') and not \
+                                       (a.force=='Chaos' and (self.mode=='Chaos' or ('spirit of order3' in self.tool_tags and random.randint(1,30)>each_other.attr['Mnd']))):
                                         each_other.mode='hostile'
-                                init_screen.combat(self, a)
+                                self.game.combat(self, a)
                             else:
                                 message.message('')
                         xy[0] = x
                         xy[1] = y
                         return 1
-            if (T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move > self.energy) and not \
-               ('kraken1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~') and not \
-               ('winterwalk' in self.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i") and not \
-               ('summerwalk' in self.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in ",") and not \
-               (self.possessed and self.possessed[0].race=='fish' and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
+            if (T[self.game.land[xy[1]-1][xy[0]-21]].tire_move > self.energy) and not \
+               ('kraken1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wWt~') and not \
+               ('winterwalk' in self.effects and T[self.game.land[xy[1]-1][xy[0]-21]].id in "'i") and not \
+               ('summerwalk' in self.effects and T[self.game.land[xy[1]-1][xy[0]-21]].id in ",") and not \
+               (self.possessed and self.possessed[0].race=='fish' and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
                 message.emotion('tired')
-                if T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].drowning:
+                if T[self.game.land[self.xy[1]-1][self.xy[0]-21]].drowning:
                     self.life -= 1
                     message.message('drown')
                 xy[0] = x
                 xy[1] = y
-            elif not (self.possessed and self.possessed[0].race=='fish' and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
-                if ('kraken1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wWt~'):
+            elif not (self.possessed and self.possessed[0].race=='fish' and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
+                if ('kraken1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wWt~'):
                     message.message('kraken_move')
-                elif ('winterwalk' in self.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in "'i"):
-                    message.message('fairy_%smove' %(T[init_screen.land[xy[1]-1][xy[0]-21]].name))
-                elif ('summerwalk' in self.effects and T[init_screen.land[xy[1]-1][xy[0]-21]].id in ","):
-                    message.message('fairy_%smove' %(T[init_screen.land[xy[1]-1][xy[0]-21]].name))
-                elif ('gnome1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
-                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                    if T[init_screen.land[xy[1]-1][xy[0]-21]].id != 'n':
-                        init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'n'+init_screen.land[xy[1]-1][xy[0]-20:]
+                elif ('winterwalk' in self.effects and T[self.game.land[xy[1]-1][xy[0]-21]].id in "'i"):
+                    message.message('fairy_%smove' %(T[self.game.land[xy[1]-1][xy[0]-21]].name))
+                elif ('summerwalk' in self.effects and T[self.game.land[xy[1]-1][xy[0]-21]].id in ","):
+                    message.message('fairy_%smove' %(T[self.game.land[xy[1]-1][xy[0]-21]].name))
+                elif ('gnome1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
+                    self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
+                    if T[self.game.land[xy[1]-1][xy[0]-21]].id != 'n':
+                        self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'n'+self.game.land[xy[1]-1][xy[0]-20:]
                         effect('force',{'Nature':{'force':0.01,'gnome':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                     message.message('gnome_move')
                 elif ('spirit of nature1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'd'):
@@ -697,6 +693,11 @@ class Player:
                     effect('force',{'Nature':{'force':0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
 
 class NPC(object):
+    __refs__ = []
+    def __init__(self,replica):
+        if not replica:
+            self.__refs__.append(self)
+
     def creature_move(self):
         md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
               '6':[1,0], '7':[-1,-1], '8':[0,-1], '9':[1,-1], '0':[0,0]}
@@ -886,7 +887,8 @@ class NPC(object):
 
     
 class Human(NPC):
-    def __init__(self,xy,area,path,terr_restr,emotion,fear,tag,name,mode,id,attr,WD,armour,f,r,game_id=0):
+    def __init__(self,xy,area,path,terr_restr,emotion,fear,tag,name,mode,id,attr,WD,armour,f,r,game_id=0,replica=False):
+        super(Human,self).__init__(replica)
         self.xy = xy[:]
         self.area = area[:]
         self.path = path[:]
@@ -919,7 +921,7 @@ class Human(NPC):
         arm=self.armour
         WD=0
         for a in self.attr:
-            attr_d[a]=int(race_attrs[r][a]*init_screen.current_place[f]/100.)
+            attr_d[a]=int(self.race_attrs[r][a]*init_screen.current_place[f]/100.)
         if f=='Nature':
             emo=2
             arm=init_screen.current_place[f]*3.5
@@ -952,7 +954,7 @@ class Human(NPC):
         if ch.possessed:
             mode='wander'
         duplica = Human(xy,self.area,self.path,self.terr_restr,emo,self.fear,r[0].upper(),r,
-                        mode,self.id,attr_d,WD,arm,f,r,game_id=g_id)
+                        mode,self.id,attr_d,WD,arm,f,r,game_id=g_id,replica=True)
         duplica.learning=random.random()
         duplica.attr['loot']=[[1310,100,1,4],[r,init_screen.current_place[f]+init_screen.current_place['Treasure']*10]]
         duplica.attr['shoot']=ammo
@@ -965,7 +967,8 @@ class Human(NPC):
         return duplica
 
 class Animal(NPC):
-    def __init__(self,xy,area,path,terr_restr,emotion,tag,name,mode,id,life,attr,WS,armour,f,r,game_id=0):
+    def __init__(self,xy,area,path,terr_restr,emotion,tag,name,mode,id,life,attr,WS,armour,f,r,game_id=0,replica=False):
+        super(Animal,self).__init__(replica)
         self.xy = xy[:]
         self.area = area[:]
         self.path = path[:]
@@ -993,7 +996,8 @@ class Animal(NPC):
     def duplicate(self,x,y,g_id,f,r,rand=False):
         xy = [x, y]
         duplica = Animal(xy,self.area,self.path,self.terr_restr,self.emotion,self.tag,self.name,
-                         self.mode,self.id,self.life,self.attr,self.weapon_skill,self.armour,f,r,game_id=g_id)
+                         self.mode,self.id,self.life,self.attr,self.weapon_skill,self.armour,f,r,game_id=g_id,
+                         replica=True)
         duplica.learning=0
         if self.mode in ['hostile','fearfull_hide','fearfull'] and 'elf1' in ch.tool_tags and self.t=='animal':
             duplica.mode = 'wander'
@@ -1007,7 +1011,7 @@ class Animal(NPC):
 
 ## Taming tags - pet, guard, ride, farm. [tag,difficulty,item requirement for taming,farming product id]
 wood = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',1,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
-wood_perm = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',2,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
+#wood_perm = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',2,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
 ##squirrel = Animal([30, 20],[],[],'wW',7,'s','squirrel','fearfull_hide',2,1,{'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1},1,5,'Nature','squirrel')
 random_squirrel = Animal([30, 20],[],[],'wW',7,'s','squirrel','wander',3,1,{'tame':['pet',25,1315],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,70,1,1],['squirrel skin',100,1,1]]},1,5,'Nature','squirrel')
 bear = Animal([30, 20],[],[],'',6,'b','bear','wander',4,12,{'tame':['guard',95,1302],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':12,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','bear')
@@ -1029,913 +1033,9 @@ wild_chicken = Animal([30, 20],[],[],'wWt',7,'c','wild chicken','wander',19,1,{'
 wild_cattle = Animal([30, 20],[],[],'wWt',8,'c','wild cattle','wander',20,15,{'tame':['farm',35,902,1322],'Str':25,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':4,'loot':[[1326,100,4,6],[1310,100,10,15],['buffalo skin',100,3,8]]},1,100,'Order','cattle')
 fish = Animal([30, 20],[],[],".,+><aAbBdDfFgiIJlLmnoOpsST%#`'~:",1,'f','fish','wander',100,5,{'Str':1,'End':4,'Dex':5,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,100,1,1]]},5,20,'Nature','fish')
 
-random_creatures = [1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,100] ## ID-ta na random gadinite za loadvaneto
-random_by_force = {'Nature':{'cold':[5,4,11,12,16,20],'warm':[3,9,5,4,13,18,19,20],'hot':[9,14,17]},
-                   'Order':{'cold':[12,16,20,6],'warm':[9,6,13,19,20],'hot':[14,9,10,6]},
-                   'Chaos':{'cold':[12,7],'warm':[7,8,10,19,20],'hot':[15,10,9]}}
-water_creatures = [100]
-game_creatures = [wood,wood_perm,random_squirrel,bear,fish,wolf,dog,hyena,grizzly,snake,poison_snake,polar_bear,polar_wolf,
-                  wild_horse,camel,giant_lizard,penguin,monkey,carnivore_bush,wild_chicken,wild_cattle]
+game_creatures=NPC.__refs__[:]
+##game_creatures = [wood,wood_perm,random_squirrel,bear,fish,wolf,dog,hyena,grizzly,snake,poison_snake,polar_bear,polar_wolf,
+##                  wild_horse,camel,giant_lizard,penguin,monkey,carnivore_bush,wild_chicken,wild_cattle]
 
 ##['Backpack','Head','Neck','Chest','Jewel','Back','Arms','Right hand','Left hand','On hands',
 ## 'Left ring','Right ring','Belt','Legs','Feet','Sheath','Belt tool 1','Belt tool 2','Quiver/stone pouch']
-
-import inventory
-def start_inv(i): ##Unstackable items da se davat edno po edno
-    if i == 'a':
-        inventory.shoulder_bag.start_item(1,"healer's satchel")
-        ch.inventory[0].color=10
-        ch.equip(ch.inventory[0],0)
-        inventory.cloth_pants.start_item(1)
-        ch.equip(ch.inventory[0],13)
-        inventory.cloth_shirt.start_item(1,"healer's tunic")
-        ch.inventory[0].color=10
-        ch.equip(ch.inventory[0],3)
-        inventory.cloth_shoes.start_item(1)
-        ch.equip(ch.inventory[0],14)
-        inventory.cloth_cloak.start_item(1,"healer's cloak")
-        ch.inventory[0].color=10
-        ch.equip(ch.inventory[0],5)
-        inventory.tinderbox.start_item(1)
-        inventory.nature_heal_set.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-    elif i == 'b':
-        inventory.shoulder_bag.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        inventory.cloth_shoes.start_item(1)
-        ch.equip(ch.inventory[0],14)
-        inventory.cloth_robe.start_item(1,"traveler's robe")
-        ch.equip(ch.inventory[0],3)
-        inventory.light_staff.start_item(1,"traveler's staff")
-        ch.equip(ch.inventory[0],7)
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-    elif i == 'c':
-        inventory.small_backpack.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        inventory.cloth_pants.start_item(1,'gray pants')
-        ch.equip(ch.inventory[0],13)
-        inventory.wood_vest.start_item(1)
-        ch.equip(ch.inventory[0],3)
-        inventory.wood_boots.start_item(1)
-        ch.equip(ch.inventory[0],14)
-        random.choice(inventory.light_weapons).start_item(1)
-        ch.equip(ch.inventory[0],7)
-        inventory.bow.start_item(1,'elven bow')
-        ch.inventory[0].color=10
-        inventory.wood_arrow.start_item(50)
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-        inventory.gem_amethyst.start_item(5)
-        inventory.gem_lapis_lazuli.start_item(1)
-    elif i == 'd':
-        inventory.small_backpack.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        inventory.cloth_pants.start_item(1)
-        ch.equip(ch.inventory[0],13)
-        inventory.leather_gloves.start_item(1,"miner's gloves")
-        ch.equip(ch.inventory[0],9)
-        inventory.cloth_shirt.start_item(1,"miner's shirt")
-        ch.equip(ch.inventory[0],3)
-        inventory.pick.start_item(1)
-        ch.equip(ch.inventory[0],7)
-        inventory.hammer.start_item(1,"builder's hammer")
-        inventory.saw.start_item(1)
-        inventory.pliers.start_item(1)
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.dagger.start_item(1)
-        inventory.bottle_water.start_item(2)
-    elif i == 'e':
-        inventory.small_backpack.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        inventory.cloth_pants.start_item(1)
-        ch.equip(ch.inventory[0],13)
-        inventory.cloth_shirt.start_item(1)
-        ch.equip(ch.inventory[0],3)
-        inventory.leather_boots.start_item(1,"farmer's boots")
-        ch.equip(ch.inventory[0],14)
-        inventory.shovel.start_item(1)
-        ch.equip(ch.inventory[0],16)
-        inventory.vegetable_seed.start_item(10)
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-    elif i == 'f':
-        inventory.small_backpack.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        inventory.cloth_pants.start_item(1,'embroidered pants')
-        ch.equip(ch.inventory[0],13)
-        inventory.cloth_shirt.start_item(1,"merchant's shirt")
-        ch.equip(ch.inventory[0],3)
-        inventory.cloth_belt.start_item(1,"embroidered belt")
-        ch.equip(ch.inventory[0],12)
-        inventory.cloth_shoes.start_item(1,'fine shoes')
-        ch.equip(ch.inventory[0],14)
-        inventory.cloth_cloak.start_item(1,"merchants's cloak")
-        ch.equip(ch.inventory[0],5)
-        inventory.jewel_ring.start_item(1,"silver ring")
-        ch.equip(ch.inventory[0],10)
-        inventory.coins_silver.start_item(10)
-        inventory.common_spices.start_item(5,'sack of spices')
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-    elif i == 'g':
-        inventory.small_backpack.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        inventory.long_sword.start_item(1)
-        ch.equip(ch.inventory[0],7)
-        inventory.leather_pants.start_item(1)
-        ch.equip(ch.inventory[0],13)
-        inventory.leather_vest.start_item(1,"soldier's tunic")
-        ch.equip(ch.inventory[0],3)
-        inventory.leather_boots.start_item(1)
-        ch.equip(ch.inventory[0],14)
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-    elif i == 'h':
-        inventory.small_backpack.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        inventory.giant_club.start_item(1)
-        ch.equip(ch.inventory[0],7)
-        inventory.cloth_pants.start_item(1,'dirty waist wrap')
-        ch.inventory[0].color=7
-        ch.equip(ch.inventory[0],13)
-        inventory.cloth_shoes.start_item(1,'old sandals')
-        ch.inventory[0].color=7
-        ch.equip(ch.inventory[0],14)
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-    elif i == 'i':
-        inventory.small_backpack.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        random.choice(inventory.medium_weapons).start_item(1)
-        ch.equip(ch.inventory[0],7)
-        inventory.chain_pants.start_item(1)
-        ch.equip(ch.inventory[0],13)
-        inventory.chain_vest.start_item(1)
-        ch.equip(ch.inventory[0],3)
-        inventory.leather_boots.start_item(1)
-        ch.equip(ch.inventory[0],14)
-        inventory.leather_cloak.start_item(1)
-        ch.equip(ch.inventory[0],5)
-        inventory.dagger.start_item(1)
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-    elif i == 'j':
-        inventory.small_backpack.start_item(1)
-        ch.equip(ch.inventory[0],0)
-        inventory.cloth_robe.start_item(1)
-        ch.equip(ch.inventory[0],3)
-        inventory.magic_book.start_item(1)
-        inventory.herb_set.start_item(1)
-        inventory.tinderbox.start_item(1)
-        inventory.bread.start_item(2)
-        inventory.bottle_water.start_item(2)
-    message.message('')
-
-def take_effect():
-    ch.max_weight = ch.attr['Str']*10
-    ch.max_weaps = ch.attr['Str']
-    ch.max_energy = ch.attr['End']*100
-    ch.max_life = ch.attr['End'] + ch.attr['End']/4
-    ch.dmg = max([ch.attr['Str'] / 5, 1])
-    if ch.weapon_weight < 6:
-        ch.att_att = 'Dex'
-        ch.def_att = 'Dex'
-        ch.battle_att = ch.attr['Dex']
-    elif ch.weapon_weight < 10:
-    ## Ako orujieto e sredno maksimalnata stoinost na umenieto stava 100 pri balans na Dex i Str
-        the_max=max([ch.attr['Dex'],ch.attr['Str']])
-        the_min=min([ch.attr['Dex'],ch.attr['Str']])
-        ch.battle_att = min([the_max+(the_min-the_max*2/3),20])
-        ch.att_att = 'Str'
-        ch.def_att = 'Dex'
-    else:
-        ch.battle_att = ch.attr['Str']
-        ch.att_att = 'Str'
-        ch.def_att = 'Str'
-
-def take_force_effect():
-    for f in ch.races:
-        for r in ch.races[f]:
-            if ch.races[f][r]<30:
-                if ch.research_races[f][r]<30:
-                    for n in ['1','2','3']:
-                        try:
-                            ch.tool_tags.remove(r+n)
-                            if r+n=='troll1':
-                                ch.tool_tags.remove('big hammer')
-                            if r+n=='imp1':
-                                ch.tool_tags.remove('fire')
-                        except ValueError:
-                            pass
-            elif ch.races[f][r]<60:
-                if ch.research_races[f][r]<60:
-                    for n in ['2','3']:
-                        try:
-                            ch.tool_tags.remove(r+n)
-                        except ValueError:
-                            pass
-                if r+'1' not in ch.tool_tags:
-                    ch.tool_tags.append(r+'1')
-                    if r+'1'=='troll1':
-                        ch.tool_tags.append('big hammer')
-                    if r+'1'=='imp1':
-                        ch.tool_tags.append('fire')
-            elif ch.races[f][r]<90:
-                for n in ['1','2']:
-                    if r+n not in ch.tool_tags:
-                        ch.tool_tags.append(r+n)
-                        if r+n=='troll1':
-                            ch.tool_tags.append('big hammer')
-                        if r+n=='imp1':
-                            ch.tool_tags.append('fire')
-                if ch.research_races[f][r]<90:
-                    try:
-                        ch.tool_tags.remove(r+'3')
-                        if r=='human':
-                            for f in ch.research_forces:
-                                ch.research_forces[f]=0.
-                                for r in ch.research_races[f]:
-                                    ch.research_races[f][r]=0.
-                            take_research_effect()
-                            ch.research_force='Order'
-                            ch.research_race='human'
-                    except ValueError:
-                        pass
-            elif ch.races[f][r]>=90:
-                for n in ['1','2','3']:
-                    if r+n not in ch.tool_tags:
-                        ch.tool_tags.append(r+n)
-                        if r+n=='troll1':
-                            ch.tool_tags.append('big hammer')
-                        if r+n=='imp1':
-                            ch.tool_tags.append('fire')
-
-def take_research_effect():
-    for f in ch.research_races:
-        for r in ch.research_races[f]:
-            if r!='human':
-                if ch.research_races[f][r]<30:
-                    if ch.races[f][r]<30:
-                        for n in ['1','2','3']:
-                            try:
-                                ch.tool_tags.remove(r+n)
-                                if r+n=='troll1':
-                                    ch.tool_tags.remove('big hammer')
-                                if r+n=='imp1':
-                                    ch.tool_tags.remove('fire')
-                            except ValueError:
-                                pass
-                elif ch.research_races[f][r]<60:
-                    if ch.races[f][r]<60:
-                        for n in ['2','3']:
-                            try:
-                                ch.tool_tags.remove(r+n)
-                            except ValueError:
-                                pass
-                    if r+'1' not in ch.tool_tags:
-                        ch.tool_tags.append(r+'1')
-                        if r+'1'=='troll1':
-                            ch.tool_tags.append('big hammer')
-                        if r+'1'=='imp1':
-                            ch.tool_tags.append('fire')
-                elif ch.research_races[f][r]<90:
-                    for n in ['1','2']:
-                        if r+n not in ch.tool_tags:
-                            ch.tool_tags.append(r+n)
-                            if r+n=='troll1':
-                                ch.tool_tags.append('big hammer')
-                            if r+n=='imp1':
-                                ch.tool_tags.append('fire')
-                    if ch.races[f][r]<90:
-                        try:
-                            ch.tool_tags.remove(r+'3')
-                        except ValueError:
-                            pass
-                elif ch.research_races[f][r]>=90:
-                    for n in ['1','2','3']:
-                        if r+n not in ch.tool_tags:
-                            ch.tool_tags.append(r+n)
-                            if r+n=='troll1':
-                                ch.tool_tags.append('big hammer')
-                            if r+n=='imp1':
-                                ch.tool_tags.append('fire')
-    
-def effect(k,v,xy=[],ot=''):
-    if k == 'attr':
-        mod = ch.attr[v[0]]-ch.max_attr[v[0]]
-        ch.max_attr[v[0]] += v[1]
-        ch.attr[v[0]] = ch.max_attr[v[0]] + mod
-        take_effect()
-    elif k == 'temp_attr':
-        ch.attr[v[0]] += v[1]
-        take_effect()
-    elif k == 'temp_attr_reverse':
-        ch.attr[v[0]] -= v[1]
-        take_effect()
-    elif k == 'energy':
-        ch.energy += v
-        if ch.life < ch.max_life:
-            while ch.energy >= ch.max_energy and ch.life < ch.max_life:
-                ch.life += 1
-                ch.energy -= 100
-        if ch.energy > ch.max_energy:
-            ch.energy = ch.max_energy
-    elif k == 'research':
-        for x in v:
-            if 'force' in v[x].keys():
-                ## Izpolzva se za uvelichavane!
-                ch.research_forces[x]=min([max([ch.research_forces[x]+v[x]['force'],0]),100])
-                all_x=sum([ch.research_forces[f] for f in ch.research_forces])
-                if all_x>100:
-                    rorder=ch.research_forces.keys()
-                    rorder.remove(ch.research_force)
-                    random.shuffle(rorder)
-                    rest=all_x-100
-                    i=0
-                    rall_x=sum([ch.research_forces[f] for f in rorder])
-                    while rest>0 and rall_x>0:
-                        if ch.research_forces[rorder[i%len(rorder)]]>0:
-                            ch.research_forces[rorder[i%len(rorder)]]=max([ch.research_forces[rorder[i%len(rorder)]]-0.01,0])
-                            every=0
-                            for every in ch.research_races[rorder[i%len(rorder)]].keys():
-                                if ch.research_races[rorder[i%len(rorder)]][every]==0:
-                                    break
-                            if not every:
-                                ch.research_races[rorder[i%len(rorder)]].keys()[0]
-                            effect('research',{rorder[i%len(rorder)]:{every:0}})
-                            rest-=0.01
-                        i+=1
-                        rall_x=sum([ch.research_forces[f] for f in rorder])
-                    if rest:
-                        ch.research_forces[x]=min([max([ch.research_forces[x]-rest,0]),100])
-                take_research_effect()
-            ## Za uvelichavane i namalqvane na rasi.
-            else:
-                for y in v[x]:
-                    ch.research_races[x][y]=min([max([ch.research_races[x][y]+v[x][y],0]),100])
-                    all_x=sum([ch.research_races[x][f] for f in ch.research_races[x]])
-                    if all_x>ch.research_forces[x]:
-                        rorder=ch.research_races[x].keys()
-                        rorder.remove(y)
-                        if ch.research_race in rorder:
-                            rorder.remove(ch.research_race)
-                        random.shuffle(rorder)
-                        rest=all_x-ch.research_forces[x]
-                        i=0
-                        rall_x=sum([ch.research_races[x][f] for f in rorder])
-                        while rest>0 and rall_x>0:
-                            if ch.research_races[x][rorder[i%len(rorder)]]>0:
-                                ch.research_races[x][rorder[i%len(rorder)]]=max([ch.research_races[x][rorder[i%len(rorder)]]-0.01,0])
-                                rest-=0.01
-                            i+=1
-                            rall_x=sum([ch.research_races[x][f] for f in rorder])
-                        if rest>0:
-                            ch.research_races[x][y]=min([max([ch.research_races[x][y]-rest,0]),100])
-                    take_research_effect()
-    elif k == 'force':
-        ##{'Nature':{'force':0.01,'spirit of nature':0.01},'Chaos':{'all':-.01}}
-        for x in v:
-            if 'all' in v[x].keys():
-                ## Izpolzva se za namalqvane, ne za uvelichavane!
-                ch.forces[x]=min([max([ch.forces[x]+v[x]['all'],0]),100])
-                for r in ch.races[x]:
-                    ch.races[x][r]=min([max([ch.races[x][r]+v[x]['all'],0]),100])
-                take_force_effect()
-            if 'force' in v[x].keys():
-                ## Izpolzva se za uvelichavane!
-                ch.forces[x]=min([max([ch.forces[x]+v[x]['force'],0]),100])
-            for y in v[x]:
-                if y in ['all','force']:
-                    pass
-                elif y=='expend':
-                    for each in ch.inventory:
-                        if v[x][y] in each.tool_tag:
-                            each.use_item('expend')
-                            break
-                ## Prirodniq ritual e nai-truden (25% pri 100 i 100), no nqma shans za izbuhvane i vsichki rasi go mogat
-                elif y=='calm_lava':
-                    chance=max(ch.races['Nature'].values())+ch.forces['Nature']-v[x][y]
-                    check=random.randint(0,100)
-                    if check<chance:
-                        msvcrt.getch()
-                        init_screen.combat_buffer+=' The lava recedes down in the earth. With a last flicker a spark flies up and   lands near your feet. You have received a Seed of Life!'
-                        init_screen.land[xy[1]-1] = init_screen.land[xy[1]-1][:xy[0]-21]+'.'+init_screen.land[xy[1]-1][xy[0]-20:]
-                        inventory.put_item([[1307,100,1,1]], xy)
-                ## Rituala na reda e po-lesen (50% pri 100 i 100), no ako se provali izbuhva
-                elif y=='suppress_lava':
-                    chance=max(ch.races['Order'].values())+ch.forces['Order']-v[x][y]
-                    check=random.randint(0,100)
-                    if check<chance:
-                        msvcrt.getch()
-                        init_screen.combat_buffer+=' The lava bubles and dances, and then slowly turns darker - you managed to tame the power of the fire! With a last "BLOP!" the nearly black surface breaks and  in the last flickers you see something shiny. Maybe you can pry it out?'
-                        init_screen.land[xy[1]-1] = init_screen.land[xy[1]-1][:xy[0]-21]+'A'+init_screen.land[xy[1]-1][xy[0]-20:]
-                    else:
-                        msvcrt.getch()
-                        init_screen.combat_buffer+=' The lava errupts violently!'
-                        for x1 in range(max([1,xy[1]-6]),min([24,xy[1]+6])):
-                            for y1 in range(max([21,xy[0]-6]),min([79,xy[0]+6])):
-                                if random.choice([0,1,2]):
-                                    effect('force',{'Chaos':{'lava_fire':15}},[y1,x1])
-                ## Rituala na haosa e nai-lesen (75% pri 100 i 100), no vinagi ima izbuhvane
-                elif y=='awaken_lava':
-                    chance=max(ch.races['Chaos'].values())+ch.forces['Chaos']-v[x][y]
-                    check=random.randint(0,100)
-                    if check<chance:
-                        msvcrt.getch()
-                        init_screen.combat_buffer+=' The lava bursts out of the earth and sprays the space around you! On the bottom of the smoking hole lies a small piece of black rock, emanating dread and      coldness.'
-                        init_screen.land[xy[1]-1] = init_screen.land[xy[1]-1][:xy[0]-21]+'.'+init_screen.land[xy[1]-1][xy[0]-20:]
-                        inventory.put_item([[1309,100,1,1]], xy)
-                        for x1 in range(max([1,xy[1]-14]),min([24,xy[1]+14])):
-                            for y1 in range(max([21,xy[0]-14]),min([79,xy[0]+14])):
-                                if random.choice([0,1,2,3]):
-                                    effect('force',{'Chaos':{'lava_fire':15}},[y1,x1])
-                    else:
-                        msvcrt.getch()
-                        init_screen.combat_buffer+=' The lava errupts violently!'
-                        for x1 in range(max([1,xy[1]-14]),min([24,xy[1]+14])):
-                            for y1 in range(max([21,xy[0]-14]),min([79,xy[0]+14])):
-                                if random.choice([0,1,2,3]):
-                                    effect('force',{'Chaos':{'lava_fire':15}},[y1,x1])
-                elif y=='fire_up':
-                    spot_id=ot
-                    spot_color=T[init_screen.land[xy[1]-1][xy[0]-21]].colour
-                    ch.land_effects[ch.turn]=[v[x][y],'on_fire',init_screen.current_area,xy[:],spot_id,spot_color,2]
-                elif y=='lava_fire':
-                    spot_id=T[init_screen.land[xy[1]-1][xy[0]-21]].char
-                    spot_color=T[init_screen.land[xy[1]-1][xy[0]-21]].colour
-                    if init_screen.land[xy[1]-1][xy[0]-21] in ['T','g',':','J']:
-                        init_screen.land[xy[1]-1] = init_screen.land[xy[1]-1][:xy[0]-21]+'.'+init_screen.land[xy[1]-1][xy[0]-20:]
-                    if ch.land_effects.keys():
-                        if max(ch.land_effects.keys())<ch.turn:
-                            ch.land_effects[ch.turn]=[v[x][y]+random.randint(0,6),'on_fire',init_screen.current_area,xy[:],spot_id,spot_color,6]
-                        else:
-                            ch.land_effects[max(ch.land_effects.keys())+1]=[v[x][y]+random.randint(0,6),'on_fire',init_screen.current_area,xy[:],spot_id,spot_color,6]
-                    else:
-                        ch.land_effects[ch.turn]=[v[x][y]+random.randint(0,6),'on_fire',init_screen.current_area,xy[:],spot_id,spot_color,6]
-                ## Izpolzva se za uvelichavane!
-                elif y=='terrain':
-                    if random.random()<v[x][y]:
-                        if init_screen.current_place[x]<100:
-                            init_screen.current_place[x]+=1
-                        restf=['Nature','Chaos','Order']
-                        restf.remove(x)
-                        random.shuffle(restf)
-                        if init_screen.current_place[restf[0]]>0:
-                            init_screen.current_place[restf[0]]-=1
-                        elif init_screen.current_place[restf[1]]>0:
-                            init_screen.current_place[restf[1]]-=1
-                        predominant_f={init_screen.current_place['Nature']:'Nature',init_screen.current_place['Order']:'Order',
-                                       init_screen.current_place['Chaos']:'Chaos'}
-                        init_screen.place_descriptions[init_screen.current_area] = 'A place of %s.' %(predominant_f[max(predominant_f.keys())])
-                ## Izpolzva se za uvelichavane!
-                elif y=='population':
-                    init_screen.current_place['Population']=max([0,min([100,init_screen.current_place['Population']+v[x][y]])])
-                ## Za uvelichavane i namalqvane na rasi.
-                else:
-                    ch.races[x][y]=min([max([ch.races[x][y]+v[x][y],0]),100])
-                    all_x=sum([ch.races[x][f] for f in ch.races[x]])
-                    if all_x>ch.forces[x]:
-                        rorder=ch.races[x].keys()
-                        rorder.remove(y)
-                        if ch.locked_race in rorder:
-                            rorder.remove(ch.locked_race)
-                        random.shuffle(rorder)
-                        rest=all_x-ch.forces[x]
-                        i=0
-                        rall_x=sum([ch.races[x][f] for f in rorder])
-                        while rest>0 and rall_x>0:
-                            if ch.races[x][rorder[i%len(rorder)]]>0:
-                                ch.races[x][rorder[i%len(rorder)]]=max([ch.races[x][rorder[i%len(rorder)]]-0.01,0])
-                                rest-=0.01
-                            i+=1
-                            rall_x=sum([ch.races[x][f] for f in rorder])
-                        if rest:
-                            ch.races[x][y]=min([max([ch.races[x][y]-rest,0]),100])
-                    take_force_effect()
-    elif k=='mass destruction':
-        ch.land_effects[ch.turn]=[1,'mass destruction',init_screen.current_area]
-    elif k=='dryad song':
-        ch.land_effects[ch.turn]=[1,'dryad song',init_screen.current_area,ch.energy/100+1]
-    elif k == 'thirst':
-        ch.thirst -= v
-        if ch.thirst < 0:
-            ch.thirst = 0
-    elif k == 'hunger':
-        ch.hunger -= v
-        if ch.hunger < 0:
-            ch.hunger = 0
-    elif k == 'container':
-        init_screen.I[v].create_item()
-    elif k == 'fill':
-        try:
-            init_screen.I[v[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]]].create_item()
-        except KeyError:
-            message.message('no_fill')
-            i = msvcrt.getch()
-            return 0
-    elif k == 'gather':
-        try:
-            ## Izbira sluchaina bilka ot spisuka za suotvetniq teren i opredelq dali e namerena.
-            choice = random.choice(v[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]])
-            found = random.randint(1,100)
-            if found <= choice.effect['chance']*ch.attr['Int']:
-                choice.create_item()
-            else:
-                message.message('failed_gather')
-                i = msvcrt.getch()
-        except KeyError:
-            message.message('no_gather')
-            i = msvcrt.getch()
-            return 0
-    elif k=='transform':
-        init_screen.possess(v,'trans')
-    elif k=='plant_seed':
-        if init_screen.land[ch.xy[1]-1][ch.xy[0]-21] in ['.','a','g']:
-            message.message('plant_seed')
-            ch.land_effects[ch.turn]=[int(1200*(1-.5*(init_screen.current_place['Nature']/100.))),'plant',init_screen.current_area,random.choice(v),ch.xy[:]]
-        else:
-            message.message('need_dirt')
-            return 0
-    elif k=='plant_vegetable':
-        if init_screen.land[ch.xy[1]-1][ch.xy[0]-21]== 'a':
-            message.message('plant_seed')
-            ch.land_effects[ch.turn]=[int(1200*(1-.5*(init_screen.current_place['Nature']/100.))),'plant',init_screen.current_area,random.choice(v),ch.xy[:]]
-        else:
-            message.message('need_farm')
-            return 0
-    ## Za veche opredeleni semena na zelenchuci
-    elif k=='plant_specific':
-        if init_screen.land[ch.xy[1]-1][ch.xy[0]-21]== 'a':
-            message.message('plant_seed')
-            ch.land_effects[ch.turn]=[int(1200*(1-.5*(init_screen.current_place['Nature']/100.))),'plant',init_screen.current_area,random.choice(v[0]),ch.xy[:],v[1]]
-        else:
-            message.message('need_farm')
-            return 0
-    elif k=='break_rock':
-        if 'hammer' in ch.tool_tags:
-            effect('force',{'Order':{'force':0.01,'dwarf':0.01},'Nature':{'all':-.01}})
-            if random.random()<0.05 or ('dwarf3' in ch.tool_tags and random.random()<0.15):
-                the_turn=ch.turn+1
-                while the_turn in ch.land_effects:
-                    the_turn+=1
-                ch.land_effects[the_turn]=[1,'plant',init_screen.current_area,random.choice(v),ch.xy[:]]
-                message.message('found_gem')
-            else:
-                message.message('break_rock')
-            msvcrt.getch()
-        else:
-            message.tool_msg('no_tool',['hammer'])
-            msvcrt.getch()
-            return 0
-    elif k=='smelt_ore':
-        if 'hammer' in ch.tool_tags:
-            smelted=0
-            for i in init_screen.ground_items:
-                if i[:2]==ch.xy and i[2].id==505:
-                    effect('force',{'Order':{'force':0.01,'dwarf':0.01},'Nature':{'all':-.01},'Chaos':{'all':-.01}})
-                    if random.random()<(0.05*ch.attr['Cre']):
-                        the_turn=ch.turn+1
-                        while the_turn in ch.land_effects:
-                            the_turn+=1
-                        if random.random()<0.08 or ('dwarf3' in ch.tool_tags and random.random()<0.25):
-                            ch.land_effects[the_turn]=[50,'plant',init_screen.current_area,v[1],ch.xy[:],
-                                                      random.choice(['copper ingot','gold ingot','silver ingot'])]
-                        else:
-                            ch.land_effects[the_turn]=[50,'plant',init_screen.current_area,v[0],ch.xy[:]]
-                        message.message('found_metal')
-                        msvcrt.getch()
-                    else:
-                        message.message('failed_smelt')
-                        msvcrt.getch()
-                        return 0
-                    smelted=1
-                    break
-            if not smelted:
-                message.tool_msg('no_tool',['forge'])
-                msvcrt.getch()
-                return 0
-        else:
-            message.tool_msg('no_tool',['hammer'])
-            msvcrt.getch()
-            return 0
-    elif k=='gnome_gem':
-        if T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in v[0] and 'gnome2' in ch.tool_tags:
-            if 'ruby' not in v[1] and 'sapphire' not in v[1] and 'amethyst' not in v[1]:
-                message.message(v[1])
-            if 'topaz' in v[1]:
-                effect('energy',ch.max_energy-ch.energy)
-            elif 'emerald' in v[1]:
-                effect('energy',ch.max_energy-ch.energy+100*(ch.max_life-ch.life))
-            elif 'diamond' in v[1]:
-                init_screen.current_place['Treasure']+=1
-                init_screen.treasure_modifier -=1
-            elif 'garnet' in v[1]:
-                for x in all_creatures:
-                    if x.mode != 'not_appeared' and x.t=='animal':
-                        x.mode='fearfull'
-            elif 'opal' in v[1]:
-                mossy_coords=[]
-                for y in range(len(init_screen.land)):
-                    for x in range(len(init_screen.land[y])):
-                        if init_screen.land[y][x]=='n' and [x+21,y+1] != ch.xy:
-                            mossy_coords.append([x+21,y+1])
-                ch.xy=random.choice(mossy_coords)
-            elif 'turquoise' in v[1]:
-                init_screen.land[ch.xy[1]-1] = init_screen.land[ch.xy[1]-1][:ch.xy[0]-21]+'W'+init_screen.land[ch.xy[1]-1][ch.xy[0]-20:]
-                effect('force',{'Nature':{'terrain':1}})
-            elif 'tourmaline' in v[1]:
-                init_screen.land[ch.xy[1]-1] = init_screen.land[ch.xy[1]-1][:ch.xy[0]-21]+'n'+init_screen.land[ch.xy[1]-1][ch.xy[0]-20:]
-                effect('force',{'Nature':{'terrain':1}})
-            elif 'aquamarine' in v[1]:
-                init_screen.land[ch.xy[1]-1] = init_screen.land[ch.xy[1]-1][:ch.xy[0]-21]+'w'+init_screen.land[ch.xy[1]-1][ch.xy[0]-20:]
-                effect('force',{'Nature':{'terrain':1}})
-            elif 'sapphire' in v[1]:
-                for x in all_creatures:
-                    if x.mode=='hostile':
-                        if init_screen.clear_los(init_screen.direct_path(ch.xy,x.xy)):
-                            x.life-=max([(ch.races['Nature']['gnome']-60)/4,1])
-                            message.creature('sapphired',x)
-            elif 'ruby' in v[1]:
-                found_fire=0
-                for x in ch.land_effects.keys():
-                    if ch.land_effects[x][2]==init_screen.current_area and ch.land_effects[x][1]=='on_fire' \
-                       and ch.land_effects[x][3]==ch.xy:
-                        message.message(v[1])
-                        found_fire=1
-                        for x in all_creatures:
-                            if x.mode=='hostile':
-                                if init_screen.clear_los(init_screen.direct_path(ch.xy,x.xy)):
-                                    x.life-=max([(ch.races['Nature']['gnome']-60)/2,1])
-                                    message.creature('rubied',x)
-                        break
-                if not found_fire:
-                    message.message('cant_use_gem')
-                    return 0
-            elif 'amethyst' in v[1]:
-                if ch.marked_stone and init_screen.current_area==ch.marked_stone[0] and ch.xy==ch.marked_stone[1]:
-                    ch.marked_stone=[]
-                    message.message('amethyst0')
-                else:
-                    ch.marked_stone=[init_screen.current_area,ch.xy[:]]
-                    message.message('amethyst1')
-            elif 'lapis' in v[1]:
-                init_screen.change_place('areaB','gnome')
-            effect('force',{'Nature':{'force':0.03,'gnome':0.03},'Chaos':{'all':-.03},'Order':{'all':-.03}})
-        else:
-            message.message('cant_use_gem')
-            return 0
-    else:
-        return 0
-
-def game_time(i = '0'):
-    hostile_in_sight=1
-    if i in ['0','1','2','3','4','5','6','7','8','9']:
-        if ch.work > 0:
-            ch.work -= 10
-            ch.energy -= 11
-            if ch.work < 0:
-                ch.work = 0
-        else:
-            ch.move(i)
-            if 'human3' in ch.tool_tags and ch.research_race!='human':
-                if init_screen.current_place[ch.research_force]==max([init_screen.current_place['Chaos'],init_screen.current_place['Order'],init_screen.current_place['Nature'],]) and init_screen.current_place[ch.research_force]>=ch.research_forces[ch.research_force]:
-                    effect('research',{ch.research_force:{'force':0.01}})
-            if ch.possessed and ch.possessed[0].mode=='temp':
-                effect('force',{'Nature':{'terrain':0.1}})
-        for x in all_creatures:
-            if x.mode != 'not_appeared':
-                if x.life < 1:
-                    init_screen.c.scroll((x.xy[0], x.xy[1], x.xy[0]+1, x.xy[1]+1), 1, 1,
-                                         T[init_screen.land[x.xy[1]-1][x.xy[0]-21]].colour,
-                                         T[init_screen.land[x.xy[1]-1][x.xy[0]-21]].char)
-                    all_creatures.remove(x)
-                    all_beings.remove(x)
-        for x in all_creatures:
-            if not (x in ch.followers and x.xy==ch.xy) or (x in ch.possessed and x.xy==[1,1]):
-                init_screen.hide(x)
-            if x.mode != 'not_appeared':
-                if x in ch.ride or x in ch.possessed or (x in ch.followers and x.xy==ch.xy):
-                    continue
-                x.creature_move()
-            if init_screen.clear_los(init_screen.direct_path(ch.xy,x.xy)):
-                if x.mode=='hostile':
-                    hostile_in_sight=2
-                if 'human3' in ch.tool_tags and ch.research_race!='human':
-                    if x.race==ch.research_race and i!=0 and i!=5 and x.learning>0:
-                        effect('research',{ch.research_force:{ch.research_race:0.01}})
-                        x.learning-=0.01
-            elif x.t=='sentient' and 'midnight fears' in ch.effects and x.mode=='hostile':
-                x.fear+=int(ch.races['Nature']['fairy']/10)-abs(600-max([0,ch.turn%2400-1200])%1200)/100
-        init_screen.draw_items()
-        ch.turn += 1 * ch.place_time
-        for cr in all_creatures:
-            if (cr.energy < cr.max_energy):
-                cr.energy += 1
-            if (cr.energy > cr.max_energy):
-                cr.energy = cr.max_energy
-        if ch.place_time > 1:
-            ch.hunger += ch.place_time/20
-            ch.thirst += ch.place_time/20
-        elif (ch.turn % 20) == 0:
-            ch.hunger += 1
-            ch.thirst += 1
-            for fol in ch.followers+ch.ride:
-                if fol.attr['tame'][0]=='farm':
-                    if not fol.food%5 and fol.food>random.randint(64,100):
-                        fol.farm+=1
-                fol.food=max([fol.food-1,0])
-                if fol.food<random.randint(0,25):
-                    fol.mode='wander'
-        if (ch.hunger > 100):
-            ch.life -= 1
-            ch.hunger = 100
-        if (ch.thirst > 100):
-            ch.life -= 2
-            ch.thirst = 100
-        if (ch.energy < ch.max_energy) and not (ch.hunger>79 or ch.thirst>79):
-            ch.energy += ch.rest * ch.place_time
-        if (ch.energy > ch.max_energy):
-            ch.energy = ch.max_energy
-        if (ch.life < ch.max_life) and ch.life!=0:
-            if ch.energy == ch.max_energy:
-                ch.life += 1
-                ch.energy -= 100
-        if (ch.life > ch.max_life):
-            ch.life = ch.max_life
-        if (ch.energy > (ch.max_energy * 0.2)):
-            ch.emotion = 7
-        else:
-            ch.emotion = 2
-        if not ch.possessed:
-            for attr in ch.attr:
-                new_sum = 0
-                for each_force in ch.races:
-                    for each_race in ch.races[each_force]:
-                        new_sum += ch.races[each_force][each_race]*race_attrs[each_race][attr]/100.
-                if int(new_sum) != ch.max_attr[attr]:
-                        effect('attr',[attr, int(min([20,new_sum])) - ch.max_attr[attr]])
-                if ch.attr[attr] > ch.max_attr[attr]:
-                    ch.attr_colors[attr] = 10
-                elif ch.attr[attr] < ch.max_attr[attr]:
-                    ch.attr_colors[attr] = 12
-                else:
-                    ch.attr_colors[attr] = 7
-        init_screen.draw_hud()
-        if 'water elemental1' in ch.tool_tags and T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wWt':
-            if 'waterform' not in ch.effects:
-                ch.effects['invisible']=2
-                if 'water elemental2' in ch.tool_tags:
-                    if T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id in 'wW':
-                        ch.hunger=max([0,ch.hunger-1])
-                        ch.thirst=max([0,ch.thirst-1])
-                        message.message('good_water')
-                    elif T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id=='t':
-                        ch.hunger=min([100,ch.hunger+10])
-                        ch.thirst=min([100,ch.thirst+10])
-                        message.message('bad_water')
-            elif T[init_screen.land[ch.xy[1]-1][ch.xy[0]-21]].id=='W' and 'waterform' in ch.effects:
-                ch.life=1
-                ch.hunger=90
-                ch.thirst=90
-                del(ch.effects['waterform'])
-                del(ch.effects['invisible'])
-                message.message('reform_waterform')
-                msvcrt.getch()
-        if (init_screen.current_place['Nature']>=33 and init_screen.current_place['Temperature']>=33 and 'elf2' in ch.tool_tags) \
-           or ('goblin1' in ch.tool_tags and ch.turn%2400>1200):
-            if 'stealthy' not in ch.tool_tags:
-                ch.tool_tags.append('stealthy')
-        else:
-            if 'stealthy' in ch.tool_tags:
-                ch.tool_tags.remove('stealthy')
-        if 'stealthy' in ch.tool_tags:
-            ch.emotion=8
-        for x in ch.effects.keys():
-            if not (ch.equipment['Right ring'] and ch.equipment['Right ring'].name=='ring of winter' and (init_screen.current_place['Temperature']<33 or 'summerwalk' in ch.effects) and x=='winterwalk')\
-               and not (ch.equipment['Left ring'] and ch.equipment['Left ring'].name=='ring of summer' and (init_screen.current_place['Temperature']>=66 or 'winterwalk' in ch.effects) and x=='summerwalk')\
-               and not (x in ['fairyland','summerwalk','winterwalk','midnight fears','sun armour','invisible'] and 'fairyland' in ch.effects):
-                ch.effects[x] -= 1
-            if ch.effects[x]==0:
-                if x=='waterform':
-                    msvcrt.getch()
-                    over = init_screen.game_over()
-                    return over
-                del(ch.effects[x])
-                if x=='sun armour' and ch.sun_armour:
-                    ch.armour-=ch.sun_armour
-                    ch.sun_armour=0
-            if 'invisible' in ch.effects:
-                ch.emotion = 1
-            if 'midnight fears' in ch.effects:
-                ch.emotion+= 208
-            if 'sun armour' in ch.effects:
-                ch.emotion+= 224
-                ch.armour=ch.armour-ch.sun_armour
-                if ch.turn%2400>=1200:
-                    ch.sun_armour=0
-                else:
-                    clothes_penalty={'Chest':10,'Back':8,'Arms':5,'On hands':5,'Belt':2,'Legs':7,'Feet':3}
-                    penalty=0
-                    for cl in clothes_penalty:
-                        if ch.equipment[cl] and ch.equipment[cl].name!='dress of the fae':
-                            penalty+=clothes_penalty[cl]
-                    steps=[200,400,550,650,800,1000,1200]
-                    adds=[60,120,180,240,180,120,60]
-                    daytime=ch.turn%2400
-                    for s in range(len(steps)):
-                        if daytime<steps[s]:
-                            ch.sun_armour=max([0,adds[s]-penalty*adds[s]/60])
-                            ch.armour+=ch.sun_armour
-                            break
-        for x in ch.land_effects.keys():
-            if ch.land_effects[x][0] > 0:
-                ch.land_effects[x][0] -= 1
-            if ch.land_effects[x][2]==init_screen.current_area:
-                if ch.land_effects[x][1]=='mass destruction':
-                    init_screen.combat_buffer+=' You unleash the power of the chaos rock! The world crumbles around you!'
-                    message.combat_buffer()
-                    msvcrt.getch()
-                    for i1 in range(8):
-                        effect('force',{'Chaos':{'terrain':1}})
-                        for i2 in range(100):
-                            place=[random.randint(22,78),random.randint(2,23)]
-                            dest=T[init_screen.land[place[1]-1][place[0]-21]].degrade_to['Chaos']
-                            if dest in ['`','+','s','S']:
-                                dest='.'
-                            init_screen.land[place[1]-1] = init_screen.land[place[1]-1][:place[0]-21]+dest+init_screen.land[place[1]-1][place[0]-20:]
-                            init_screen.c.scroll((place[0],place[1],place[0]+1,place[1]+1), 1, 1, T[init_screen.land[place[1]-1][place[0]-21]].colour, T[init_screen.land[place[1]-1][place[0]-21]].char)
-                        msvcrt.getch()
-                if ch.land_effects[x][1]=='dryad song':
-                    effect('force',{'Nature':{'dryad':.01,'terrain':.4,'force':.01},'Chaos':{'all':-0.02},'Order':{'all':-0.01}})
-                    init_screen.combat_buffer+=' Leaves rustle, wood creaks, in your steps the grass grows higher!'
-                    for i1 in range(30):
-                        place=[random.randint(22,78),random.randint(2,23)]
-                        growing={'.':'g','B':'g','g':'b','a':'g','T':'J','F':'T','b':'T','%':'n','m':'n','#':'n','o':'b',
-                                 'p':'g',',':'g','~':'b','+':'T','`':'T',}
-                        dest=T[init_screen.land[place[1]-1][place[0]-21]].id
-                        if dest in growing:
-                            dest=growing[dest]
-                        init_screen.land[place[1]-1] = init_screen.land[place[1]-1][:place[0]-21]+dest+init_screen.land[place[1]-1][place[0]-20:]
-                        init_screen.c.scroll((place[0],place[1],place[0]+1,place[1]+1), 1, 1, T[init_screen.land[place[1]-1][place[0]-21]].colour, T[init_screen.land[place[1]-1][place[0]-21]].char)
-                        if ch.land_effects[x][3]>1:
-                            ch.land_effects[ch.turn]=[1,'dryad song',init_screen.current_area,ch.land_effects[x][3]-2]
-                if ch.land_effects[x][1]=='plant':
-                    if ch.land_effects[x][0]==0:
-##                        inventory.put_item([[ch.land_effects[x][3].id,100,1,1]],ch.land_effects[x][4])
-                        if len(ch.land_effects[x])==5:
-                            inventory.put_item([[ch.land_effects[x][3].id,100,1,1]],ch.land_effects[x][4])
-                        ## Za opredeleni zelenchuci
-                        elif len(ch.land_effects[x])==6:
-                            new_veg=ch.land_effects[x][3].duplicate(1,ch.land_effects[x][5])
-                            init_screen.ground_items.append([ch.land_effects[x][4][0],ch.land_effects[x][4][1],new_veg])
-                if ch.land_effects[x][1]=='on_fire':
-                    fxy=ch.land_effects[x][3]
-                    if ch.land_effects[x][0]==0:
-                        init_screen.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, T[init_screen.land[fxy[1]-1][fxy[0]-21]].colour, T[init_screen.land[fxy[1]-1][fxy[0]-21]].char)
-                    else:
-                        for cr in all_creatures:
-                            if cr.mode != 'not_appeared':
-                                if cr.xy==fxy:
-                                    cr.life-=ch.land_effects[x][6]
-                                if cr.life < 1:
-                                    init_screen.c.scroll((cr.xy[0], cr.xy[1], cr.xy[0]+1, cr.xy[1]+1), 1, 1,
-                                                         T[init_screen.land[cr.xy[1]-1][cr.xy[0]-21]].colour,
-                                                         T[init_screen.land[cr.xy[1]-1][cr.xy[0]-21]].char)
-                                    all_creatures.remove(cr)
-                                    all_beings.remove(cr)
-                                    init_screen.combat_buffer+=' The %s dies in the flames!' %(cr.name)
-                        fire_color=random.choice([4,12,14])
-                        init_screen.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, fire_color*16+ch.land_effects[x][5],ch.land_effects[x][4])
-                        if ch.xy==fxy:
-                            ch.life-=ch.land_effects[x][6]
-                            init_screen.combat_buffer+=' You get burnt by the fire!'
-            if ch.land_effects[x][0]==0:
-                del(ch.land_effects[x])
-
-        message.combat_buffer()
-
-        if ch.life <= 0:
-            if 'water elemental3' in ch.tool_tags and 'waterform' not in ch.effects:
-                ch.effects['waterform']=100+int(100*(ch.races['Nature']['water elemental']-90))
-                ch.effects['invisible']=100+int(100*(ch.races['Nature']['water elemental']-90))
-                message.emotion('gain_waterform',ch.effects['waterform'])
-            elif 'waterform' in ch.effects:
-                message.emotion('gain_waterform',ch.effects['waterform'])
-            else:
-                msvcrt.getch()
-                over = init_screen.game_over()
-                return over
-    else:
-        message.message('?')
-    ##Can't be 0 - ends the game
-    return hostile_in_sight

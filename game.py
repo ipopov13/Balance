@@ -30,6 +30,7 @@ class Game:
         self.combat_buffer = ''
         self.I = {}
         for i in inventory.all_items:
+            i.game=self
             self.I[i.id] = (i)
         self.map_size=10
         self.T_matrix = []
@@ -38,9 +39,14 @@ class Game:
                          'Order':[["'","'",'.','g','%'],['.','g',':','g','%','g'],[',',',',':','g','%']]}
         self.all_beings = []
         self.all_creatures = []
-        self.hidden = [] ## Sudurja skritite sushtestva i tezi koito ne sa se poqvili, no se poqvqvat po princip v mestnostta i sa
-                    ## unikalni (ne random) i imat mode = 'not_appeared'!!!
-    
+        self.hidden = [] ## Contains hidden creatures and those that did not appear at the moment (but usually do) and have mode 'not_appeared'
+        self.random_by_force = {'Nature':{'cold':[5,4,11,12,16,20],'warm':[3,9,5,4,13,18,19,20],'hot':[9,14,17]},
+                   'Order':{'cold':[12,16,20,6],'warm':[9,6,13,19,20],'hot':[14,9,10,6]},
+                   'Chaos':{'cold':[12,7],'warm':[7,8,10,19,20],'hot':[15,10,9]}}
+        self.water_creatures = [100]
+        for creature in player.game_creatures:
+            creature.game=self
+
     def draw_items(self,the_spot=[]):
         for x in self.ground_items:
             if the_spot and x[:2]!=the_spot:
@@ -210,20 +216,20 @@ class Game:
         self.draw_move(self.player, self.player.xy[0], self.player.xy[1])
         self.c.pos(*self.player.xy)
 
-    def draw_move(self,ch, x, y):
+    def draw_move(self,mover, x, y):
     ##    try:
         self.c.scroll((x, y, x+1, y+1), 1, 1, T[self.land[y-1][x-21]].colour, T[self.land[y-1][x-21]].char)
     ##    except:
     ##        print x, y, land[y-1][x-21]
-        self.c.pos(*ch.xy)
-        if ch.tag=='@' and ch.possessed:
-            self.c.scroll((ch.xy[0], ch.xy[1], ch.xy[0]+1, ch.xy[1]+1), 1, 1, ch.possessed[0].emotion, ch.possessed[0].tag)
+        self.c.pos(*mover.xy)
+        if mover.tag=='@' and mover.possessed:
+            self.c.scroll((mover.xy[0], mover.xy[1], mover.xy[0]+1, mover.xy[1]+1), 1, 1, mover.possessed[0].emotion, mover.possessed[0].tag)
         else:
-            self.c.scroll((ch.xy[0], ch.xy[1], ch.xy[0]+1, ch.xy[1]+1), 1, 1, ch.emotion, ch.tag)
+            self.c.scroll((mover.xy[0], mover.xy[1], mover.xy[0]+1, mover.xy[1]+1), 1, 1, mover.emotion, mover.tag)
 
-    def hide(self,ch):
-        x = ch.xy[0]
-        y = ch.xy[1]
+    def hide(self,to_hide):
+        x = to_hide.xy[0]
+        y = to_hide.xy[1]
         self.c.scroll((x, y, x+1, y+1), 1, 1, T[self.land[y-1][x-21]].colour, T[self.land[y-1][x-21]].char)
 
     def build_terr(self,new_ter):
@@ -239,12 +245,12 @@ class Game:
             elif ok!=1:
                 self.player.work = inventory.build_recipes[new_ter][4]
                 ok=1
-            hostiles=player.game_time('0')
+            hostiles=self.game_time('0')
             if hostiles==2:
                 self.player.work=0
                 return -3
             if self.player.work == 0:
-                player.effect('force',inventory.build_recipes[new_ter][5])
+                self.effect('force',inventory.build_recipes[new_ter][5])
                 if 'str' in str(type(inventory.build_recipes[new_ter][2])):
                     self.land[self.player.xy[1]-1] = self.land[self.player.xy[1]-1][:self.player.xy[0]-21] + inventory.build_recipes[new_ter][2] + self.land[self.player.xy[1]-1][self.player.xy[0]-20:]
                 elif 'int' in str(type(inventory.build_recipes[new_ter][2])):
@@ -353,12 +359,12 @@ class Game:
             elif ok!=1:
                 self.player.work = inventory.craft_recipes[item_type][new_item][4]
                 ok=1
-            hostiles=player.game_time('0')
+            hostiles=self.game_time('0')
             if hostiles==2:
                 self.player.work=0
                 return -3,0
             if self.player.work == 0:
-                player.effect('force',inventory.craft_recipes[item_type][new_item][5])
+                self.effect('force',inventory.craft_recipes[item_type][new_item][5])
                 creation=self.I[inventory.craft_recipes[item_type][new_item][2]].duplicate(name=the_name)
                 if 'dwarf2' in self.player.tool_tags:
                     creation=self.add_gems(creation)
@@ -706,12 +712,12 @@ class Game:
                 else:
                     grown_item=self.I[make_list[si[0]][si[1]]].duplicate(amount)
                 self.ground_items.append([self.player.xy[0],self.player.xy[1],grown_item])
-                player.effect('force',{'Nature':{'dryad':-1.}})
+                self.effect('force',{'Nature':{'dryad':-1.}})
         else:
             message.message('dryad_song')
             msvcrt.getch()
             if self.player.energy>100:
-                player.effect('dryad song',1)
+                self.effect('dryad song',1)
                 self.player.energy=0
         self.redraw_screen()
 
@@ -734,7 +740,7 @@ class Game:
                         message.message('dryad_heal_tree')
                     else:
                         message.message(T[old_ter].degr_mess[self.player.mode])
-                    hostiles=player.game_time('0')
+                    hostiles=self.game_time('0')
                     if hostiles==2:
                         self.player.work=0
                         return -3
@@ -746,9 +752,9 @@ class Game:
                                 self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21] + T[old_ter].degrade_to[self.player.mode] + self.land[xy[1]-1][xy[0]-20:]
                         found_loot=0
                         if xy not in self.player.worked_places[self.player.mode] or T[old_ter].id=='m':
-                            player.effect('force',T[old_ter].force_effects[self.player.mode],xy,T[old_ter].char)
+                            self.effect('force',T[old_ter].force_effects[self.player.mode],xy,T[old_ter].char)
                             if 'dryad2' in self.player.tool_tags and T[old_ter].id==':' and self.player.mode=='Nature':
-                                player.effect('force',T[old_ter].force_effects[self.player.mode],xy,T[old_ter].char)
+                                self.effect('force',T[old_ter].force_effects[self.player.mode],xy,T[old_ter].char)
                             self.player.worked_places[self.player.mode].append(xy[:])
                             if 'gnome2' in self.player.tool_tags and T[old_ter].id in ['%','n','m'] and self.player.mode=='Nature':
                                 found_loot+=inventory.put_item([['gnome_touch',5,1,1]], xy)
@@ -1583,10 +1589,10 @@ class Game:
             message.use('drink',T[self.land[xy[1]-1][xy[0]-21]])
             if T[self.land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in self.player.tool_tags:
                 for k,v in {'energy':10,'thirst':5}.items():
-                    player.effect(k,v)
+                    self.effect(k,v)
             else:
                 for k,v in T[self.land[xy[1]-1][xy[0]-21]].drink.items():
-                    player.effect(k,v)
+                    self.effect(k,v)
         elif self.player.possessed:
             if self.player.thirst>20 or self.player.hunger>20:
                 to_eat={'wild horse':'gb','squirrel':'T','snake':'b','poison snake':'b','camel':'Tb','giant lizard':'.,',
@@ -1596,7 +1602,7 @@ class Game:
                     self.possession_score(100,self.player)
                     if self.player.xy not in self.player.worked_places[self.player.mode]:
                         for k,v in {'energy':10,'thirst':5,'hunger':5}.items():
-                            player.effect(k,v)
+                            self.effect(k,v)
                         message.message('eating_%s' %(self.player.possessed[0].race.replace(' ','_')))
                         if self.player.possessed[0].race!='plant':
                             self.player.worked_places[self.player.mode].append(xy[:])
@@ -1608,7 +1614,7 @@ class Game:
                         if [x[0],x[1]]==self.player.xy and 'meat' in x[2].name:
                             found_meat=1
                             for k,v in {'energy':10,'thirst':10,'hunger':25}.items():
-                                player.effect(k,v)
+                                self.effect(k,v)
                             break
                     if found_meat:
                         if x[2].qty>1:
@@ -2039,8 +2045,8 @@ class Game:
             force='Chaos'
         else:
             force='Order'
-        self.player = player.Player([0,0],race,force,self)
-        player.take_force_effect()
+        self.player = player.Player([0,0],race,force,34,self)
+        self.take_force_effect()
         self.all_beings = [self.player]
         i = 'z'
         too_heavy = 0
@@ -2082,7 +2088,7 @@ class Game:
                     too_heavy = 0
             except KeyError:
                 pass
-        player.start_inv(i)
+        self.start_inv(i)
         while True:
             self.c.page()
             self.c.write('''
@@ -2290,7 +2296,7 @@ class Game:
                                         if random.randint(1,100)<=kill_chance:
                                             add_dmg+=creature.life+5
                                             if kill_chance>12 and self.current_place['Chaos']>0:
-                                                player.effect('force',{'Nature':{'terrain':1}})
+                                                self.effect('force',{'Nature':{'terrain':1}})
                                     if add_dmg<creature.life+5:
                                         for each_other in self.all_creatures:
                                             if each_other.force==creature.force and (creature.t=='sentient' and each_other.t=='sentient') and not (creature.force=='Chaos' and attacker.mode=='Chaos'):
@@ -2463,23 +2469,23 @@ class Game:
     def defender_dead(self,defender,add_dmg,attacker):
         if attacker.tag=='@':
             if defender.race=='dwarf':
-                player.effect('force',{'Chaos':{'troll':0.02}})
+                self.effect('force',{'Chaos':{'troll':0.02}})
             elif defender.race=='troll':
-                player.effect('force',{'Order':{'dwarf':0.02}})
+                self.effect('force',{'Order':{'dwarf':0.02}})
             elif defender.race=='spirit of order':
-                player.effect('force',{'Chaos':{'spirit of chaos':0.02}})
+                self.effect('force',{'Chaos':{'spirit of chaos':0.02}})
             elif defender.race=='spirit of chaos':
-                player.effect('force',{'Order':{'spirit of order':0.02}})
+                self.effect('force',{'Order':{'spirit of order':0.02}})
             elif defender.race=='spirit of nature':
-                player.effect('force',{'Chaos':{'goblin':0.02}})
+                self.effect('force',{'Chaos':{'goblin':0.02}})
             elif defender.race=='dryad':
-                player.effect('force',{'Chaos':{'goblin':0.02}})
+                self.effect('force',{'Chaos':{'goblin':0.02}})
             elif defender.race=='fairy':
-                player.effect('force',{'Chaos':{'goblin':0.02}})
+                self.effect('force',{'Chaos':{'goblin':0.02}})
             elif defender.race=='kraken':
-                player.effect('force',{'Nature':{'water elemental':0.02}})
+                self.effect('force',{'Nature':{'water elemental':0.02}})
             elif defender.race=='water elemental':
-                player.effect('force',{'Chaos':{'kraken':0.02}})
+                self.effect('force',{'Chaos':{'kraken':0.02}})
             self.c.scroll((defender.xy[0], defender.xy[1], defender.xy[0]+1, defender.xy[1]+1), 1, 1,
                                  T[self.land[defender.xy[1]-1][defender.xy[0]-21]].colour,
                                  T[self.land[defender.xy[1]-1][defender.xy[0]-21]].char)
@@ -2821,7 +2827,7 @@ class Game:
             creatures = random.randint(0,2)
             if creatures:
                 for i in range(creatures):
-                    ID = random.choice(player.water_creatures)
+                    ID = random.choice(self.water_creatures)
                     for thing in player.game_creatures:
                         if ID == thing.id:
                             break
@@ -2925,7 +2931,7 @@ class Game:
                         c_temp='warm'
                     else:
                         c_temp='hot'
-                    ID = random.choice(player.random_by_force[c_force][c_temp])
+                    ID = random.choice(self.random_by_force[c_force][c_temp])
                     for thing in player.game_creatures:
                         if ID == thing.id:
                             break
@@ -3134,7 +3140,7 @@ class Game:
                             self.all_beings.append(each_creature)
                             creature_coords.append(each_creature.xy[:])
                             game_ids.append(each_creature.game_id)
-                        else: #if each_creature.id not in player.random_creatures:
+                        else:
                             if random.randint(1,1000)>each_creature.appearance:
                                 each_creature.mode = 'not_appeared'
                                 self.hidden.append(each_creature)
@@ -3160,7 +3166,7 @@ class Game:
                                 c_temp='warm'
                             else:
                                 c_temp='hot'
-                            ID = random.choice(player.random_by_force[c_force][c_temp])
+                            ID = random.choice(self.random_by_force[c_force][c_temp])
                             for thing in player.game_creatures:
                                 if ID == thing.id:
                                     break
@@ -3212,7 +3218,7 @@ class Game:
                         else:
                             add_id=1
                         for i in range(creatures):
-                            ID = random.choice(player.water_creatures)
+                            ID = random.choice(self.water_creatures)
                             for thing in player.game_creatures:
                                 if ID == thing.id:
                                     break
@@ -3326,6 +3332,903 @@ class Game:
             os.system('ren %s %s' %(f,f.split('_')[-1]))
         os.chdir('..')
         return 1
+
+    def game_time(self,i = '0'):
+        hostile_in_sight=1
+        if i in ['0','1','2','3','4','5','6','7','8','9']:
+            if self.player.work > 0:
+                self.player.work -= 10
+                self.player.energy -= 11
+                if self.player.work < 0:
+                    self.player.work = 0
+            else:
+                self.player.move(i)
+                if 'human3' in self.player.tool_tags and self.player.research_race!='human':
+                    if self.current_place[self.player.research_force]==max([self.current_place['Chaos'],self.current_place['Order'],self.current_place['Nature'],])\
+                       and self.current_place[self.player.research_force]>=self.player.research_forces[self.player.research_force]:
+                        self.effect('research',{self.player.research_force:{'force':0.01}})
+                if self.player.possessed and self.player.possessed[0].mode=='temp':
+                    self.effect('force',{'Nature':{'terrain':0.1}})
+            for x in self.all_creatures:
+                if x.mode != 'not_appeared':
+                    if x.life < 1:
+                        self.c.scroll((x.xy[0], x.xy[1], x.xy[0]+1, x.xy[1]+1), 1, 1,
+                                             T[self.land[x.xy[1]-1][x.xy[0]-21]].colour,
+                                             T[self.land[x.xy[1]-1][x.xy[0]-21]].char)
+                        self.all_creatures.remove(x)
+                        self.all_beings.remove(x)
+            for x in self.all_creatures:
+                if not (x in self.player.followers and x.xy==self.player.xy) or (x in self.player.possessed and x.xy==[1,1]):
+                    self.hide(x)
+                if x.mode != 'not_appeared':
+                    if x in self.player.ride or x in self.player.possessed or (x in self.player.followers and x.xy==self.player.xy):
+                        continue
+                    x.creature_move()
+                if self.clear_los(self.direct_path(self.player.xy,x.xy)):
+                    if x.mode=='hostile':
+                        hostile_in_sight=2
+                    if 'human3' in self.player.tool_tags and self.player.research_race!='human':
+                        if x.race==self.player.research_race and i!=0 and i!=5 and x.learning>0:
+                            self.effect('research',{self.player.research_force:{self.player.research_race:0.01}})
+                            x.learning-=0.01
+                elif x.t=='sentient' and 'midnight fears' in self.player.effects and x.mode=='hostile':
+                    x.fear+=int(self.player.races['Nature']['fairy']/10)-abs(600-max([0,self.player.turn%2400-1200])%1200)/100
+            self.draw_items()
+            self.player.turn += 1 * self.player.place_time
+            for cr in self.all_creatures:
+                if (cr.energy < cr.max_energy):
+                    cr.energy += 1
+                if (cr.energy > cr.max_energy):
+                    cr.energy = cr.max_energy
+            if self.player.place_time > 1:
+                self.player.hunger += self.player.place_time/20
+                self.player.thirst += self.player.place_time/20
+            elif (self.player.turn % 20) == 0:
+                self.player.hunger += 1
+                self.player.thirst += 1
+                for fol in self.player.followers+self.player.ride:
+                    if fol.attr['tame'][0]=='farm':
+                        if not fol.food%5 and fol.food>random.randint(64,100):
+                            fol.farm+=1
+                    fol.food=max([fol.food-1,0])
+                    if fol.food<random.randint(0,25):
+                        fol.mode='wander'
+            if (self.player.hunger > 100):
+                self.player.life -= 1
+                self.player.hunger = 100
+            if (self.player.thirst > 100):
+                self.player.life -= 2
+                self.player.thirst = 100
+            if (self.player.energy < self.player.max_energy) and not (self.player.hunger>79 or self.player.thirst>79):
+                self.player.energy += self.player.rest * self.player.place_time
+            if (self.player.energy > self.player.max_energy):
+                self.player.energy = self.player.max_energy
+            if (self.player.life < self.player.max_life) and self.player.life!=0:
+                if self.player.energy == self.player.max_energy:
+                    self.player.life += 1
+                    self.player.energy -= 100
+            if (self.player.life > self.player.max_life):
+                self.player.life = self.player.max_life
+            if (self.player.energy > (self.player.max_energy * 0.2)):
+                self.player.emotion = 7
+            else:
+                self.player.emotion = 2
+            if not self.player.possessed:
+                for attr in self.player.attr:
+                    new_sum = 0
+                    for each_force in self.player.races:
+                        for each_race in self.player.races[each_force]:
+                            new_sum += self.player.races[each_force][each_race]*self.player.race_attrs[each_race][attr]/100.
+                    if int(new_sum) != self.player.max_attr[attr]:
+                            self.effect('attr',[attr, int(min([20,new_sum])) - self.player.max_attr[attr]])
+                    if self.player.attr[attr] > self.player.max_attr[attr]:
+                        self.player.attr_colors[attr] = 10
+                    elif self.player.attr[attr] < self.player.max_attr[attr]:
+                        self.player.attr_colors[attr] = 12
+                    else:
+                        self.player.attr_colors[attr] = 7
+            self.draw_hud()
+            if 'water elemental1' in self.player.tool_tags and T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id in 'wWt':
+                if 'waterform' not in self.player.effects:
+                    self.player.effects['invisible']=2
+                    if 'water elemental2' in self.player.tool_tags:
+                        if T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id in 'wW':
+                            self.player.hunger=max([0,self.player.hunger-1])
+                            self.player.thirst=max([0,self.player.thirst-1])
+                            message.message('good_water')
+                        elif T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id=='t':
+                            self.player.hunger=min([100,self.player.hunger+10])
+                            self.player.thirst=min([100,self.player.thirst+10])
+                            message.message('bad_water')
+                elif T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id=='W' and 'waterform' in self.player.effects:
+                    self.player.life=1
+                    self.player.hunger=90
+                    self.player.thirst=90
+                    del(self.player.effects['waterform'])
+                    del(self.player.effects['invisible'])
+                    message.message('reform_waterform')
+                    msvcrt.getch()
+            if (self.current_place['Nature']>=33 and self.current_place['Temperature']>=33 and 'elf2' in self.player.tool_tags) \
+               or ('goblin1' in self.player.tool_tags and self.player.turn%2400>1200):
+                if 'stealthy' not in self.player.tool_tags:
+                    self.player.tool_tags.append('stealthy')
+            else:
+                if 'stealthy' in self.player.tool_tags:
+                    self.player.tool_tags.remove('stealthy')
+            if 'stealthy' in self.player.tool_tags:
+                self.player.emotion=8
+            for x in self.player.effects.keys():
+                if not (self.player.equipment['Right ring'] and self.player.equipment['Right ring'].name=='ring of winter' and (self.current_place['Temperature']<33 or 'summerwalk' in self.player.effects) and x=='winterwalk')\
+                   and not (self.player.equipment['Left ring'] and self.player.equipment['Left ring'].name=='ring of summer' and (self.current_place['Temperature']>=66 or 'winterwalk' in self.player.effects) and x=='summerwalk')\
+                   and not (x in ['fairyland','summerwalk','winterwalk','midnight fears','sun armour','invisible'] and 'fairyland' in self.player.effects):
+                    self.player.effects[x] -= 1
+                if self.player.effects[x]==0:
+                    if x=='waterform':
+                        msvcrt.getch()
+                        over = self.game_over()
+                        return over
+                    del(self.player.effects[x])
+                    if x=='sun armour' and self.player.sun_armour:
+                        self.player.armour-=self.player.sun_armour
+                        self.player.sun_armour=0
+                if 'invisible' in self.player.effects:
+                    self.player.emotion = 1
+                if 'midnight fears' in self.player.effects:
+                    self.player.emotion+= 208
+                if 'sun armour' in self.player.effects:
+                    self.player.emotion+= 224
+                    self.player.armour=self.player.armour-self.player.sun_armour
+                    if self.player.turn%2400>=1200:
+                        self.player.sun_armour=0
+                    else:
+                        clothes_penalty={'Chest':10,'Back':8,'Arms':5,'On hands':5,'Belt':2,'Legs':7,'Feet':3}
+                        penalty=0
+                        for cl in clothes_penalty:
+                            if self.player.equipment[cl] and self.player.equipment[cl].name!='dress of the fae':
+                                penalty+=clothes_penalty[cl]
+                        steps=[200,400,550,650,800,1000,1200]
+                        adds=[60,120,180,240,180,120,60]
+                        daytime=self.player.turn%2400
+                        for s in range(len(steps)):
+                            if daytime<steps[s]:
+                                self.player.sun_armour=max([0,adds[s]-penalty*adds[s]/60])
+                                self.player.armour+=self.player.sun_armour
+                                break
+            for x in self.player.land_effects.keys():
+                if self.player.land_effects[x][0] > 0:
+                    self.player.land_effects[x][0] -= 1
+                if self.player.land_effects[x][2]==self.current_area:
+                    if self.player.land_effects[x][1]=='mass destruction':
+                        self.combat_buffer+=' You unleash the power of the chaos rock! The world crumbles around you!'
+                        message.combat_buffer()
+                        msvcrt.getch()
+                        for i1 in range(8):
+                            self.effect('force',{'Chaos':{'terrain':1}})
+                            for i2 in range(100):
+                                place=[random.randint(22,78),random.randint(2,23)]
+                                dest=T[self.land[place[1]-1][place[0]-21]].degrade_to['Chaos']
+                                if dest in ['`','+','s','S']:
+                                    dest='.'
+                                self.land[place[1]-1] = self.land[place[1]-1][:place[0]-21]+dest+self.land[place[1]-1][place[0]-20:]
+                                self.c.scroll((place[0],place[1],place[0]+1,place[1]+1), 1, 1, T[self.land[place[1]-1][place[0]-21]].colour, T[self.land[place[1]-1][place[0]-21]].char)
+                            msvcrt.getch()
+                    if self.player.land_effects[x][1]=='dryad song':
+                        self.effect('force',{'Nature':{'dryad':.01,'terrain':.4,'force':.01},'Chaos':{'all':-0.02},'Order':{'all':-0.01}})
+                        self.combat_buffer+=' Leaves rustle, wood creaks, in your steps the grass grows higher!'
+                        for i1 in range(30):
+                            place=[random.randint(22,78),random.randint(2,23)]
+                            growing={'.':'g','B':'g','g':'b','a':'g','T':'J','F':'T','b':'T','%':'n','m':'n','#':'n','o':'b',
+                                     'p':'g',',':'g','~':'b','+':'T','`':'T',}
+                            dest=T[self.land[place[1]-1][place[0]-21]].id
+                            if dest in growing:
+                                dest=growing[dest]
+                            self.land[place[1]-1] = self.land[place[1]-1][:place[0]-21]+dest+self.land[place[1]-1][place[0]-20:]
+                            self.c.scroll((place[0],place[1],place[0]+1,place[1]+1), 1, 1, T[self.land[place[1]-1][place[0]-21]].colour, T[self.land[place[1]-1][place[0]-21]].char)
+                            if self.player.land_effects[x][3]>1:
+                                self.player.land_effects[self.player.turn]=[1,'dryad song',self.current_area,self.player.land_effects[x][3]-2]
+                    if self.player.land_effects[x][1]=='plant':
+                        if self.player.land_effects[x][0]==0:
+                            if len(self.player.land_effects[x])==5:
+                                inventory.put_item([[self.player.land_effects[x][3].id,100,1,1]],self.player.land_effects[x][4])
+                            ## For defined vegetables
+                            elif len(self.player.land_effects[x])==6:
+                                new_veg=self.player.land_effects[x][3].duplicate(1,self.player.land_effects[x][5])
+                                self.ground_items.append([self.player.land_effects[x][4][0],self.player.land_effects[x][4][1],new_veg])
+                    if self.player.land_effects[x][1]=='on_fire':
+                        fxy=self.player.land_effects[x][3]
+                        if self.player.land_effects[x][0]==0:
+                            self.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, T[self.land[fxy[1]-1][fxy[0]-21]].colour, T[self.land[fxy[1]-1][fxy[0]-21]].char)
+                        else:
+                            for cr in self.all_creatures:
+                                if cr.mode != 'not_appeared':
+                                    if cr.xy==fxy:
+                                        cr.life-=self.player.land_effects[x][6]
+                                    if cr.life < 1:
+                                        self.c.scroll((cr.xy[0], cr.xy[1], cr.xy[0]+1, cr.xy[1]+1), 1, 1,
+                                                             T[self.land[cr.xy[1]-1][cr.xy[0]-21]].colour,
+                                                             T[self.land[cr.xy[1]-1][cr.xy[0]-21]].char)
+                                        self.all_creatures.remove(cr)
+                                        self.all_beings.remove(cr)
+                                        self.combat_buffer+=' The %s dies in the flames!' %(cr.name)
+                            fire_color=random.choice([4,12,14])
+                            self.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, fire_color*16+self.player.land_effects[x][5],self.player.land_effects[x][4])
+                            if self.player.xy==fxy:
+                                self.player.life-=self.player.land_effects[x][6]
+                                self.combat_buffer+=' You get burnt by the fire!'
+                if self.player.land_effects[x][0]==0:
+                    del(self.player.land_effects[x])
+            message.combat_buffer()
+            if chself.player.life <= 0:
+                if 'water elemental3' in self.player.tool_tags and 'waterform' not in self.player.effects:
+                    self.player.effects['waterform']=100+int(100*(self.player.races['Nature']['water elemental']-90))
+                    self.player.effects['invisible']=100+int(100*(self.player.races['Nature']['water elemental']-90))
+                    message.emotion('gain_waterform',self.player.effects['waterform'])
+                elif 'waterform' in self.player.effects:
+                    message.emotion('gain_waterform',self.player.effects['waterform'])
+                else:
+                    msvcrt.getch()
+                    over = self.game_over()
+                    return over
+        else:
+            message.message('?')
+        ##Can't be 0 - ends the game
+        return hostile_in_sight
+
+    def take_research_effect(self):
+        for f in self.player.research_races:
+            for r in self.player.research_races[f]:
+                if r!='human':
+                    if self.player.research_races[f][r]<30:
+                        if self.player.races[f][r]<30:
+                            for n in ['1','2','3']:
+                                try:
+                                    self.player.tool_tags.remove(r+n)
+                                    if r+n=='troll1':
+                                        self.player.tool_tags.remove('big hammer')
+                                    if r+n=='imp1':
+                                        self.player.tool_tags.remove('fire')
+                                except ValueError:
+                                    pass
+                    elif self.player.research_races[f][r]<60:
+                        if self.player.races[f][r]<60:
+                            for n in ['2','3']:
+                                try:
+                                    self.player.tool_tags.remove(r+n)
+                                except ValueError:
+                                    pass
+                        if r+'1' not in self.player.tool_tags:
+                            self.player.tool_tags.append(r+'1')
+                            if r+'1'=='troll1':
+                                self.player.tool_tags.append('big hammer')
+                            if r+'1'=='imp1':
+                                self.player.tool_tags.append('fire')
+                    elif self.player.research_races[f][r]<90:
+                        for n in ['1','2']:
+                            if r+n not in self.player.tool_tags:
+                                self.player.tool_tags.append(r+n)
+                                if r+n=='troll1':
+                                    self.player.tool_tags.append('big hammer')
+                                if r+n=='imp1':
+                                    self.player.tool_tags.append('fire')
+                        if self.player.races[f][r]<90:
+                            try:
+                                self.player.tool_tags.remove(r+'3')
+                            except ValueError:
+                                pass
+                    elif self.player.research_races[f][r]>=90:
+                        for n in ['1','2','3']:
+                            if r+n not in self.player.tool_tags:
+                                self.player.tool_tags.append(r+n)
+                                if r+n=='troll1':
+                                    self.player.tool_tags.append('big hammer')
+                                if r+n=='imp1':
+                                    self.player.tool_tags.append('fire')
+
+    def effect(self,k,v,xy=[],ot=''):
+        if k == 'attr':
+            mod = self.player.attr[v[0]]-self.player.max_attr[v[0]]
+            self.player.max_attr[v[0]] += v[1]
+            self.player.attr[v[0]] = self.player.max_attr[v[0]] + mod
+            self.take_effect()
+        elif k == 'temp_attr':
+            self.player.attr[v[0]] += v[1]
+            self.take_effect()
+        elif k == 'temp_attr_reverse':
+            self.player.attr[v[0]] -= v[1]
+            self.take_effect()
+        elif k == 'energy':
+            self.player.energy += v
+            if self.player.life < self.player.max_life:
+                while self.player.energy >= self.player.max_energy and self.player.life < self.player.max_life:
+                    self.player.life += 1
+                    self.player.energy -= 100
+            if self.player.energy > self.player.max_energy:
+                self.player.energy = self.player.max_energy
+        elif k == 'research':
+            for x in v:
+                if 'force' in v[x].keys():
+                    ## Use to increase
+                    self.player.research_forces[x]=min([max([self.player.research_forces[x]+v[x]['force'],0]),100])
+                    all_x=sum([self.player.research_forces[f] for f in self.player.research_forces])
+                    if all_x>100:
+                        rorder=self.player.research_forces.keys()
+                        rorder.remove(self.player.research_force)
+                        random.shuffle(rorder)
+                        rest=all_x-100
+                        i=0
+                        rall_x=sum([self.player.research_forces[f] for f in rorder])
+                        while rest>0 and rall_x>0:
+                            if self.player.research_forces[rorder[i%len(rorder)]]>0:
+                                self.player.research_forces[rorder[i%len(rorder)]]=max([self.player.research_forces[rorder[i%len(rorder)]]-0.01,0])
+                                every=0
+                                for every in self.player.research_races[rorder[i%len(rorder)]].keys():
+                                    if self.player.research_races[rorder[i%len(rorder)]][every]==0:
+                                        break
+                                if not every:
+                                    self.player.research_races[rorder[i%len(rorder)]].keys()[0]
+                                self.effect('research',{rorder[i%len(rorder)]:{every:0}})
+                                rest-=0.01
+                            i+=1
+                            rall_x=sum([self.player.research_forces[f] for f in rorder])
+                        if rest:
+                            self.player.research_forces[x]=min([max([self.player.research_forces[x]-rest,0]),100])
+                    self.take_research_effect()
+                ## Use to increase/decrease race research
+                else:
+                    for y in v[x]:
+                        self.player.research_races[x][y]=min([max([self.player.research_races[x][y]+v[x][y],0]),100])
+                        all_x=sum([self.player.research_races[x][f] for f in self.player.research_races[x]])
+                        if all_x>self.player.research_forces[x]:
+                            rorder=self.player.research_races[x].keys()
+                            rorder.remove(y)
+                            if self.player.research_race in rorder:
+                                rorder.remove(self.player.research_race)
+                            random.shuffle(rorder)
+                            rest=all_x-self.player.research_forces[x]
+                            i=0
+                            rall_x=sum([self.player.research_races[x][f] for f in rorder])
+                            while rest>0 and rall_x>0:
+                                if self.player.research_races[x][rorder[i%len(rorder)]]>0:
+                                    self.player.research_races[x][rorder[i%len(rorder)]]=max([self.player.research_races[x][rorder[i%len(rorder)]]-0.01,0])
+                                    rest-=0.01
+                                i+=1
+                                rall_x=sum([self.player.research_races[x][f] for f in rorder])
+                            if rest>0:
+                                self.player.research_races[x][y]=min([max([self.player.research_races[x][y]-rest,0]),100])
+                        self.take_research_effect()
+        elif k == 'force':
+            ##{'Nature':{'force':0.01,'spirit of nature':0.01},'Chaos':{'all':-.01}}
+            for x in v:
+                if 'all' in v[x].keys():
+                    ## Use to decrease
+                    self.player.forces[x]=min([max([self.player.forces[x]+v[x]['all'],0]),100])
+                    for r in self.player.races[x]:
+                        self.player.races[x][r]=min([max([self.player.races[x][r]+v[x]['all'],0]),100])
+                    self.take_force_effect()
+                if 'force' in v[x].keys():
+                    ## Use to increase
+                    self.player.forces[x]=min([max([self.player.forces[x]+v[x]['force'],0]),100])
+                for y in v[x]:
+                    if y in ['all','force']:
+                        pass
+                    elif y=='expend':
+                        for each in self.player.inventory:
+                            if v[x][y] in each.tool_tag:
+                                each.use_item('expend')
+                                break
+                    ## Nature's ritual is hardest (25% at 100 Nature and race attunement), but no chance for explosions and all races can do it
+                    elif y=='calm_lava':
+                        chance=max(self.player.races['Nature'].values())+self.player.forces['Nature']-v[x][y]
+                        check=random.randint(0,100)
+                        if check<chance:
+                            msvcrt.getch()
+                            self.combat_buffer+=' The lava recedes down in the earth. With a last flicker a spark flies up and   lands near your feet. You have received a Seed of Life!'
+                            self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21]+'.'+self.land[xy[1]-1][xy[0]-20:]
+                            inventory.put_item([[1307,100,1,1]], xy)
+                    ## Order's ritual is easier (50%), but explodes is failed
+                    elif y=='suppress_lava':
+                        chance=max(self.player.races['Order'].values())+self.player.forces['Order']-v[x][y]
+                        check=random.randint(0,100)
+                        if check<chance:
+                            msvcrt.getch()
+                            self.combat_buffer+=' The lava bubles and dances, and then slowly turns darker - you managed to tame the power of the fire! With a last "BLOP!" the nearly black surface breaks and  in the last flickers you see something shiny. Maybe you can pry it out?'
+                            self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21]+'A'+self.land[xy[1]-1][xy[0]-20:]
+                        else:
+                            msvcrt.getch()
+                            self.combat_buffer+=' The lava errupts violently!'
+                            for x1 in range(max([1,xy[1]-6]),min([24,xy[1]+6])):
+                                for y1 in range(max([21,xy[0]-6]),min([79,xy[0]+6])):
+                                    if random.choice([0,1,2]):
+                                        self.effect('force',{'Chaos':{'lava_fire':15}},[y1,x1])
+                    ## Chaos's ritual is easiest (75%), but always explodes!
+                    elif y=='awaken_lava':
+                        chance=max(self.player.races['Chaos'].values())+self.player.forces['Chaos']-v[x][y]
+                        check=random.randint(0,100)
+                        if check<chance:
+                            msvcrt.getch()
+                            self.combat_buffer+=' The lava bursts out of the earth and sprays the space around you! On the bottom of the smoking hole lies a small piece of black rock, emanating dread and      coldness.'
+                            self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21]+'.'+self.land[xy[1]-1][xy[0]-20:]
+                            inventory.put_item([[1309,100,1,1]], xy)
+                            for x1 in range(max([1,xy[1]-14]),min([24,xy[1]+14])):
+                                for y1 in range(max([21,xy[0]-14]),min([79,xy[0]+14])):
+                                    if random.choice([0,1,2,3]):
+                                        self.effect('force',{'Chaos':{'lava_fire':15}},[y1,x1])
+                        else:
+                            msvcrt.getch()
+                            self.combat_buffer+=' The lava errupts violently!'
+                            for x1 in range(max([1,xy[1]-14]),min([24,xy[1]+14])):
+                                for y1 in range(max([21,xy[0]-14]),min([79,xy[0]+14])):
+                                    if random.choice([0,1,2,3]):
+                                        self.effect('force',{'Chaos':{'lava_fire':15}},[y1,x1])
+                    elif y=='fire_up':
+                        spot_id=ot
+                        spot_color=T[self.land[xy[1]-1][xy[0]-21]].colour
+                        self.player.land_effects[self.player.turn]=[v[x][y],'on_fire',self.current_area,xy[:],spot_id,spot_color,2]
+                    elif y=='lava_fire':
+                        spot_id=T[self.land[xy[1]-1][xy[0]-21]].char
+                        spot_color=T[self.land[xy[1]-1][xy[0]-21]].colour
+                        if self.land[xy[1]-1][xy[0]-21] in ['T','g',':','J']:
+                            self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21]+'.'+self.land[xy[1]-1][xy[0]-20:]
+                        if self.player.land_effects.keys():
+                            if max(self.player.land_effects.keys())<self.player.turn:
+                                self.player.land_effects[self.player.turn]=[v[x][y]+random.randint(0,6),'on_fire',self.current_area,xy[:],spot_id,spot_color,6]
+                            else:
+                                self.player.land_effects[max(self.player.land_effects.keys())+1]=[v[x][y]+random.randint(0,6),'on_fire',self.current_area,xy[:],spot_id,spot_color,6]
+                        else:
+                            self.player.land_effects[self.player.turn]=[v[x][y]+random.randint(0,6),'on_fire',self.current_area,xy[:],spot_id,spot_color,6]
+                    ## Use to increase
+                    elif y=='terrain':
+                        if random.random()<v[x][y]:
+                            if self.current_place[x]<100:
+                                self.current_place[x]+=1
+                            restf=['Nature','Chaos','Order']
+                            restf.remove(x)
+                            random.shuffle(restf)
+                            if self.current_place[restf[0]]>0:
+                                self.current_place[restf[0]]-=1
+                            elif self.current_place[restf[1]]>0:
+                                self.current_place[restf[1]]-=1
+                            predominant_f={self.current_place['Nature']:'Nature',self.current_place['Order']:'Order',
+                                           self.current_place['Chaos']:'Chaos'}
+                            self.place_descriptions[self.current_area] = 'A place of %s.' %(predominant_f[max(predominant_f.keys())])
+                    ## Use to increase
+                    elif y=='population':
+                        self.current_place['Population']=max([0,min([100,self.current_place['Population']+v[x][y]])])
+                    ## Use to increase/decrease races
+                    else:
+                        self.player.races[x][y]=min([max([self.player.races[x][y]+v[x][y],0]),100])
+                        all_x=sum([self.player.races[x][f] for f in self.player.races[x]])
+                        if all_x>self.player.forces[x]:
+                            rorder=self.player.races[x].keys()
+                            rorder.remove(y)
+                            if self.player.locked_race in rorder:
+                                rorder.remove(self.player.locked_race)
+                            random.shuffle(rorder)
+                            rest=all_x-self.player.forces[x]
+                            i=0
+                            rall_x=sum([self.player.races[x][f] for f in rorder])
+                            while rest>0 and rall_x>0:
+                                if self.player.races[x][rorder[i%len(rorder)]]>0:
+                                    self.player.races[x][rorder[i%len(rorder)]]=max([self.player.races[x][rorder[i%len(rorder)]]-0.01,0])
+                                    rest-=0.01
+                                i+=1
+                                rall_x=sum([self.player.races[x][f] for f in rorder])
+                            if rest:
+                                self.player.races[x][y]=min([max([self.player.races[x][y]-rest,0]),100])
+                        self.take_force_effect()
+        elif k=='mass destruction':
+            self.player.land_effects[self.player.turn]=[1,'mass destruction',self.current_area]
+        elif k=='dryad song':
+            self.player.land_effects[self.player.turn]=[1,'dryad song',self.current_area,self.player.energy/100+1]
+        elif k == 'thirst':
+            self.player.thirst -= v
+            if self.player.thirst < 0:
+                self.player.thirst = 0
+        elif k == 'hunger':
+            self.player.hunger -= v
+            if self.player.hunger < 0:
+                self.player.hunger = 0
+        elif k == 'container':
+            self.I[v].create_item()
+        elif k == 'fill':
+            try:
+                self.I[v[self.land[self.player.xy[1]-1][self.player.xy[0]-21]]].create_item()
+            except KeyError:
+                message.message('no_fill')
+                i = msvcrt.getch()
+                return 0
+        elif k == 'gather':
+            try:
+                ## Chooses a random herb for the respective tile and determines if it appears
+                choice = random.choice(v[self.land[self.player.xy[1]-1][self.player.xy[0]-21]])
+                found = random.randint(1,100)
+                if found <= choice.effect['chance']*self.player.attr['Int']:
+                    choice.create_item()
+                else:
+                    message.message('failed_gather')
+                    i = msvcrt.getch()
+            except KeyError:
+                message.message('no_gather')
+                i = msvcrt.getch()
+                return 0
+        elif k=='transform':
+            self.possess(v,'trans')
+        elif k=='plant_seed':
+            if self.land[self.player.xy[1]-1][self.player.xy[0]-21] in ['.','a','g']:
+                message.message('plant_seed')
+                self.player.land_effects[self.player.turn]=[int(1200*(1-.5*(self.current_place['Nature']/100.))),'plant',self.current_area,random.choice(v),self.player.xy[:]]
+            else:
+                message.message('need_dirt')
+                return 0
+        elif k=='plant_vegetable':
+            if self.land[self.player.xy[1]-1][self.player.xy[0]-21]== 'a':
+                message.message('plant_seed')
+                self.player.land_effects[self.player.turn]=[int(1200*(1-.5*(self.current_place['Nature']/100.))),'plant',self.current_area,random.choice(v),self.player.xy[:]]
+            else:
+                message.message('need_farm')
+                return 0
+        ## For already identified vegetable seeds
+        elif k=='plant_specific':
+            if self.land[self.player.xy[1]-1][self.player.xy[0]-21]== 'a':
+                message.message('plant_seed')
+                self.player.land_effects[self.player.turn]=[int(1200*(1-.5*(self.current_place['Nature']/100.))),'plant',self.current_area,random.choice(v[0]),self.player.xy[:],v[1]]
+            else:
+                message.message('need_farm')
+                return 0
+        elif k=='break_rock':
+            if 'hammer' in self.player.tool_tags:
+                self.effect('force',{'Order':{'force':0.01,'dwarf':0.01},'Nature':{'all':-.01}})
+                if random.random()<0.05 or ('dwarf3' in self.player.tool_tags and random.random()<0.15):
+                    the_turn=self.player.turn+1
+                    while the_turn in self.player.land_effects:
+                        the_turn+=1
+                    self.player.land_effects[the_turn]=[1,'plant',self.current_area,random.choice(v),self.player.xy[:]]
+                    message.message('found_gem')
+                else:
+                    message.message('break_rock')
+                msvcrt.getch()
+            else:
+                message.tool_msg('no_tool',['hammer'])
+                msvcrt.getch()
+                return 0
+        elif k=='smelt_ore':
+            if 'hammer' in self.player.tool_tags:
+                smelted=0
+                for i in self.ground_items:
+                    if i[:2]==self.player.xy and i[2].id==505:
+                        self.effect('force',{'Order':{'force':0.01,'dwarf':0.01},'Nature':{'all':-.01},'Chaos':{'all':-.01}})
+                        if random.random()<(0.05*self.player.attr['Cre']):
+                            the_turn=self.player.turn+1
+                            while the_turn in self.player.land_effects:
+                                the_turn+=1
+                            if random.random()<0.08 or ('dwarf3' in self.player.tool_tags and random.random()<0.25):
+                                self.player.land_effects[the_turn]=[50,'plant',self.current_area,v[1],self.player.xy[:],
+                                                          random.choice(['copper ingot','gold ingot','silver ingot'])]
+                            else:
+                                self.player.land_effects[the_turn]=[50,'plant',self.current_area,v[0],self.player.xy[:]]
+                            message.message('found_metal')
+                            msvcrt.getch()
+                        else:
+                            message.message('failed_smelt')
+                            msvcrt.getch()
+                            return 0
+                        smelted=1
+                        break
+                if not smelted:
+                    message.tool_msg('no_tool',['forge'])
+                    msvcrt.getch()
+                    return 0
+            else:
+                message.tool_msg('no_tool',['hammer'])
+                msvcrt.getch()
+                return 0
+        elif k=='gnome_gem':
+            if T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id in v[0] and 'gnome2' in self.player.tool_tags:
+                if 'ruby' not in v[1] and 'sapphire' not in v[1] and 'amethyst' not in v[1]:
+                    message.message(v[1])
+                if 'topaz' in v[1]:
+                    self.effect('energy',self.player.max_energy-self.player.energy)
+                elif 'emerald' in v[1]:
+                    self.effect('energy',self.player.max_energy-self.player.energy+100*(self.player.max_life-self.player.life))
+                elif 'diamond' in v[1]:
+                    self.current_place['Treasure']+=1
+                    self.treasure_modifier -=1
+                elif 'garnet' in v[1]:
+                    for x in all_creatures:
+                        if x.mode != 'not_appeared' and x.t=='animal':
+                            x.mode='fearfull'
+                elif 'opal' in v[1]:
+                    mossy_coords=[]
+                    for y in range(len(self.land)):
+                        for x in range(len(self.land[y])):
+                            if self.land[y][x]=='n' and [x+21,y+1] != self.player.xy:
+                                mossy_coords.append([x+21,y+1])
+                    self.player.xy=random.choice(mossy_coords)
+                elif 'turquoise' in v[1]:
+                    self.land[self.player.xy[1]-1] = self.land[self.player.xy[1]-1][:self.player.xy[0]-21]+'W'+self.land[self.player.xy[1]-1][self.player.xy[0]-20:]
+                    self.effect('force',{'Nature':{'terrain':1}})
+                elif 'tourmaline' in v[1]:
+                    self.land[self.player.xy[1]-1] = self.land[self.player.xy[1]-1][:self.player.xy[0]-21]+'n'+self.land[self.player.xy[1]-1][self.player.xy[0]-20:]
+                    self.effect('force',{'Nature':{'terrain':1}})
+                elif 'aquamarine' in v[1]:
+                    self.land[self.player.xy[1]-1] = self.land[self.player.xy[1]-1][:self.player.xy[0]-21]+'w'+self.land[self.player.xy[1]-1][self.player.xy[0]-20:]
+                    self.effect('force',{'Nature':{'terrain':1}})
+                elif 'sapphire' in v[1]:
+                    for x in self.all_creatures:
+                        if x.mode=='hostile' and self.clear_los(self.direct_path(self.player.xy,x.xy)):
+                            x.life-=max([(self.player.races['Nature']['gnome']-60)/4,1])
+                            message.creature('sapphired',x)
+                elif 'ruby' in v[1]:
+                    found_fire=0
+                    for x in self.player.land_effects.keys():
+                        if self.player.land_effects[x][2]==self.current_area and self.player.land_effects[x][1]=='on_fire' \
+                           and self.player.land_effects[x][3]==self.player.xy:
+                            message.message(v[1])
+                            found_fire=1
+                            for x in self.all_creatures:
+                                if x.mode=='hostile' and self.clear_los(self.direct_path(self.player.xy,x.xy)):
+                                    x.life-=max([(self.player.races['Nature']['gnome']-60)/2,1])
+                                    message.creature('rubied',x)
+                            break
+                    if not found_fire:
+                        message.message('cant_use_gem')
+                        return 0
+                elif 'amethyst' in v[1]:
+                    if self.player.marked_stone and self.current_area==self.player.marked_stone[0] and self.player.xy==self.player.marked_stone[1]:
+                        self.player.marked_stone=[]
+                        message.message('amethyst0')
+                    else:
+                        self.player.marked_stone=[self.current_area,self.player.xy[:]]
+                        message.message('amethyst1')
+                elif 'lapis' in v[1]:
+                    self.change_place('areaB','gnome')
+                self.effect('force',{'Nature':{'force':0.03,'gnome':0.03},'Chaos':{'all':-.03},'Order':{'all':-.03}})
+            else:
+                message.message('cant_use_gem')
+                return 0
+        else:
+            return 0
+
+    def take_effect(self):
+        self.player.max_weight = self.player.attr['Str']*10
+        self.player.max_weaps = self.player.attr['Str']
+        self.player.max_energy = self.player.attr['End']*100
+        self.player.max_life = self.player.attr['End'] + self.player.attr['End']/4
+        self.player.dmg = max([self.player.attr['Str'] / 5, 1])
+        if self.player.weapon_weight < 6:
+            self.player.att_att = 'Dex'
+            self.player.def_att = 'Dex'
+            self.player.battle_att = self.player.attr['Dex']
+        elif self.player.weapon_weight < 10:
+        ## If the weapon is medium a balance between Dex and Str allows maximum skill level
+            the_max=max([self.player.attr['Dex'],self.player.attr['Str']])
+            the_min=min([self.player.attr['Dex'],self.player.attr['Str']])
+            self.player.battle_att = min([the_max+(the_min-the_max*2/3),20])
+            self.player.att_att = 'Str'
+            self.player.def_att = 'Dex'
+        else:
+            self.player.battle_att = self.player.attr['Str']
+            self.player.att_att = 'Str'
+            self.player.def_att = 'Str'
+
+    def take_force_effect(self):
+        for f in self.player.races:
+            for r in self.player.races[f]:
+                if self.player.races[f][r]<30:
+                    if self.player.research_races[f][r]<30:
+                        for n in ['1','2','3']:
+                            try:
+                                self.player.tool_tags.remove(r+n)
+                                if r+n=='troll1':
+                                    self.player.tool_tags.remove('big hammer')
+                                if r+n=='imp1':
+                                    self.player.tool_tags.remove('fire')
+                            except ValueError:
+                                pass
+                elif self.player.races[f][r]<60:
+                    if self.player.research_races[f][r]<60:
+                        for n in ['2','3']:
+                            try:
+                                self.player.tool_tags.remove(r+n)
+                            except ValueError:
+                                pass
+                    if r+'1' not in self.player.tool_tags:
+                        self.player.tool_tags.append(r+'1')
+                        if r+'1'=='troll1':
+                            self.player.tool_tags.append('big hammer')
+                        if r+'1'=='imp1':
+                            self.player.tool_tags.append('fire')
+                elif self.player.races[f][r]<90:
+                    for n in ['1','2']:
+                        if r+n not in self.player.tool_tags:
+                            self.player.tool_tags.append(r+n)
+                            if r+n=='troll1':
+                                self.player.tool_tags.append('big hammer')
+                            if r+n=='imp1':
+                                self.player.tool_tags.append('fire')
+                    if self.player.research_races[f][r]<90:
+                        try:
+                            self.player.tool_tags.remove(r+'3')
+                        except ValueError:
+                            pass
+                    if r=='human':
+                        for f in self.player.research_forces:
+                            self.player.research_forces[f]=0.
+                            for r in self.player.research_races[f]:
+                                self.player.research_races[f][r]=0.
+                        self.take_research_effect()
+                        self.player.research_force='Order'
+                        self.player.research_race='human'
+                elif self.player.races[f][r]>=90:
+                    for n in ['1','2','3']:
+                        if r+n not in self.player.tool_tags:
+                            self.player.tool_tags.append(r+n)
+                            if r+n=='troll1':
+                                self.player.tool_tags.append('big hammer')
+                            if r+n=='imp1':
+                                self.player.tool_tags.append('fire')
+
+    def start_inv(self,i): ##Unstackable items MUST be given one by one!
+        if i == 'a':
+            inventory.shoulder_bag.start_item(1,"healer's satchel")
+            self.player.inventory[0].color=10
+            self.player.equip(self.player.inventory[0],0)
+            inventory.cloth_pants.start_item(1)
+            self.player.equip(self.player.inventory[0],13)
+            inventory.cloth_shirt.start_item(1,"healer's tunic")
+            self.player.inventory[0].color=10
+            self.player.equip(self.player.inventory[0],3)
+            inventory.cloth_shoes.start_item(1)
+            self.player.equip(self.player.inventory[0],14)
+            inventory.cloth_cloak.start_item(1,"healer's cloak")
+            self.player.inventory[0].color=10
+            self.player.equip(self.player.inventory[0],5)
+            inventory.tinderbox.start_item(1)
+            inventory.nature_heal_set.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+        elif i == 'b':
+            inventory.shoulder_bag.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            inventory.cloth_shoes.start_item(1)
+            self.player.equip(self.player.inventory[0],14)
+            inventory.cloth_robe.start_item(1,"traveler's robe")
+            self.player.equip(self.player.inventory[0],3)
+            inventory.light_staff.start_item(1,"traveler's staff")
+            self.player.equip(self.player.inventory[0],7)
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+        elif i == 'c':
+            inventory.small_backpack.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            inventory.cloth_pants.start_item(1,'gray pants')
+            self.player.equip(self.player.inventory[0],13)
+            inventory.wood_vest.start_item(1)
+            self.player.equip(self.player.inventory[0],3)
+            inventory.wood_boots.start_item(1)
+            self.player.equip(self.player.inventory[0],14)
+            random.choice(inventory.light_weapons).start_item(1)
+            self.player.equip(self.player.inventory[0],7)
+            inventory.bow.start_item(1,'elven bow')
+            self.player.inventory[0].color=10
+            inventory.wood_arrow.start_item(50)
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+            inventory.gem_amethyst.start_item(5)
+            inventory.gem_lapis_lazuli.start_item(1)
+        elif i == 'd':
+            inventory.small_backpack.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            inventory.cloth_pants.start_item(1)
+            self.player.equip(self.player.inventory[0],13)
+            inventory.leather_gloves.start_item(1,"miner's gloves")
+            self.player.equip(self.player.inventory[0],9)
+            inventory.cloth_shirt.start_item(1,"miner's shirt")
+            self.player.equip(self.player.inventory[0],3)
+            inventory.pick.start_item(1)
+            self.player.equip(self.player.inventory[0],7)
+            inventory.hammer.start_item(1,"builder's hammer")
+            inventory.saw.start_item(1)
+            inventory.pliers.start_item(1)
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.dagger.start_item(1)
+            inventory.bottle_water.start_item(2)
+        elif i == 'e':
+            inventory.small_backpack.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            inventory.cloth_pants.start_item(1)
+            self.player.equip(self.player.inventory[0],13)
+            inventory.cloth_shirt.start_item(1)
+            self.player.equip(self.player.inventory[0],3)
+            inventory.leather_boots.start_item(1,"farmer's boots")
+            self.player.equip(self.player.inventory[0],14)
+            inventory.shovel.start_item(1)
+            self.player.equip(self.player.inventory[0],16)
+            inventory.vegetable_seed.start_item(10)
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+        elif i == 'f':
+            inventory.small_backpack.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            inventory.cloth_pants.start_item(1,'embroidered pants')
+            self.player.equip(self.player.inventory[0],13)
+            inventory.cloth_shirt.start_item(1,"merchant's shirt")
+            self.player.equip(self.player.inventory[0],3)
+            inventory.cloth_belt.start_item(1,"embroidered belt")
+            self.player.equip(self.player.inventory[0],12)
+            inventory.cloth_shoes.start_item(1,'fine shoes')
+            self.player.equip(self.player.inventory[0],14)
+            inventory.cloth_cloak.start_item(1,"merchants's cloak")
+            self.player.equip(self.player.inventory[0],5)
+            inventory.jewel_ring.start_item(1,"silver ring")
+            self.player.equip(self.player.inventory[0],10)
+            inventory.coins_silver.start_item(10)
+            inventory.common_spices.start_item(5,'sack of spices')
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+        elif i == 'g':
+            inventory.small_backpack.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            inventory.long_sword.start_item(1)
+            self.player.equip(self.player.inventory[0],7)
+            inventory.leather_pants.start_item(1)
+            self.player.equip(self.player.inventory[0],13)
+            inventory.leather_vest.start_item(1,"soldier's tunic")
+            self.player.equip(self.player.inventory[0],3)
+            inventory.leather_boots.start_item(1)
+            self.player.equip(self.player.inventory[0],14)
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+        elif i == 'h':
+            inventory.small_backpack.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            inventory.giant_club.start_item(1)
+            self.player.equip(self.player.inventory[0],7)
+            inventory.cloth_pants.start_item(1,'dirty waist wrap')
+            self.player.inventory[0].color=7
+            self.player.equip(self.player.inventory[0],13)
+            inventory.cloth_shoes.start_item(1,'old sandals')
+            self.player.inventory[0].color=7
+            self.player.equip(self.player.inventory[0],14)
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+        elif i == 'i':
+            inventory.small_backpack.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            random.choice(inventory.medium_weapons).start_item(1)
+            self.player.equip(self.player.inventory[0],7)
+            inventory.chain_pants.start_item(1)
+            self.player.equip(self.player.inventory[0],13)
+            inventory.chain_vest.start_item(1)
+            self.player.equip(self.player.inventory[0],3)
+            inventory.leather_boots.start_item(1)
+            self.player.equip(self.player.inventory[0],14)
+            inventory.leather_cloak.start_item(1)
+            self.player.equip(self.player.inventory[0],5)
+            inventory.dagger.start_item(1)
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+        elif i == 'j':
+            inventory.small_backpack.start_item(1)
+            self.player.equip(self.player.inventory[0],0)
+            inventory.cloth_robe.start_item(1)
+            self.player.equip(self.player.inventory[0],3)
+            inventory.magic_book.start_item(1)
+            inventory.herb_set.start_item(1)
+            inventory.tinderbox.start_item(1)
+            inventory.bread.start_item(2)
+            inventory.bottle_water.start_item(2)
+        message.message('')
+
+
 
 if __name__=='__main__':
     the_game=Game()
@@ -3567,7 +4470,7 @@ if __name__=='__main__':
             if (i != '0') and (i != '5') and (i != '-1'):
                 the_game.player.sit = False
                 the_game.player.rest = 1
-            clock = player.game_time(i)
+            clock = the_game.game_time(i)
             if clock == 0:
                 break
             the_game.c.pos(*the_game.player.xy)

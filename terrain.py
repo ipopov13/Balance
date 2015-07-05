@@ -5,10 +5,6 @@ class KeepRefs(object):
     def __init__(self,name):
         self.__refs__[self.__class__][name]=self
 
-    @classmethod
-    def get_instances(cls,name):
-        return cls.__refs__[cls][name]
-
 class Terrain(KeepRefs):
     def __init__(self, name = 'dirt', world_name = 'no_world_name', the_id = '.', colour = 6, char = '.', mess = '',
                  pass_through = True, degradable = True, workable = True,
@@ -411,10 +407,3 @@ up_stair = Terrain('staircase going up','','>',7,'>','up_stair',True,False,False
 down_stair = Terrain('staircase going down','','<',7,'<','down_stair',True,False,False,clear_los=False)
 
 T = Terrain.__refs__[Terrain]
-
-##all_terr = (dirt,grass,tree,rock,mine_rock,wall,pavement,sand,snow,log,water,magic_water,waterfall,up_stair,down_stair,mechka,
-##       wood_door_c,wood_door_o,stone_door_o,stone_door_c,treasure1,mossy_rock,bush,lichen,jungle,ice,ice_block,
-##       frozen_tree,d_grass,d_tree,lava,bones,well,farmland,wooden_fence,swamp,dirty_water,lava_rock)
-##T = {}
-##for i in all_terr:
-##    T[i.id] = (i)

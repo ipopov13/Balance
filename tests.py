@@ -26,7 +26,7 @@ for f in files:
     with open(f,'r') as infile:
         i=1
         for l in infile:
-            if 'import init_screen' in l:
+            if 'game_creatures' in l:
                 print f,i
                 break
             i+=1
