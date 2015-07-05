@@ -2,7 +2,6 @@
 import player
 import msvcrt
 import message
-import init_screen
 import random
 
 class item:
@@ -766,7 +765,7 @@ unique_treasure = (the_golden_stool,)
 
 ##Misc equipment, IDs 1200-
 herb_set = item(1,['herb_set','wood'],['herb_set'],'',0,0,'herb collecting set',1200,False,1,{'gather':{'g':herbs}},7,'"')
-magic_book = item(2,['magic_book','paper'],['magic_book'],'',0,0,'book of magical theory',1201,False,1,{'devise_spell':'devise'},12,'"')
+magic_book = item(2,['magic_book','paper'],['magic_book'],'',0,0,'book of magical theory',1201,False,1,{},12,'"')
 lockpicks = item(1,['lockpick','iron'],['lockpick'],'',0,0,'lockpick set',1202,False,1,{},7,'"')
 nature_heal_set = item(1,['heal_set','wood'],['nature healing set'],'',0,0,"nature healer's set",1203,False,1,{},7,'"')
 

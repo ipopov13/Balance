@@ -6,9 +6,9 @@ import pickle
 import message
 import inventory
 import random
-from os import curdir
-from os import mkdir
+import os
 from time import sleep
+from glob import glob
 
 
 class Game:
@@ -36,23 +36,18 @@ class Game:
         self.force_terrains={'Nature':[["'","'",'.','g','l'],['g','g','b','g','T','n'],[',','b','g','g','g','T','J']],
                          'Chaos':[['i','.','I','F','%'],['.','d','d','D','%','B'],[',',',','.','L','B','%']],
                          'Order':[["'","'",'.','g','%'],['.','g',':','g','%','g'],[',',',',':','g','%']]}
-
-##def reinitialize():
-##    player.ch = player.Player([0, 0],attr = {'Str':10, 'End':5,'Dex':10})
-##    player.ch.inventory = []
-##    for tag in player.ch.equip_tags:
-##        player.ch.equipment[tag] = []
-##    player.all_beings = [player.ch]
-##    player.all_creatures = []
-##    player.hidden = []
+        self.all_beings = []
+        self.all_creatures = []
+        self.hidden = [] ## Sudurja skritite sushtestva i tezi koito ne sa se poqvili, no se poqvqvat po princip v mestnostta i sa
+                    ## unikalni (ne random) i imat mode = 'not_appeared'!!!
     
     def draw_items(self,the_spot=[]):
         for x in self.ground_items:
             if the_spot and x[:2]!=the_spot:
                 continue
             i = 0
-            for thing in player.all_beings:
-                if (thing.xy[0] == x[0]) and (thing.xy[1] == x[1]) and thing not in player.hidden and thing.life>0:
+            for thing in self.all_beings:
+                if (thing.xy[0] == x[0]) and (thing.xy[1] == x[1]) and thing not in self.hidden and thing.life>0:
                     i += 1
                     break
             if i == 0:
@@ -60,42 +55,42 @@ class Game:
 
     def draw_mode(self):
         self.c.rectangle((15,16,20,19))
-        mode_mod=['Nature','Order','Chaos'].index(player.ch.mode)
+        mode_mod=['Nature','Order','Chaos'].index(self.player.mode)
         self.c.text(15,mode_mod+16,'***',[10,9,12][mode_mod])
 
     def draw_hud(self):
         self.c.rectangle((0,1,20,25))
-        self.c.text(0,1,'%s' %(player.ch.name),7)
-        for tag in player.ch.equip_tags:
-            if player.ch.equipment[tag] != []:
-                self.c.text(1+player.ch.equip_tags.index(tag),2,player.ch.equipment[tag].tag,player.ch.equipment[tag].color)
+        self.c.text(0,1,'%s' %(self.player.name),7)
+        for tag in self.player.equip_tags:
+            if self.player.equipment[tag] != []:
+                self.c.text(1+self.player.equip_tags.index(tag),2,self.player.equipment[tag].tag,self.player.equipment[tag].color)
             else:
-                self.c.text(1+player.ch.equip_tags.index(tag),2,' ',7)
+                self.c.text(1+self.player.equip_tags.index(tag),2,' ',7)
         i = 10
-        if (player.ch.life < (player.ch.max_life*0.7)) and (player.ch.life > (player.ch.max_life*0.2)):
+        if (self.player.life < (self.player.max_life*0.7)) and (self.player.life > (self.player.max_life*0.2)):
             i = 14
-        elif (player.ch.life <= (player.ch.max_life*0.2)):
+        elif (self.player.life <= (self.player.max_life*0.2)):
             i = 12
-        self.c.text(0,3,'Life %d/%d' %(player.ch.life,player.ch.max_life),i)
+        self.c.text(0,3,'Life %d/%d' %(self.player.life,self.player.max_life),i)
         try:
-            if player.ch.sun_armour:
-                self.c.text(0,4,'Armour ' + str(player.ch.armour),9+224)
+            if self.player.sun_armour:
+                self.c.text(0,4,'Armour ' + str(self.player.armour),9+224)
             else:
-                self.c.text(0,4,'Armour ' + str(player.ch.armour),9)
+                self.c.text(0,4,'Armour ' + str(self.player.armour),9)
         except AttributeError:
-            self.c.text(0,4,'Armour ' + str(player.ch.armour),9)
-        self.c.text(0,5,'Str  ' + str(player.ch.attr['Str']),player.ch.attr_colors['Str'])
-        self.c.text(0,6,'Dex  ' + str(player.ch.attr['Dex']),player.ch.attr_colors['Dex'])
-        self.c.text(0,7,'End  ' + str(player.ch.attr['End']),player.ch.attr_colors['End'])
-        self.c.text(0,8,'Int  ' + str(player.ch.attr['Int']),player.ch.attr_colors['Int'])
-        self.c.text(0,9,'Cre  ' + str(player.ch.attr['Cre']),player.ch.attr_colors['Cre'])
-        self.c.text(0,10,'Mnd  ' + str(player.ch.attr['Mnd']),player.ch.attr_colors['Mnd'])
-        if player.ch.equipment['Ammunition']:
+            self.c.text(0,4,'Armour ' + str(self.player.armour),9)
+        self.c.text(0,5,'Str  ' + str(self.player.attr['Str']),self.player.attr_colors['Str'])
+        self.c.text(0,6,'Dex  ' + str(self.player.attr['Dex']),self.player.attr_colors['Dex'])
+        self.c.text(0,7,'End  ' + str(self.player.attr['End']),self.player.attr_colors['End'])
+        self.c.text(0,8,'Int  ' + str(self.player.attr['Int']),self.player.attr_colors['Int'])
+        self.c.text(0,9,'Cre  ' + str(self.player.attr['Cre']),self.player.attr_colors['Cre'])
+        self.c.text(0,10,'Mnd  ' + str(self.player.attr['Mnd']),self.player.attr_colors['Mnd'])
+        if self.player.equipment['Ammunition']:
             self.c.text(11,4,'Ammo:',4)
             ammo_col=10
             ammo=1
-            for am in player.ch.inventory:
-                if am.id==player.ch.equipment['Ammunition'].id and am.name==player.ch.equipment['Ammunition'].name:
+            for am in self.player.inventory:
+                if am.id==self.player.equipment['Ammunition'].id and am.name==self.player.equipment['Ammunition'].name:
                     ammo+=am.qty
                     break
             if ammo<5:
@@ -103,22 +98,22 @@ class Game:
             elif ammo<11:
                 ammo_col=14
             self.c.text(17,4,str(ammo),ammo_col)
-        if player.ch.ride:
+        if self.player.ride:
             self.c.text(11,6,'Mount:',7)
-            if player.ch.ride[0].food<25:
+            if self.player.ride[0].food<25:
                 self.c.text(11,7,'Hungry!',12)
-            elif player.ch.ride[0].food<75:
+            elif self.player.ride[0].food<75:
                 self.c.text(11,7,'Normal',7)
             else:
                 self.c.text(11,7,'Fresh',10)
-        self.c.text(0,11,'Wg %.2f/%d' %(player.ch.weight, player.ch.max_weight),7)
-        if player.ch.equipment['Backpack']:
-            self.c.text(0,12,'Bag %.2f/%.2f' %(player.ch.equipment['Backpack'].weight*6-player.ch.backpack,player.ch.equipment['Backpack'].weight*6),7)
+        self.c.text(0,11,'Wg %.2f/%d' %(self.player.weight, self.player.max_weight),7)
+        if self.player.equipment['Backpack']:
+            self.c.text(0,12,'Bag %.2f/%.2f' %(self.player.equipment['Backpack'].weight*6-self.player.backpack,self.player.equipment['Backpack'].weight*6),7)
         else:
             self.c.text(0,12,'Bag --/--',7)
-        if 'dwarf1' in player.ch.tool_tags:
+        if 'dwarf1' in self.player.tool_tags:
             self.c.text(0,13,'Treasure feeling ' + str(current_place['Treasure']),13)
-        daytime=player.ch.turn%2400
+        daytime=self.player.turn%2400
         day_tag=''
         day_color=7
         steps=[200,400,550,650,800,1000,1200,1450,1750,1850,2150,2400]
@@ -136,11 +131,11 @@ class Game:
                 break
         self.c.text((20-len(day_tag))/2+1,14,day_tag,day_color)
         self.c.text(4,15,'['+'*'*passed+'-'*(10-passed)+']',day_color)
-        self.c.text(0,16,'Nature %6.2f' %(player.ch.forces['Nature'])+'%',10)
-        self.c.text(0,17,'Order  %6.2f' %(player.ch.forces['Order'])+'%',9)
-        self.c.text(0,18,'Chaos  %6.2f' %(player.ch.forces['Chaos'])+'%',12)
+        self.c.text(0,16,'Nature %6.2f' %(self.player.forces['Nature'])+'%',10)
+        self.c.text(0,17,'Order  %6.2f' %(self.player.forces['Order'])+'%',9)
+        self.c.text(0,18,'Chaos  %6.2f' %(self.player.forces['Chaos'])+'%',12)
     ##    try:
-    ##        self.c.text(0,23,'%d' %(player.ch.hunger),7)
+    ##        self.c.text(0,23,'%d' %(self.player.hunger),7)
     ##    except:
     ##        pass
         self.draw_mode()
@@ -157,35 +152,35 @@ class Game:
         elif self.current_place['Temperature']>=85:
             climate=" You can barely breathe from the heat!"
         self.c.text(23,24,self.place_descriptions[self.current_area]+climate,7)
-        if 'invisible' in player.ch.effects:
+        if 'invisible' in self.player.effects:
             self.c.text(0,19,'Invisible',7)
-        if 'stealthy' in player.ch.tool_tags:
+        if 'stealthy' in self.player.tool_tags:
             self.c.text(10,19,'Stealth',7)
-        if player.ch.emotion == 2:
+        if self.player.emotion == 2:
             self.c.text(0,20,'Tired',7)
-        if player.ch.sit == True:
+        if self.player.sit == True:
             self.c.text(0,23,'Sitting',7)
         colour = 7
-        if player.ch.hunger > 60:
+        if self.player.hunger > 60:
             sign = 'Hungry'
-            if 80 < player.ch.hunger < 100:
+            if 80 < self.player.hunger < 100:
                 colour = 12
                 sign = 'HUNGRY'
-            if player.ch.hunger == 100:
-                if player.ch.turn%2 == 1:
+            if self.player.hunger == 100:
+                if self.player.turn%2 == 1:
                     colour = 14
                 else:
                     colour = 12
                 sign = 'STARVING!'
             self.c.text(0,21,sign,colour)
         colour = 7
-        if player.ch.thirst > 60:
+        if self.player.thirst > 60:
             sign = 'Thirsty'
-            if 80 < player.ch.thirst < 100:
+            if 80 < self.player.thirst < 100:
                 colour = 12
                 sign = 'THIRSTY'
-            if player.ch.thirst == 100:
-                if player.ch.turn%2 == 0:
+            if self.player.thirst == 100:
+                if self.player.turn%2 == 0:
                     colour = 14
                 else:
                     colour = 12
@@ -198,38 +193,28 @@ class Game:
             self.c.pos(21, x)
             for y in range(21,79):
                 self.c.scroll((y,x,y+1,x+1), 1, 1, T[self.land[x-1][y-21]].colour, T[self.land[x-1][y-21]].char)
-        for x in player.ch.land_effects.keys():
-            if player.ch.land_effects[x][1]=='on_fire':
-                fxy=player.ch.land_effects[x][3]
-                if player.ch.land_effects[x][0]==0:
+        for x in self.player.land_effects.keys():
+            if self.player.land_effects[x][1]=='on_fire':
+                fxy=self.player.land_effects[x][3]
+                if self.player.land_effects[x][0]==0:
                     self.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, T[self.land[fxy[1]-1][fxy[0]-21]].colour, T[self.land[fxy[1]-1][fxy[0]-21]].char)
                     continue
                 fire_color=random.choice([4,12,14])
-                self.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, fire_color*16+player.ch.land_effects[x][5],player.ch.land_effects[x][4])
+                self.c.scroll((fxy[0],fxy[1],fxy[0]+1,fxy[1]+1), 1, 1, fire_color*16+self.player.land_effects[x][5],self.player.land_effects[x][4])
         self.draw_hud()
         self.draw_items()
-        for creature in player.all_creatures:
-            if creature not in player.hidden and (self.clear_los(self.direct_path(player.ch.xy,creature.xy)) or \
-                                                  (self.current_place['Nature']>=33 and self.current_place['Temperature']>=33 and 'elf2' in player.ch.tool_tags)):
+        for creature in self.all_creatures:
+            if creature not in self.hidden and (self.clear_los(self.direct_path(self.player.xy,creature.xy)) or \
+                                                  (self.current_place['Nature']>=33 and self.current_place['Temperature']>=33 and 'elf2' in self.player.tool_tags)):
                 self.draw_move(creature, creature.xy[0], creature.xy[1])
-        
-        if self.current_area == 'world':
-            for place in self.world_places:
-                if place != 'world' and place in player.ch.known_areas and str(self.world_places[place]) in self.top_world_places:
-                    x = self.world_places[place][0]
-                    y = self.world_places[place][1]
-                    self.c.scroll((x, y, x+1, y+1), 1, 1, 11, '?')
-        self.draw_move(player.ch, player.ch.xy[0], player.ch.xy[1])
-        self.c.pos(*player.ch.xy)
+        self.draw_move(self.player, self.player.xy[0], self.player.xy[1])
+        self.c.pos(*self.player.xy)
 
     def draw_move(self,ch, x, y):
     ##    try:
         self.c.scroll((x, y, x+1, y+1), 1, 1, T[self.land[y-1][x-21]].colour, T[self.land[y-1][x-21]].char)
     ##    except:
     ##        print x, y, land[y-1][x-21]
-        if self.current_area == 'world':
-            if str([x, y]) in self.top_world_places and [x,y] in [self.world_places[a] for a in player.ch.known_areas]:
-                self.c.scroll((x, y, x+1, y+1), 1, 1, 11, '?')
         self.c.pos(*ch.xy)
         if ch.tag=='@' and ch.possessed:
             self.c.scroll((ch.xy[0], ch.xy[1], ch.xy[0]+1, ch.xy[1]+1), 1, 1, ch.possessed[0].emotion, ch.possessed[0].tag)
@@ -243,37 +228,37 @@ class Game:
 
     def build_terr(self,new_ter):
         ok = 0
-        if player.ch.hunger>79 or player.ch.thirst>79:
+        if self.player.hunger>79 or self.player.thirst>79:
             return -4
         while 1:
-            if (player.ch.energy < inventory.build_recipes[new_ter][4]) and (player.ch.work == 0):
-                if player.ch.max_energy < inventory.build_recipes[new_ter][4]:
+            if (self.player.energy < inventory.build_recipes[new_ter][4]) and (self.player.work == 0):
+                if self.player.max_energy < inventory.build_recipes[new_ter][4]:
                     return -2
                 else:
                     return -1
             elif ok!=1:
-                player.ch.work = inventory.build_recipes[new_ter][4]
+                self.player.work = inventory.build_recipes[new_ter][4]
                 ok=1
             hostiles=player.game_time('0')
             if hostiles==2:
-                player.ch.work=0
+                self.player.work=0
                 return -3
-            if player.ch.work == 0:
+            if self.player.work == 0:
                 player.effect('force',inventory.build_recipes[new_ter][5])
                 if 'str' in str(type(inventory.build_recipes[new_ter][2])):
-                    self.land[player.ch.xy[1]-1] = self.land[player.ch.xy[1]-1][:player.ch.xy[0]-21] + inventory.build_recipes[new_ter][2] + self.land[player.ch.xy[1]-1][player.ch.xy[0]-20:]
+                    self.land[self.player.xy[1]-1] = self.land[self.player.xy[1]-1][:self.player.xy[0]-21] + inventory.build_recipes[new_ter][2] + self.land[self.player.xy[1]-1][self.player.xy[0]-20:]
                 elif 'int' in str(type(inventory.build_recipes[new_ter][2])):
                     creation=self.I[inventory.build_recipes[new_ter][2]].duplicate()
-                    self.ground_items.append([player.ch.xy[0],player.ch.xy[1],creation])
+                    self.ground_items.append([self.player.xy[0],self.player.xy[1],creation])
                 return 1
-            elif player.ch.hunger>79 or player.ch.thirst>79:
-                player.ch.work = 0
+            elif self.player.hunger>79 or self.player.thirst>79:
+                self.player.work = 0
                 return -4
 
     def build(self):
         mats={}
         for i in self.ground_items:
-            if i[:2]==player.ch.xy:
+            if i[:2]==self.player.xy:
                 if 'buildmat' in i[2].type:
                     if i[2].effect['build'] in mats:
                         mats[i[2].effect['build']]+=i[2].qty
@@ -285,12 +270,12 @@ class Game:
         mat_keys=mats.keys()
         selected_recipes={}
         the_build=''
-        for r in inventory.BR[player.ch.attr['Cre']]:
+        for r in inventory.BR[self.player.attr['Cre']]:
             all_in=1
             needed_mats=inventory.build_recipes[r][3]
             needed_tools=[]
             for t in inventory.build_recipes[r][1]:
-                if t not in player.ch.tool_tags[:]:
+                if t not in self.player.tool_tags[:]:
                     needed_tools.append(t)
             if mats:
                 for t in needed_mats:
@@ -334,7 +319,7 @@ class Game:
                 self.c.write('You build a %s.' %(the_build))
                 new_ground_items=[]
                 for m in self.ground_items:
-                    if m[:2]!=player.ch.xy or (inventory.build_recipes[the_build][2] in self.I and\
+                    if m[:2]!=self.player.xy or (inventory.build_recipes[the_build][2] in self.I and\
                        m[2].id==self.I[inventory.build_recipes[the_build][2]].id):
                         new_ground_items.append(m)
                 self.ground_items=new_ground_items[:]
@@ -357,37 +342,37 @@ class Game:
         if new_item.split()[0] in ['copper','silver','gold']:
             new_item=' '.join(new_item.split()[1:])
         ok = 0
-        if player.ch.hunger>79 or player.ch.thirst>79:
+        if self.player.hunger>79 or self.player.thirst>79:
             return -4,0
         while 1:
-            if player.ch.energy < inventory.craft_recipes[item_type][new_item][4] and player.ch.work==0:
-                if player.ch.max_energy < inventory.craft_recipes[item_type][new_item][4]:
+            if self.player.energy < inventory.craft_recipes[item_type][new_item][4] and self.player.work==0:
+                if self.player.max_energy < inventory.craft_recipes[item_type][new_item][4]:
                     return -2,0
                 else:
                     return -1,0
             elif ok!=1:
-                player.ch.work = inventory.craft_recipes[item_type][new_item][4]
+                self.player.work = inventory.craft_recipes[item_type][new_item][4]
                 ok=1
             hostiles=player.game_time('0')
             if hostiles==2:
-                player.ch.work=0
+                self.player.work=0
                 return -3,0
-            if player.ch.work == 0:
+            if self.player.work == 0:
                 player.effect('force',inventory.craft_recipes[item_type][new_item][5])
                 creation=self.I[inventory.craft_recipes[item_type][new_item][2]].duplicate(name=the_name)
-                if 'dwarf2' in player.ch.tool_tags:
+                if 'dwarf2' in self.player.tool_tags:
                     creation=self.add_gems(creation)
-                elif 'fairy1' in player.ch.tool_tags and creation.name=='flower crown':
+                elif 'fairy1' in self.player.tool_tags and creation.name=='flower crown':
                     creation=self.add_flowers(creation)
-                self.ground_items.append([player.ch.xy[0],player.ch.xy[1],creation])
+                self.ground_items.append([self.player.xy[0],self.player.xy[1],creation])
                 return 1,creation.name
-            elif player.ch.hunger>79 or player.ch.thirst>79:
-                player.ch.work = 0
+            elif self.player.hunger>79 or self.player.thirst>79:
+                self.player.work = 0
                 return -4,0
 
     def add_gems(self,creation):
         gems=[]
-        for x in player.ch.inventory:
+        for x in self.player.inventory:
             if 'gem' in x.type:
                 gems.append(x)
         if gems:
@@ -413,7 +398,7 @@ class Game:
         found=0
         flowers={}
         fltypes={'rare flower':'1','noon flower':'2','midnight flower':'3','frost flower':'4','desert flower':'5'}
-        for fls in player.ch.inventory:
+        for fls in self.player.inventory:
             if 'rare flower' in fls.type:
                 flowers[fltypes[fls.name]]=fls
                 found=1
@@ -431,7 +416,7 @@ class Game:
                 self.c.write('''1) Short invisibility x 3 (starts when you put the crown on)\n  ''')
                 self.c.text(5,offset,'Short invisibility',flowers['1'].color)
                 offset+=1
-            if 'fairy2' in player.ch.tool_tags:
+            if 'fairy2' in self.player.tool_tags:
                 if '2' in flowers:
                     possible['2']=[{'sun armour':1},'sunlit']
                     self.c.write("""2) Sunlit crown (use ONLY AT DAY! Lasts till sunset or until you
@@ -461,7 +446,7 @@ class Game:
       ring can only exist in HOT places, unless coupled with a ring of winter.)\n  """)
                     self.c.text(5,offset,'Ring of summer',flowers['5'].color)
                     offset+=3
-            if 'fairy3' in player.ch.tool_tags:
+            if 'fairy3' in self.player.tool_tags:
                 self.c.write("""6) Dress of the fae. The most beautifull expression of a fairy's soul,
       this gown (or robe, when made for male fairies) makes all faerie magicks
       linger for eternity. In addition, all who strike at the fairy suffer greatly
@@ -479,7 +464,7 @@ class Game:
                     flowers[i].lose_item(1)
                 else:
                     found=0
-                    for i1 in player.ch.inventory:
+                    for i1 in self.player.inventory:
                         if i1.name=='wild flowers' and i1.qty>=50:
                             found=1
                             i1.lose_item(50)
@@ -504,7 +489,7 @@ class Game:
 
     def create(self):
         metal_chosen='a'
-        if 'dwarf3' in player.ch.tool_tags:
+        if 'dwarf3' in self.player.tool_tags:
             self.c.page()
             self.c.write('''\n  As a dwarf you now can choose the kind of metal you want to use for
       your items. If the chosen metal is not available at your location you will
@@ -523,7 +508,7 @@ class Game:
         mats={}
         ground_tools=[]
         for i in self.ground_items:
-            if i[:2]==player.ch.xy:
+            if i[:2]==self.player.xy:
                 if 'craftmat' in i[2].type:
                     if i[2].effect['craft'] in mats:
                         mats[i[2].effect['craft']]+=i[2].qty
@@ -536,7 +521,7 @@ class Game:
         tools_needed={}
         the_build=''
         for recipe_group in inventory.CrR:
-            for r in inventory.CrR[recipe_group][player.ch.attr['Cre']]:
+            for r in inventory.CrR[recipe_group][self.player.attr['Cre']]:
                 if recipe_group not in selected_recipes:
                     selected_recipes[recipe_group]={}
                     tools_needed[recipe_group]=[]
@@ -549,7 +534,7 @@ class Game:
                 for t in inventory.craft_recipes[recipe_group][r][1]:
                     if t not in tools_needed[recipe_group]:
                         tools_needed[recipe_group].append(t)
-                    if t not in player.ch.tool_tags[:] and t not in ground_tools:
+                    if t not in self.player.tool_tags[:] and t not in ground_tools:
                         needed_tools.append(t)
                 if mats:
                     for t in mats:
@@ -631,7 +616,7 @@ class Game:
                     del(used_mats['iron'])
                 new_ground_items=[]
                 for m in self.ground_items:
-                    if m[:2]==player.ch.xy and 'craftmat' in m[2].type and m[2].effect['craft'] in used_mats and used_mats[m[2].effect['craft']]>0:
+                    if m[:2]==self.player.xy and 'craftmat' in m[2].type and m[2].effect['craft'] in used_mats and used_mats[m[2].effect['craft']]>0:
                         if m[2].qty>used_mats[m[2].effect['craft']]:
                             m[2].qty-=used_mats[m[2].effect['craft']]
                             new_ground_items.append(m)
@@ -655,7 +640,7 @@ class Game:
             return 1
 
     def dryad_grow(self):
-        if T[self.land[player.ch.xy[1]-1][player.ch.xy[0]-21]].id == 'T':
+        if T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id == 'T':
             self.c.page()
             si=[None,None]
             i=''
@@ -720,72 +705,72 @@ class Game:
                     grown_item=self.I[make_list[si[0]][si[1]]].duplicate(amount,weap_names[si[1]])
                 else:
                     grown_item=self.I[make_list[si[0]][si[1]]].duplicate(amount)
-                self.ground_items.append([player.ch.xy[0],player.ch.xy[1],grown_item])
+                self.ground_items.append([self.player.xy[0],self.player.xy[1],grown_item])
                 player.effect('force',{'Nature':{'dryad':-1.}})
         else:
             message.message('dryad_song')
             msvcrt.getch()
-            if player.ch.energy>100:
+            if self.player.energy>100:
                 player.effect('dryad song',1)
-                player.ch.energy=0
+                self.player.energy=0
         self.redraw_screen()
 
     def degrade_terr(self,old_ter, xy, c_x, c_y):
         ok = 0
-        if ((player.ch.hunger > 79) or (player.ch.thirst > 79)) and T[old_ter].degr_mess[player.ch.mode]!='forage':
+        if ((self.player.hunger > 79) or (self.player.thirst > 79)) and T[old_ter].degr_mess[self.player.mode]!='forage':
             return -4
         while 1:
-            if (player.ch.energy < T[old_ter].tire[player.ch.mode]) and (player.ch.work == 0):
-                if player.ch.max_energy < T[old_ter].tire[player.ch.mode]:
+            if (self.player.energy < T[old_ter].tire[self.player.mode]) and (self.player.work == 0):
+                if self.player.max_energy < T[old_ter].tire[self.player.mode]:
                     return -2
                 else:
                     return -1
             elif ok != 1:
-                player.ch.work = T[old_ter].tire[player.ch.mode]
-            for i in T[old_ter].degrade_tool[player.ch.mode]:
-                if i in player.ch.tool_tags:
+                self.player.work = T[old_ter].tire[self.player.mode]
+            for i in T[old_ter].degrade_tool[self.player.mode]:
+                if i in self.player.tool_tags:
                     ok = 1
-                    if 'dryad2' in player.ch.tool_tags and T[old_ter].id==':' and player.ch.mode=='Nature':
+                    if 'dryad2' in self.player.tool_tags and T[old_ter].id==':' and self.player.mode=='Nature':
                         message.message('dryad_heal_tree')
                     else:
-                        message.message(T[old_ter].degr_mess[player.ch.mode])
+                        message.message(T[old_ter].degr_mess[self.player.mode])
                     hostiles=player.game_time('0')
                     if hostiles==2:
-                        player.ch.work=0
+                        self.player.work=0
                         return -3
-                    if player.ch.work == 0:
+                    if self.player.work == 0:
                         if T[self.land[xy[1]-1][xy[0]-21]].degradable:
-                            if 'dryad2' in player.ch.tool_tags and T[old_ter].id==':' and player.ch.mode=='Nature':
+                            if 'dryad2' in self.player.tool_tags and T[old_ter].id==':' and self.player.mode=='Nature':
                                 self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21] + 'T' + self.land[xy[1]-1][xy[0]-20:]
                             else:
-                                self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21] + T[old_ter].degrade_to[player.ch.mode] + self.land[xy[1]-1][xy[0]-20:]
+                                self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21] + T[old_ter].degrade_to[self.player.mode] + self.land[xy[1]-1][xy[0]-20:]
                         found_loot=0
-                        if xy not in player.ch.worked_places[player.ch.mode] or T[old_ter].id=='m':
-                            player.effect('force',T[old_ter].force_effects[player.ch.mode],xy,T[old_ter].char)
-                            if 'dryad2' in player.ch.tool_tags and T[old_ter].id==':' and player.ch.mode=='Nature':
-                                player.effect('force',T[old_ter].force_effects[player.ch.mode],xy,T[old_ter].char)
-                            player.ch.worked_places[player.ch.mode].append(xy[:])
-                            if 'gnome2' in player.ch.tool_tags and T[old_ter].id in ['%','n','m'] and player.ch.mode=='Nature':
+                        if xy not in self.player.worked_places[self.player.mode] or T[old_ter].id=='m':
+                            player.effect('force',T[old_ter].force_effects[self.player.mode],xy,T[old_ter].char)
+                            if 'dryad2' in self.player.tool_tags and T[old_ter].id==':' and self.player.mode=='Nature':
+                                player.effect('force',T[old_ter].force_effects[self.player.mode],xy,T[old_ter].char)
+                            self.player.worked_places[self.player.mode].append(xy[:])
+                            if 'gnome2' in self.player.tool_tags and T[old_ter].id in ['%','n','m'] and self.player.mode=='Nature':
                                 found_loot+=inventory.put_item([['gnome_touch',5,1,1]], xy)
                                 if found_loot:
                                     message.message('gnome_touch')
-                            elif 'fairy1' in player.ch.tool_tags and T[old_ter].id in ['g','O'] and player.ch.mode=='Nature':
+                            elif 'fairy1' in self.player.tool_tags and T[old_ter].id in ['g','O'] and self.player.mode=='Nature':
                                 found_loot+=inventory.put_item([['fairy_flowers',5,1,1]], xy)
                                 if found_loot:
                                     message.message('fairy_flowers')
                             if T[self.land[xy[1]-1][xy[0]-21]].pass_through:
-                                found_loot+=inventory.put_item(T[old_ter].loot[player.ch.mode], xy)
+                                found_loot+=inventory.put_item(T[old_ter].loot[self.player.mode], xy)
                             else:
-                                found_loot+=inventory.put_item(T[old_ter].loot[player.ch.mode], [c_x,c_y])
+                                found_loot+=inventory.put_item(T[old_ter].loot[self.player.mode], [c_x,c_y])
                         if not found_loot:
                             self.c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[self.land[xy[1]-1][xy[0]-21]].colour, T[self.land[xy[1]-1][xy[0]-21]].char)
                         self.draw_items(xy)
                         return 1
-                    elif (player.ch.hunger > 79 or player.ch.thirst > 79) and T[old_ter].degr_mess[player.ch.mode]!='forage':
-                        player.ch.work = 0
+                    elif (self.player.hunger > 79 or self.player.thirst > 79) and T[old_ter].degr_mess[self.player.mode]!='forage':
+                        self.player.work = 0
                         return -4
             if ok == 0:
-                player.ch.work = 0
+                self.player.work = 0
                 return 0
 
     def work(self,i):
@@ -793,7 +778,7 @@ class Game:
         try:
             md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
                   '6':[1,0], '7':[-1,-1], '8':[0,-1], '9':[1,-1], '0':[0,0]}
-            xy = player.ch.xy[:]
+            xy = self.player.xy[:]
             x = xy[0]
             y = xy[1]
             for a in range(2):
@@ -803,7 +788,7 @@ class Game:
                 if d == 1:
                     xy[0] = x
                     xy[1] = y
-                    self.draw_move(player.ch, x, y)
+                    self.draw_move(self.player, x, y)
                 elif d == -2:
                     message.emotion('not_tough')
                     xy[0] = x
@@ -821,7 +806,7 @@ class Game:
                     xy[0] = x
                     xy[1] = y
                 else:
-                    message.tool_msg('no_tool',T[self.land[xy[1]-1][xy[0]-21]].degrade_tool[player.ch.mode])
+                    message.tool_msg('no_tool',T[self.land[xy[1]-1][xy[0]-21]].degrade_tool[self.player.mode])
                     xy[0] = x
                     xy[1] = y
             else:
@@ -838,23 +823,23 @@ class Game:
             self.c.write('\n What do you want to put in the container?\n\n\n')
         else:
             self.c.write('\n You open your backpack:\n (e)view equipment (q)eat/drink (d)drop item (u)use item\n\n')
-        for i in range(len(player.ch.inventory)):
-            print ' '+chr(i+97)+')  ', player.ch.inventory[i].name.capitalize()+', %d x %s stones' %(player.ch.inventory[i].qty,
-                                                                                      str(player.ch.inventory[i].weight))
-            self.c.text(4,i+4,player.ch.inventory[i].tag,player.ch.inventory[i].color)
-        print '\n Carrying: %s/%s. You can fit %s more in your bag.' %(str(player.ch.weight), str(player.ch.max_weight),
-                                                                       str(player.ch.backpack))
+        for i in range(len(self.player.inventory)):
+            print ' '+chr(i+97)+')  ', self.player.inventory[i].name.capitalize()+', %d x %s stones' %(self.player.inventory[i].qty,
+                                                                                      str(self.player.inventory[i].weight))
+            self.c.text(4,i+4,self.player.inventory[i].tag,self.player.inventory[i].color)
+        print '\n Carrying: %s/%s. You can fit %s more in your bag.' %(str(self.player.weight), str(self.player.max_weight),
+                                                                       str(self.player.backpack))
         i1 = ' '
         i1 = msvcrt.getch()
         try:
-            if put_in and player.ch.inventory[ord(i1)-97] != container:
+            if put_in and self.player.inventory[ord(i1)-97] != container:
                 space = self.I[container.id].weight*7 - container.weight
-                drop = player.ch.inventory[ord(i1)-97].drop_item('',space)
+                drop = self.player.inventory[ord(i1)-97].drop_item('',space)
                 if not drop:
                     message.message('cant_fit_in_container')
                     msvcrt.getch()
                 return drop
-            elif put_in and player.ch.inventory[ord(i1)-97] == container:
+            elif put_in and self.player.inventory[ord(i1)-97] == container:
                 message.message('cant_fit_container')
                 msvcrt.getch()
                 return None
@@ -870,7 +855,7 @@ class Game:
                     break
             self.c.rectangle((0,0,79,1))
             try:
-                player.ch.inventory[ord(eat)-97].eat()
+                self.player.inventory[ord(eat)-97].eat()
             except IndexError:
                 pass
             self.draw_inv()
@@ -884,14 +869,14 @@ class Game:
                     break
             self.c.rectangle((0,0,79,1))
             try:
-                drop = player.ch.inventory[ord(dr)-97].drop_item('',10000)
+                drop = self.player.inventory[ord(dr)-97].drop_item('',10000)
                 dropped = 0
                 for item in self.ground_items:
-                    if item[:2] == player.ch.xy and item[2].id == drop.id and item[2].stackable and item[2].name == drop.name:
+                    if item[:2] == self.player.xy and item[2].id == drop.id and item[2].stackable and item[2].name == drop.name:
                         item[2].qty += drop.qty
                         dropped = 1
                 if not dropped:
-                    self.ground_items.append([player.ch.xy[0], player.ch.xy[1],drop])
+                    self.ground_items.append([self.player.xy[0], self.player.xy[1],drop])
             except:
                 pass
             self.draw_inv()
@@ -905,12 +890,12 @@ class Game:
             use = msvcrt.getch()
             self.c.rectangle((0,0,79,1))
             try:
-                ty = player.ch.inventory[ord(use)-97].type
-                if 'container' in player.ch.inventory[ord(use)-97].type:
-                    open_container(player.ch.inventory[ord(use)-97])
-                elif player.ch.inventory[ord(use)-97].effect != {} and ('armour' not in ty and 'weapon' not in ty and 'tool' not in ty):
-                    player.ch.inventory[ord(use)-97].use_item()
-                if player.ch.spell_cast or player.ch.turn in player.ch.land_effects:
+                ty = self.player.inventory[ord(use)-97].type
+                if 'container' in self.player.inventory[ord(use)-97].type:
+                    open_container(self.player.inventory[ord(use)-97])
+                elif self.player.inventory[ord(use)-97].effect != {} and ('armour' not in ty and 'weapon' not in ty and 'tool' not in ty):
+                    self.player.inventory[ord(use)-97].use_item()
+                if self.player.turn in self.player.land_effects:
                     return 0
             except IndexError:
                 pass
@@ -920,12 +905,12 @@ class Game:
         self.c.page()
         self.c.pos(0,0)
         self.c.write('\n You check your equipment:\n (a-p)take off/equip item (1)view inventory\n\n')
-        for i in range(len(player.ch.equipment)):
-            if player.ch.equipment[player.ch.equip_tags[i]] != []:
+        for i in range(len(self.player.equipment)):
+            if self.player.equipment[self.player.equip_tags[i]] != []:
                 item_effs = ''
                 try:
                     item_effs = []
-                    done = [item_effs.extend(x) for x in player.ch.equipment[player.ch.equip_tags[i]].effect['temp_attr']]
+                    done = [item_effs.extend(x) for x in self.player.equipment[self.player.equip_tags[i]].effect['temp_attr']]
                     if item_effs:
                         item_effs = '['+' '.join([str(x) for x in item_effs])+']'
                     else:
@@ -933,47 +918,47 @@ class Game:
                 except KeyError:
                     item_effs = ''
                 engrav = ''
-                if 'engraving' in player.ch.equipment[player.ch.equip_tags[i]].effect:
-                    engrav = '"'+player.ch.equipment[player.ch.equip_tags[i]].effect['engraving']+'"'
-                if 'two_handed' in player.ch.equipment[player.ch.equip_tags[i]].type:
-                    print ' '+chr(i+97)+')  ', player.ch.equip_tags[i]+': %s (two hands), %d x %s stones %s %s' %(player.ch.equipment[player.ch.equip_tags[i]].name.capitalize(),
-                                                                                              player.ch.equipment[player.ch.equip_tags[i]].qty,
-                                                                                              str(player.ch.equipment[player.ch.equip_tags[i]].weight), item_effs,
+                if 'engraving' in self.player.equipment[self.player.equip_tags[i]].effect:
+                    engrav = '"'+self.player.equipment[self.player.equip_tags[i]].effect['engraving']+'"'
+                if 'two_handed' in self.player.equipment[self.player.equip_tags[i]].type:
+                    print ' '+chr(i+97)+')  ', self.player.equip_tags[i]+': %s (two hands), %d x %s stones %s %s' %(self.player.equipment[self.player.equip_tags[i]].name.capitalize(),
+                                                                                              self.player.equipment[self.player.equip_tags[i]].qty,
+                                                                                              str(self.player.equipment[self.player.equip_tags[i]].weight), item_effs,
                                                                                                                 engrav)
                 else:
-                    print ' '+chr(i+97)+')  ', player.ch.equip_tags[i]+': %s, %d x %s stones %s %s' %(player.ch.equipment[player.ch.equip_tags[i]].name.capitalize(),
-                                                                                              player.ch.equipment[player.ch.equip_tags[i]].qty,
-                                                                                              str(player.ch.equipment[player.ch.equip_tags[i]].weight),item_effs,
+                    print ' '+chr(i+97)+')  ', self.player.equip_tags[i]+': %s, %d x %s stones %s %s' %(self.player.equipment[self.player.equip_tags[i]].name.capitalize(),
+                                                                                              self.player.equipment[self.player.equip_tags[i]].qty,
+                                                                                              str(self.player.equipment[self.player.equip_tags[i]].weight),item_effs,
                                                                                                  engrav)
-                self.c.text(4,i+4,player.ch.equipment[player.ch.equip_tags[i]].tag,player.ch.equipment[player.ch.equip_tags[i]].color)
+                self.c.text(4,i+4,self.player.equipment[self.player.equip_tags[i]].tag,self.player.equipment[self.player.equip_tags[i]].color)
             else:
-                print ' '+chr(i+97)+')  ', player.ch.equip_tags[i]+':'
+                print ' '+chr(i+97)+')  ', self.player.equip_tags[i]+':'
         i1 = ' '
         i1 = msvcrt.getch()
         if i1 == '1':
             self.draw_inv()
             return 1
         if ord(i1)-97 in range(19):
-            if player.ch.equipment[player.ch.equip_tags[ord(i1)-97]] == []:
+            if self.player.equipment[self.player.equip_tags[ord(i1)-97]] == []:
                 two = 0
-                if player.ch.equip_tags[ord(i1)-97] == 'Right hand' and player.ch.equipment['Left hand'] != []:
-                    if 'two_handed' in player.ch.equipment['Left hand'].type:
+                if self.player.equip_tags[ord(i1)-97] == 'Right hand' and self.player.equipment['Left hand'] != []:
+                    if 'two_handed' in self.player.equipment['Left hand'].type:
                         two = 1
-                        player.ch.take_off(player.ch.equip_tags.index('Left hand'))
-                elif player.ch.equip_tags[ord(i1)-97] == 'Left hand' and player.ch.equipment['Right hand'] != []:
-                    if 'two_handed' in player.ch.equipment['Right hand'].type:
+                        self.player.take_off(self.player.equip_tags.index('Left hand'))
+                elif self.player.equip_tags[ord(i1)-97] == 'Left hand' and self.player.equipment['Right hand'] != []:
+                    if 'two_handed' in self.player.equipment['Right hand'].type:
                         two = 1
-                        player.ch.take_off(player.ch.equip_tags.index('Right hand'))
+                        self.player.take_off(self.player.equip_tags.index('Right hand'))
                 if not two:
-                    player.ch.find_equipment(ord(i1)-97)
+                    self.player.find_equipment(ord(i1)-97)
             else:
-                if player.ch.equip_tags[ord(i1)-97] == 'Backpack':
+                if self.player.equip_tags[ord(i1)-97] == 'Backpack':
                     print ' Do you really want to drop your bag to the ground?\n You will be able to carry only one item per free hand at most! (y/n)'
                     b1 = msvcrt.getch()
                     if b1.lower() != 'y':
                         self.draw_equip()
                         return
-                player.ch.take_off(ord(i1)-97)
+                self.player.take_off(ord(i1)-97)
             self.draw_equip()
 
     def character(self):
@@ -985,91 +970,91 @@ class Game:
                   'ork','troll','spirit of chaos','goblin','kraken','imp']
         self.c.page()
         self.c.pos(0,0)
-        self.c.text(2,1,'%s' %(player.ch.name),7)
+        self.c.text(2,1,'%s' %(self.player.name),7)
         i = 10
-        if (player.ch.life < (player.ch.max_life*0.7)) and (player.ch.life > (player.ch.max_life*0.2)):
+        if (self.player.life < (self.player.max_life*0.7)) and (self.player.life > (self.player.max_life*0.2)):
             i = 14
-        elif (player.ch.life <= (player.ch.max_life*0.2)):
+        elif (self.player.life <= (self.player.max_life*0.2)):
             i = 12
-        self.c.text(2,3,'Life %d/%d' %(player.ch.life,player.ch.max_life),i)
+        self.c.text(2,3,'Life %d/%d' %(self.player.life,self.player.max_life),i)
         for x in atts:
-            self.c.text(2,atts.index(x)+5,'%s  %d' %(x,player.ch.attr[x]),player.ch.attr_colors[x])
-        self.c.text(13,3,'Armour %d' %(player.ch.armour),9)
-        self.c.text(13,5,'Wg %.2f/%d' %(player.ch.weight, player.ch.max_weight),7)
-        self.c.text(13,6,'Free bag %.2f' %(player.ch.backpack),7)
-        self.c.text(13,7,'Free hands %d' %(player.ch.free_hands),9)
-        self.c.text(13,8,'Turn %d' %(player.ch.turn),7)
+            self.c.text(2,atts.index(x)+5,'%s  %d' %(x,self.player.attr[x]),self.player.attr_colors[x])
+        self.c.text(13,3,'Armour %d' %(self.player.armour),9)
+        self.c.text(13,5,'Wg %.2f/%d' %(self.player.weight, self.player.max_weight),7)
+        self.c.text(13,6,'Free bag %.2f' %(self.player.backpack),7)
+        self.c.text(13,7,'Free hands %d' %(self.player.free_hands),9)
+        self.c.text(13,8,'Turn %d' %(self.player.turn),7)
         self.c.text(29,3,'Weapon skills',12)
         current_weapons=[]
         right_hand_weapon=''
-        if player.ch.equipment['Right hand'] and 'weapon' in player.ch.equipment['Right hand'].type:
-            current_weapons.append(player.ch.equipment['Right hand'].weapon_type.capitalize())
-            right_hand_weapon=player.ch.equipment['Right hand'].weapon_type.capitalize()
-        if player.ch.equipment['Left hand'] and 'weapon' in player.ch.equipment['Left hand'].type:
-            current_weapons.append(player.ch.equipment['Left hand'].weapon_type.capitalize())
+        if self.player.equipment['Right hand'] and 'weapon' in self.player.equipment['Right hand'].type:
+            current_weapons.append(self.player.equipment['Right hand'].weapon_type.capitalize())
+            right_hand_weapon=self.player.equipment['Right hand'].weapon_type.capitalize()
+        if self.player.equipment['Left hand'] and 'weapon' in self.player.equipment['Left hand'].type:
+            current_weapons.append(self.player.equipment['Left hand'].weapon_type.capitalize())
         if not current_weapons:
             current_weapons=['Unarmed']
-        for s in player.ch.weapon_skills:
+        for s in self.player.weapon_skills:
             if s in current_weapons:
                 if s==right_hand_weapon or len(current_weapons)==1:
-                    self.c.text(29,player.ch.weapon_skills.keys().index(s)+5,'%-12s:%6.2f' %(s,player.ch.weapon_skill),10)
+                    self.c.text(29,self.player.weapon_skills.keys().index(s)+5,'%-12s:%6.2f' %(s,self.player.weapon_skill),10)
                 else:
-                    self.c.text(29,player.ch.weapon_skills.keys().index(s)+5,'%-12s:%6.2f' %(s,player.ch.weapon_skills[s]),10)
+                    self.c.text(29,self.player.weapon_skills.keys().index(s)+5,'%-12s:%6.2f' %(s,self.player.weapon_skills[s]),10)
             else:
-                self.c.text(29,player.ch.weapon_skills.keys().index(s)+5,'%-12s:%6.2f' %(s,player.ch.weapon_skills[s]),7)
-        self.c.text(49,1,'NATURE %17.2f' %player.ch.forces['Nature']+'%',10)
+                self.c.text(29,self.player.weapon_skills.keys().index(s)+5,'%-12s:%6.2f' %(s,self.player.weapon_skills[s]),7)
+        self.c.text(49,1,'NATURE %17.2f' %self.player.forces['Nature']+'%',10)
         the_line=3
         for race in races['Nature']:
-            if race==player.ch.locked_race:
+            if race==self.player.locked_race:
                 col=2
             else:
                 col=7
-            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),player.ch.races['Nature'][race])+'%',col)
+            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),self.player.races['Nature'][race])+'%',col)
             the_line+=1
-        self.c.text(49,the_line+1,'ORDER  %17.2f' %player.ch.forces['Order']+'%',9)
+        self.c.text(49,the_line+1,'ORDER  %17.2f' %self.player.forces['Order']+'%',9)
         the_line+=3
         for race in races['Order']:
-            if race==player.ch.locked_race:
+            if race==self.player.locked_race:
                 col=2
             else:
                 col=7
-            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),player.ch.races['Order'][race])+'%',col)
+            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),self.player.races['Order'][race])+'%',col)
             the_line+=1
-        self.c.text(49,the_line+1,'CHAOS  %17.2f' %player.ch.forces['Chaos']+'%',12)
+        self.c.text(49,the_line+1,'CHAOS  %17.2f' %self.player.forces['Chaos']+'%',12)
         the_line+=3
         for race in races['Chaos']:
-            if race==player.ch.locked_race:
+            if race==self.player.locked_race:
                 col=2
             else:
                 col=7
-            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),player.ch.races['Chaos'][race])+'%',col)
+            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),self.player.races['Chaos'][race])+'%',col)
             the_line+=1
         self.c.pos(2,15)
-        if player.ch.emotion == 2:
+        if self.player.emotion == 2:
             self.c.text(2,20,'Tired',7)
-        if player.ch.sit == True:
+        if self.player.sit == True:
             self.c.text(2,23,'Sitting',7)
         colour = 7
-        if player.ch.hunger > 60:
+        if self.player.hunger > 60:
             sign = 'Hungry'
-            if 80 < player.ch.hunger < 100:
+            if 80 < self.player.hunger < 100:
                 colour = 12
                 sign = 'HUNGRY'
-            if player.ch.hunger == 100:
-                if player.ch.turn%2 == 1:
+            if self.player.hunger == 100:
+                if self.player.turn%2 == 1:
                     colour = 14
                 else:
                     colour = 12
                 sign = 'STARVING!'
             self.c.text(2,21,sign,colour)
         colour = 7
-        if player.ch.thirst > 60:
+        if self.player.thirst > 60:
             sign = 'Thirsty'
-            if 80 < player.ch.thirst < 100:
+            if 80 < self.player.thirst < 100:
                 colour = 12
                 sign = 'THIRSTY'
-            if player.ch.thirst == 100:
-                if player.ch.turn%2 == 0:
+            if self.player.thirst == 100:
+                if self.player.turn%2 == 0:
                     colour = 14
                 else:
                     colour = 12
@@ -1077,7 +1062,7 @@ class Game:
             self.c.text(2,22,sign,colour)
         waiting=msvcrt.getch()
         if ord(waiting) in range(97,len(all_races)+97):
-            player.ch.locked_race=all_races[ord(waiting)-97]
+            self.player.locked_race=all_races[ord(waiting)-97]
             self.character()
 
     def research(self):
@@ -1109,50 +1094,50 @@ class Game:
      IF YOU LOSE YOUR HIGH HUMAN ATTUNEMENT (90%)
      YOU WILL LOSE ALL COLLECTED KNOWLEDGE!''')
 
-        self.c.text(1,22,'Researching: %s -> %s' %(player.ch.research_force,player.ch.research_race.capitalize()))
-        self.c.text(49,1,'NATURE %17.2f' %player.ch.research_forces['Nature']+'%',10)
+        self.c.text(1,22,'Researching: %s -> %s' %(self.player.research_force,self.player.research_race.capitalize()))
+        self.c.text(49,1,'NATURE %17.2f' %self.player.research_forces['Nature']+'%',10)
         the_line=3
         for race in races['Nature']:
-            if race==player.ch.research_race:
+            if race==self.player.research_race:
                 col=2
             else:
                 col=7
-            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),player.ch.research_races['Nature'][race])+'%',col)
+            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),self.player.research_races['Nature'][race])+'%',col)
             the_line+=1
-        self.c.text(49,the_line+1,'ORDER  %17.2f' %player.ch.research_forces['Order']+'%',9)
+        self.c.text(49,the_line+1,'ORDER  %17.2f' %self.player.research_forces['Order']+'%',9)
         the_line+=3
         for race in races['Order']:
-            if race==player.ch.research_race:
+            if race==self.player.research_race:
                 col=2
             else:
                 col=7
-            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),player.ch.research_races['Order'][race])+'%',col)
+            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),self.player.research_races['Order'][race])+'%',col)
             the_line+=1
-        self.c.text(49,the_line+1,'CHAOS  %17.2f' %player.ch.research_forces['Chaos']+'%',12)
+        self.c.text(49,the_line+1,'CHAOS  %17.2f' %self.player.research_forces['Chaos']+'%',12)
         the_line+=3
         for race in races['Chaos']:
-            if race==player.ch.research_race:
+            if race==self.player.research_race:
                 col=2
             else:
                 col=7
-            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),player.ch.research_races['Chaos'][race])+'%',col)
+            self.c.text(50,the_line,'%s) %-16s:%6.2f' %(chr(all_races.index(race)+97),race.capitalize(),self.player.research_races['Chaos'][race])+'%',col)
             the_line+=1
         waiting=msvcrt.getch()
         if ord(waiting) in range(97,len(all_races)+97):
-            player.ch.research_race=all_races[ord(waiting)-97]
+            self.player.research_race=all_races[ord(waiting)-97]
             for r in races:
                 if all_races[ord(waiting)-97] in races[r]:
-                    player.ch.research_force=r
+                    self.player.research_force=r
                     break
             self.research()
 
     def tame(self,animal):
         diff=animal.attr['tame'][1]
-        if animal.attr['tame'][2] not in [i.id for i in player.ch.inventory]:
+        if animal.attr['tame'][2] not in [i.id for i in self.player.inventory]:
             message.use('taming_item',I[animal.attr['tame'][2]])
             return 0
         chance=random.randint(1,100)
-        if chance+player.ch.forces['Nature']>=diff:
+        if chance+self.player.forces['Nature']>=diff:
             message.creature('tame_success',animal)
             if animal.random:
                 animal.random=False
@@ -1167,7 +1152,7 @@ class Game:
                     animal.attr['target']=[]
                     animal.food=50
                     animal.farm=0
-                    player.ch.followers.append(animal)
+                    self.player.followers.append(animal)
         else:
             message.creature('tame_fail',animal)
             animal.appearance-=10
@@ -1211,7 +1196,7 @@ class Game:
             message.message('')
             if ch_action.lower()=='a':
                 chosen_food=0
-                for i in player.ch.inventory:
+                for i in self.player.inventory:
                     if i.id == animal.attr['tame'][2]:
                         chosen_food=i
                         break
@@ -1230,7 +1215,7 @@ class Game:
                         if 'container' in self.I[animal.attr['tame'][3]].effect:
                             needed=self.I[self.I[animal.attr['tame'][3]].effect['container']]
                             found=0
-                            for cont in player.ch.inventory:
+                            for cont in self.player.inventory:
                                 if cont.id==needed.id and cont.name==needed.name:
                                     cont.lose_item(1)
                                     found=1
@@ -1239,8 +1224,8 @@ class Game:
                                 message.use('needed_container',needed)
                                 return 0
                         creation=self.I[animal.attr['tame'][3]].duplicate(1)
-                        self.ground_items.append([player.ch.xy[0],player.ch.xy[1],creation])
-                        player.ch.pick_up(self.ground_items)
+                        self.ground_items.append([self.player.xy[0],self.player.xy[1],creation])
+                        self.player.pick_up(self.ground_items)
                         message.use('farm_harvest',creation)
                         animal.farm-=1
                     else:
@@ -1249,10 +1234,10 @@ class Game:
                     message.message('cant_farm')
             elif ch_action.lower()=='c':
                 message.message('')
-                if animal.attr['tame'][0]=='ride' and not player.ch.ride and not player.ch.possessed:
-                    player.ch.followers.remove(animal)
-                    player.ch.ride.append(animal)
-                    player.ch.backpack += animal.attr['Str']*2
+                if animal.attr['tame'][0]=='ride' and not self.player.ride and not self.player.possessed:
+                    self.player.followers.remove(animal)
+                    self.player.ride.append(animal)
+                    self.player.backpack += animal.attr['Str']*2
                     self.hide(animal)
                     animal.xy=[1,1]
                     animal.mode='follow'
@@ -1264,21 +1249,21 @@ class Game:
                     else:
                         message.message('well_fed_mount')
                 else:
-                    if player.ch.ride:
+                    if self.player.ride:
                         message.message('cant_ride_two')
                     else:
                         message.message('cant_ride')
 
     def possess(self,animal,tr=''):
         message.message('')
-        chance=float(player.ch.attr['Mnd'])/(player.ch.attr['Mnd']+animal.attr['Mnd'])
+        chance=float(self.player.attr['Mnd'])/(self.player.attr['Mnd']+animal.attr['Mnd'])
         tried=random.random()
         if tried<chance or tr:
-            player.ch.possessed=[animal]
-            for x in player.ch.attr:
-                player.ch.attr[x]=animal.attr[x]
-            player.ch.life+=animal.life
-            player.ch.max_life+=animal.life
+            self.player.possessed=[animal]
+            for x in self.player.attr:
+                self.player.attr[x]=animal.attr[x]
+            self.player.life+=animal.life
+            self.player.max_life+=animal.life
             if tr=='trans':
                 message.creature('transform_into',animal)
             else:
@@ -1286,48 +1271,48 @@ class Game:
                 self.hide(animal)
                 animal.xy=[1,1]
                 animal.mode='follow'
-                if 'spirit of nature3' in player.ch.tool_tags:
+                if 'spirit of nature3' in self.player.tool_tags:
                     the_slot=''
-                    if player.ch.equipment['Right hand'] and player.ch.equipment['Right hand'].id==50 and \
-                       (player.ch.equipment['Right hand'].effect=={} or 'totem' in player.ch.equipment['Right hand'].type):
+                    if self.player.equipment['Right hand'] and self.player.equipment['Right hand'].id==50 and \
+                       (self.player.equipment['Right hand'].effect=={} or 'totem' in self.player.equipment['Right hand'].type):
                         the_slot='Right hand'
-                    elif player.ch.equipment['Left hand'] and player.ch.equipment['Left hand'].id==50 and \
-                         (player.ch.equipment['Left hand'].effect=={} or 'totem' in player.ch.equipment['Left hand'].type):
+                    elif self.player.equipment['Left hand'] and self.player.equipment['Left hand'].id==50 and \
+                         (self.player.equipment['Left hand'].effect=={} or 'totem' in self.player.equipment['Left hand'].type):
                         the_slot='Left hand'
                     if the_slot:
-                        if 'totem' in player.ch.equipment[the_slot].type:
-                            if 'temp_attr' in player.ch.equipment[the_slot].effect:
-                                del(player.ch.equipment[the_slot].effect['temp_attr'])
-                            if 'transform' not in player.ch.equipment[the_slot].effect and player.ch.equipment[the_slot].name[:-6]==animal.name:
-                                player.ch.equipment[the_slot].effect['transform']=animal.duplicate(1,1,10000,animal.force,
+                        if 'totem' in self.player.equipment[the_slot].type:
+                            if 'temp_attr' in self.player.equipment[the_slot].effect:
+                                del(self.player.equipment[the_slot].effect['temp_attr'])
+                            if 'transform' not in self.player.equipment[the_slot].effect and self.player.equipment[the_slot].name[:-6]==animal.name:
+                                self.player.equipment[the_slot].effect['transform']=animal.duplicate(1,1,10000,animal.force,
                                                                                                    animal.race,rand=False)
-                                player.ch.equipment[the_slot].effect['transform'].mode='temp'
+                                self.player.equipment[the_slot].effect['transform'].mode='temp'
                         else:
-                            player.ch.equipment[the_slot].type.append('totem')
-                            player.ch.equipment[the_slot].type.remove('weapon')
-                            player.ch.equipment[the_slot].effect[animal.name]=0.
-                            player.ch.equipment[the_slot].effect['transform']=animal.duplicate(1,1,10000,animal.force,
+                            self.player.equipment[the_slot].type.append('totem')
+                            self.player.equipment[the_slot].type.remove('weapon')
+                            self.player.equipment[the_slot].effect[animal.name]=0.
+                            self.player.equipment[the_slot].effect['transform']=animal.duplicate(1,1,10000,animal.force,
                                                                                                 animal.race,rand=False)
-                            player.ch.equipment[the_slot].effect['transform'].mode='temp'
-                            player.ch.equipment[the_slot].name='%s totem' %(animal.name)
+                            self.player.equipment[the_slot].effect['transform'].mode='temp'
+                            self.player.equipment[the_slot].name='%s totem' %(animal.name)
         elif tried>.95:
             animal.mode='hostile'
             message.creature('anger_animal',animal)
 
     def pickpocket(self,target):
         target_awareness=(target.attr['Int']+target.attr['Mnd'])/2.
-        if 'stealthy' in player.ch.tool_tags:
-            picking_skill=(player.ch.attr['Int']+player.ch.attr['Dex'])/1.5
+        if 'stealthy' in self.player.tool_tags:
+            picking_skill=(self.player.attr['Int']+self.player.attr['Dex'])/1.5
         else:
-            picking_skill=(player.ch.attr['Int']+player.ch.attr['Dex'])/2.
+            picking_skill=(self.player.attr['Int']+self.player.attr['Dex'])/2.
         chance=picking_skill/(target_awareness+picking_skill)
         if random.random()<chance:
             if len(target.attr['loot'])==1 and 'picked_dry' not in target.attr:
-                inventory.put_item([[1000,75,1,10]],player.ch.xy)
+                inventory.put_item([[1000,75,1,10]],self.player.xy)
                 target.attr['picked_dry']=1
                 message.creature('pilfer_last',target)
             elif len(target.attr['loot'])>1:
-                inventory.put_item([target.attr['loot'][1]],player.ch.xy)
+                inventory.put_item([target.attr['loot'][1]],self.player.xy)
                 target.attr['loot']=[target.attr['loot'][0]]+target.attr['loot'][2:]
                 message.creature('pilfer',target)
             elif len(target.attr['loot'])==1 and 'picked_dry' in target.attr:
@@ -1455,12 +1440,12 @@ class Game:
                              'dryad':{'buy':[[1311,80,1,1],[3,100,1,3],[1301,100,1,3],['dryad',100],['dryad',100]],'sell':['food','drink','cookmat','weapon','armour','Ammunition']}}
                 offering=set([])
                 for y in trade_goods[target.race]['sell']:
-                    for x in player.ch.inventory:
+                    for x in self.player.inventory:
                         if y in x.type:
                             offering.add(x)
                 offering=list(offering)
                 getting=[]
-                if 'trade_goods' in target.attr and target.attr['trade_timer']+600>player.ch.turn:
+                if 'trade_goods' in target.attr and target.attr['trade_timer']+600>self.player.turn:
                     getting=target.attr['trade_goods'][:]
                     target.attr['trade_timer']+=100
                 else:
@@ -1469,7 +1454,7 @@ class Game:
                         if the_goods:
                             getting.append(the_goods)
                     target.attr['trade_goods']=getting[:]
-                    target.attr['trade_timer']=player.ch.turn
+                    target.attr['trade_timer']=self.player.turn
                 i=''
                 chosen={}
                 balance=0
@@ -1509,7 +1494,7 @@ class Game:
                     elif i==' ':
                         if balance>=0 and chosen:
                             for x in chosen.keys():
-                                if x in player.ch.inventory:
+                                if x in self.player.inventory:
                                     x.lose_item(chosen[x])
                                     added=0
                                     for y in getting:
@@ -1524,7 +1509,7 @@ class Game:
                                         getting.remove(x)
                                     else:
                                         x.qty-=chosen[x]
-                                    self.ground_items.append([player.ch.xy[0], player.ch.xy[1], x.duplicate(chosen[x])])
+                                    self.ground_items.append([self.player.xy[0], self.player.xy[1], x.duplicate(chosen[x])])
                             target.attr['trade_goods']=getting[:]
                         else:
                             i=''
@@ -1540,7 +1525,7 @@ class Game:
                    'tourmaline':500,'garnet':500,'aquamarine':500,'opal':750,'turquoise':500,'lapis lazuli':500,
                    'paper':100,'feather':5,'bone':5}
         price=max([x.weight,0.01])*max([materials.get(y,1) for y in x.type])*max([item_types.get(z,1) for z in x.type])
-        m=(float(merch.attr['Int']+merch.attr['Cre'])/(merch.attr['Int']+merch.attr['Cre']+player.ch.attr['Int']+player.ch.attr['Cre'])-.5)/2
+        m=(float(merch.attr['Int']+merch.attr['Cre'])/(merch.attr['Int']+merch.attr['Cre']+self.player.attr['Int']+self.player.attr['Cre'])-.5)/2
         if sell:
             price-=price*m
         else:
@@ -1592,35 +1577,35 @@ class Game:
 
     def drink(self,xy):
         if T[self.land[xy[1]-1][xy[0]-21]].drink != {}:
-            if player.ch.thirst == 0:
+            if self.player.thirst == 0:
                 message.use('over_drink',T[self.land[xy[1]-1][xy[0]-21]])            
                 return 1
             message.use('drink',T[self.land[xy[1]-1][xy[0]-21]])
-            if T[self.land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in player.ch.tool_tags:
+            if T[self.land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in self.player.tool_tags:
                 for k,v in {'energy':10,'thirst':5}.items():
                     player.effect(k,v)
             else:
                 for k,v in T[self.land[xy[1]-1][xy[0]-21]].drink.items():
                     player.effect(k,v)
-        elif player.ch.possessed:
-            if player.ch.thirst>20 or player.ch.hunger>20:
+        elif self.player.possessed:
+            if self.player.thirst>20 or self.player.hunger>20:
                 to_eat={'wild horse':'gb','squirrel':'T','snake':'b','poison snake':'b','camel':'Tb','giant lizard':'.,',
                         'penguin':'wW','monkey':'T','polar bear':'wW','bear':'b','cattle':'gb','chicken':'g.','fish':'wW',
                         'plant':'.g'}
-                if T[self.land[xy[1]-1][xy[0]-21]].id in to_eat.get(player.ch.possessed[0].race,''):
-                    self.possession_score(100,player.ch)
-                    if player.ch.xy not in player.ch.worked_places[player.ch.mode]:
+                if T[self.land[xy[1]-1][xy[0]-21]].id in to_eat.get(self.player.possessed[0].race,''):
+                    self.possession_score(100,self.player)
+                    if self.player.xy not in self.player.worked_places[self.player.mode]:
                         for k,v in {'energy':10,'thirst':5,'hunger':5}.items():
                             player.effect(k,v)
-                        message.message('eating_%s' %(player.ch.possessed[0].race.replace(' ','_')))
-                        if player.ch.possessed[0].race!='plant':
-                            player.ch.worked_places[player.ch.mode].append(xy[:])
+                        message.message('eating_%s' %(self.player.possessed[0].race.replace(' ','_')))
+                        if self.player.possessed[0].race!='plant':
+                            self.player.worked_places[self.player.mode].append(xy[:])
                     else:
-                        message.message('no_food_%s' %(player.ch.possessed[0].race.replace(' ','_')))
-                elif player.ch.possessed[0].race in ['grizzly','wolf','dog','polar wolf','hyena']:
+                        message.message('no_food_%s' %(self.player.possessed[0].race.replace(' ','_')))
+                elif self.player.possessed[0].race in ['grizzly','wolf','dog','polar wolf','hyena']:
                     found_meat=0
                     for x in self.ground_items:
-                        if [x[0],x[1]]==player.ch.xy and 'meat' in x[2].name:
+                        if [x[0],x[1]]==self.player.xy and 'meat' in x[2].name:
                             found_meat=1
                             for k,v in {'energy':10,'thirst':10,'hunger':25}.items():
                                 player.effect(k,v)
@@ -1631,11 +1616,11 @@ class Game:
                         else:
                             self.ground_items.remove(x)
                         message.message('eating_carnivore')
-                        self.possession_score(100,player.ch)
+                        self.possession_score(100,self.player)
                     else:
                         message.message('no_food_carnivore')
                 else:
-                    message.message('no_food_%s' %(player.ch.possessed[0].race.replace(' ','_')))
+                    message.message('no_food_%s' %(self.player.possessed[0].race.replace(' ','_')))
             else:
                 message.message('not_hungry')
         else:
@@ -1667,7 +1652,7 @@ class Game:
         elif len(doors)+len(containers) == 1:
             if len(doors):
                 if T[self.land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_c'):
-                    self.open_door(doors[0],player.ch)
+                    self.open_door(doors[0],self.player)
                 elif T[self.land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_o'):
                     self.close_door(doors[0], land[doors[0][1]-1][doors[0][0]-21])
                 return 0
@@ -1687,7 +1672,7 @@ class Game:
                 target = [xy[0]+md[i][0], xy[1]+md[i][1]]
                 if target in doors:
                     if T[self.land[target[1]-1][target[0]-21]].world_name.endswith('_c'):
-                        self.open_door(target,player.ch)
+                        self.open_door(target,self.player)
                     elif T[self.land[target[1]-1][target[0]-21]].world_name.endswith('_o'):
                         self.close_door(target, land[target[1]-1][target[0]-21])
                     return 0
@@ -1709,22 +1694,22 @@ class Game:
 
     def open_container(self,chest):
         if 'locked' in chest.type: ##Lockpicking se uchi samo kogato uspeesh!
-            if 'lockpick' in player.ch.tool_tags:
-                lock_atts = (player.ch.attr['Dex']+player.ch.attr['Int'])/2.0
-                if 'lockpicking' not in player.ch.skills:
-                    player.ch.skills['lockpicking'] = float(player.ch.attr['Dex'])
-                if random.random() < player.ch.skills['lockpicking']/chest.effect['lock_strength']:
+            if 'lockpick' in self.player.tool_tags:
+                lock_atts = (self.player.attr['Dex']+self.player.attr['Int'])/2.0
+                if 'lockpicking' not in self.player.skills:
+                    self.player.skills['lockpicking'] = float(self.player.attr['Dex'])
+                if random.random() < self.player.skills['lockpicking']/chest.effect['lock_strength']:
                     learn = random.uniform(0,100)
-                    if learn <= (lock_atts - player.ch.skills['lockpicking']/5)/lock_atts*100:
-                        player.ch.skills['lockpicking'] += 0.1
+                    if learn <= (lock_atts - self.player.skills['lockpicking']/5)/lock_atts*100:
+                        self.player.skills['lockpicking'] += 0.1
                     chest.type.remove('locked')
                     message.message('success_lockpick')
                     msvcrt.getch()
                 else:
-                    if player.ch.skills['lockpicking'] < chest.effect['lock_strength']/10:
+                    if self.player.skills['lockpicking'] < chest.effect['lock_strength']/10:
                         learn = random.uniform(0,100)
-                        if learn <= (lock_atts - player.ch.skills['lockpicking']/5)/lock_atts*100:
-                            player.ch.skills['lockpicking'] += 0.01
+                        if learn <= (lock_atts - self.player.skills['lockpicking']/5)/lock_atts*100:
+                            self.player.skills['lockpicking'] += 0.01
                     message.message('failed_lockpick')
                     msvcrt.getch()
                     return 0
@@ -1738,8 +1723,8 @@ class Game:
             print ' %s)   %s %d x %s stones' %(chr(i+97),chest.effect['contains'][i].name.capitalize(),chest.effect['contains'][i].qty,
                                              str(chest.effect['contains'][i].weight))
             self.c.text(4,i+3,chest.effect['contains'][i].tag,chest.effect['contains'][i].color)
-        print '\n You can carry %s more stones, %s more will fit in your backpack.' %(str(player.ch.max_weight-player.ch.weight),
-                                                                                      str(player.ch.backpack))
+        print '\n You can carry %s more stones, %s more will fit in your backpack.' %(str(self.player.max_weight-self.player.weight),
+                                                                                      str(self.player.backpack))
         i1 = msvcrt.getch()
         i1 = i1.lower()
         if i1 == 't' and len(chest.effect['contains']):
@@ -1753,7 +1738,7 @@ class Game:
             self.c.rectangle((0,0,79,1))
             try:
                 item = chest.effect['contains'][ord(take)-97]
-                if item.qty > 1 and player.ch.equipment['Backpack'] != []:
+                if item.qty > 1 and self.player.equipment['Backpack'] != []:
                     message.message('pickup')                    
                     a = ''
                     i = ' '
@@ -1771,10 +1756,10 @@ class Game:
                     a = 1
                 if a > item.qty:
                     a = item.qty
-                if chest in player.ch.inventory:
-                    player.ch.weight -= item.weight*a
-                    player.ch.backpack += item.weight * item.qty
-                if player.ch.weight+item.weight*a <= player.ch.max_weight and item.weight*a <= player.ch.backpack and player.ch.equipment['Backpack'] != []:
+                if chest in self.player.inventory:
+                    self.player.weight -= item.weight*a
+                    self.player.backpack += item.weight * item.qty
+                if self.player.weight+item.weight*a <= self.player.max_weight and item.weight*a <= self.player.backpack and self.player.equipment['Backpack'] != []:
                     item.get_item(a,item.name)
                     chest.weight -= item.weight*a
                     if a == item.qty:
@@ -1785,24 +1770,24 @@ class Game:
                         for tal in item.effect['talisman']:
                             for tal_add in item.effect['talisman'][tal]:
                                 chest.effect[tal].remove(tal_add)
-                elif player.ch.weight+item.weight*a > player.ch.max_weight:
+                elif self.player.weight+item.weight*a > self.player.max_weight:
                     message.use('cant_carry', item)
                     msvcrt.getch()
-                elif item.weight*a > player.ch.backpack:
-                    if player.ch.equipment['Backpack'] == []:
+                elif item.weight*a > self.player.backpack:
+                    if self.player.equipment['Backpack'] == []:
                         if 'two_handed' in item.type:
                             needed_hands = 2
                         else:
                             needed_hands = 1
-                        if player.ch.free_hands >= needed_hands:
+                        if self.player.free_hands >= needed_hands:
                             item.get_item()
                             chest.weight -= item.weight*a
-                            player.ch.free_hands -= needed_hands
+                            self.player.free_hands -= needed_hands
                             if 1 < item.qty:
                                 item.qty -= 1
                             else:
                                 chest.effect['contains'].remove(item)
-                            player.ch.backpack = 0
+                            self.player.backpack = 0
                         else:
                             message.message('drop_first')
                             msvcrt.getch()
@@ -1824,9 +1809,9 @@ class Game:
                 if not dropped:
                     chest.effect['contains'].append(item)
                 chest.weight += item.weight * item.qty
-                if chest in player.ch.inventory:
-                    player.ch.weight += item.weight * item.qty
-                    player.ch.backpack -= item.weight * item.qty
+                if chest in self.player.inventory:
+                    self.player.weight += item.weight * item.qty
+                    self.player.backpack -= item.weight * item.qty
                 if 'talisman' in chest.type and 'talisman' in item.effect:
                     for tal in item.effect['talisman']:
                         if tal not in chest.effect:
@@ -1844,7 +1829,7 @@ class Game:
 
     def close_door(self,xy, door_id):
         blocked = 0
-        for cr in player.all_beings:
+        for cr in self.all_beings:
             if cr.xy == xy:
                 blocked = 1
         for i in self.ground_items:
@@ -1857,10 +1842,10 @@ class Game:
             self.c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[self.land[xy[1]-1][xy[0]-21]].colour, T[self.land[xy[1]-1][xy[0]-21]].char)
             message.message('close_door')
 
-    def cook():
+    def cook(self):
         mats=[]
         selected_mats=[]
-        for i in player.ch.inventory:
+        for i in self.player.inventory:
             if 'cookmat' in i.type:
                 mats.append(i.duplicate(i.qty))
                 selected_mats.append(i.duplicate(0))
@@ -1869,25 +1854,25 @@ class Game:
         the_meal=''
         i=''
         while i!=' ':
-            c.page()
-            c.pos(1,1)
-            c.write('''You have the following ingredients for cooking. Select the ones you want to
+            self.c.page()
+            self.c.pos(1,1)
+            self.c.write('''You have the following ingredients for cooking. Select the ones you want to
      use and take note of the other things you need for the desired meal on the
      right. (exit with SPACE, decrease with SHIFT)
 
      You have:                   Using:     You can make:\n''')
             for i in range(len(mats)):
                 print ' %s)   %s x %d' %(chr(i+97),mats[i].name,mats[i].qty)
-                c.text(4,i+6,mats[i].tag,mats[i].color)
-                c.text(31,i+6,str(selected_mats[i].qty))
+                self.c.text(4,i+6,mats[i].tag,mats[i].color)
+                self.c.text(31,i+6,str(selected_mats[i].qty))
             if selected_recipes:
                 line=0
                 for r in selected_recipes:
-                    c.text(40,line+6,'%s' %(r.capitalize()))
+                    self.c.text(40,line+6,'%s' %(r.capitalize()))
                     if selected_recipes[r]:
-                        c.text(40,line+7,' Needs: %s' %(','.join(['%d %s' %(selected_recipes[r].count(x),x.capitalize()) for x in set(selected_recipes[r])])))
+                        self.c.text(40,line+7,' Needs: %s' %(','.join(['%d %s' %(selected_recipes[r].count(x),x.capitalize()) for x in set(selected_recipes[r])])))
                     else:
-                        c.text(40,line+7,' Press SPACE to make!')
+                        self.c.text(40,line+7,' Press SPACE to make!')
                     line+=2
             i=msvcrt.getch()
             if ord(i)-97 in range(len(mats)):
@@ -1902,7 +1887,7 @@ class Game:
                     mats[ord(i)-65].qty+=1
             if selected_tags:
                 selected_recipes={}
-                for r in inventory.CR[player.ch.attr['Cre']]:
+                for r in inventory.CR[self.player.attr['Cre']]:
                     all_in=1
                     needed_tags=inventory.cook_recipes[r][3:]
                     for t in selected_tags:
@@ -1912,9 +1897,9 @@ class Game:
                             all_in=0
                             break
                     for t in inventory.cook_recipes[r][1]:
-                        full_tools=player.ch.tool_tags[:]
-                        for gi in ground_items:
-                            if gi[:2]==player.ch.xy:
+                        full_tools=self.player.tool_tags[:]
+                        for gi in self.ground_items:
+                            if gi[:2]==self.player.xy:
                                 full_tools+=gi[2].tool_tag
                         if t not in full_tools:
                             needed_tags.append(t)
@@ -1929,239 +1914,40 @@ class Game:
         if the_meal:
             for m in selected_mats:
                 if m.qty!=0:
-                    for x in player.ch.inventory:
+                    for x in self.player.inventory:
                         if x.id==m.id and x.name==m.name:
                             x.lose_item(m.qty)
                             if the_meal=='get seeds':
                                 veg_name=m.name
-            creation=I[inventory.cook_recipes[the_meal][2]].duplicate(1)
+            creation=self.I[inventory.cook_recipes[the_meal][2]].duplicate(1)
             ## Za semena se izpolzva SAMO iztochnika (zelenchuk/cvete)
             if the_meal=='get seeds':
                 creation.qty=3
                 creation.name=veg_name+' seed'
                 medium=creation.effect.pop('plant_vegetable')
                 creation.effect['plant_specific']=[medium,veg_name]
-            ground_items.append([player.ch.xy[0],player.ch.xy[1],creation])
-            player.ch.pick_up(ground_items)
-            c.rectangle((0,0,80,1))
-            c.pos(1,0)
+            self.ground_items.append([self.player.xy[0],self.player.xy[1],creation])
+            self.player.pick_up(self.ground_items)
+            self.c.rectangle((0,0,80,1))
+            self.c.pos(1,0)
 
-    def choose_spell():
-        c.page()
-        if player.ch.spells == []:
-            c.write('''
-      You do not know any spells, you have to create some!''')
-            i = msvcrt.getch()
-        else:
-            c.write('''
-      Choose your spell:\n\n  ''')
-            for x in player.ch.spells.keys():
-                c.write('%d) %s  Ingredients:%s\n  ' %(player.ch.spells.keys().index(x)+1,x,[x.name for x in player.ch.spells[x]['ingredients']]))
-            i = msvcrt.getch()
-            try:
-                i = int(i)-1
-                if i in range(len(player.ch.spells)):
-                    cast_spell(player.ch.spells.keys()[i])
-            except ValueError:
-                pass
-
-    def cast_spell(name):
-        in_stock = {}
-        needed = {}
-        for x in player.ch.inventory:
-            in_stock[x.id] = x.qty
-        for x in player.ch.spells[name]['ingredients']:
-            needed[x.id] = needed.get(x.id,0) + 1
-        for x in needed:
-            if needed[x]>in_stock[x]:
-                c.write("  You don't have the needed ingredients!")
-                i = msvcrt.getch()
-                return 0
-        for x in player.ch.inventory:
-            if x.id in needed:
-                x.lose_item(needed[x.id])
-        if len(player.ch.spells[name]) == 1:
-            c.write('''  You cast the spell and nothing happens - you must have made a mistake in
-      the incantation! Your ingredients are wasted and you throw away your useless
-      writings on the spell. You will have to start over with the creation.''')
-            del(player.ch.spells[name])
-            i = msvcrt.getch()
-        else:
-            if player.ch.spells[name]['effect'] == 'Fizzle':
-                c.write('''  You cast the spell and feel the energy spread around you without any purpose
-      - the spell was useless! Your ingredients are wasted.''')
-                del(player.ch.spells[name])
-                i = msvcrt.getch()
-            elif player.ch.spells[name]['effect'] == 'Damage/Healing':
-                if player.ch.spells[name]['target'] == 'Self':
-                    act = {'-':'destructive','+':'healing'}
-                    c.write('''\n  The %s energy of the spell focuses on you!''' %act[player.ch.spells[name]['action']])
-                    player.ch.life += eval('%s%d' %(player.ch.spells[name]['action'],player.ch.spells[name]['strength']))
-                    if player.ch.life > player.ch.max_life:
-                        player.ch.life = player.ch.max_life
-                    i = msvcrt.getch()
-                else:
-                    player.ch.spell_cast = name
-            elif player.ch.spells[name]['effect'] == 'Invisibility':
-                if player.ch.spells[name]['target'] == 'Self':
-                    if player.ch.spells[name]['action'] == '+':
-                        player.ch.effects['invisible']=player.ch.spells[name]['strength']+5
-                        c.write('''\n  You cast the spell and feel the energy fill you up. You become invisible!''')
-                        player.ch.emotion=1
-                        i = msvcrt.getch()
-                    else:
-                        c.write('''  You cast the spell and feel the energy spread around you without any purpose
-     - the spell was useless! Your ingredients are wasted.''')
-                        del(player.ch.spells[name])
-                        i = msvcrt.getch()
-                else:
-                    player.ch.spell_cast = name
-
-    def execute_spell(buff):
-        ## Tuk se razreshavat efektite nasocheni kum drugi sushtestva i mesta. Tezi kum igracha sa v cast_spell()
-        all_targets = []
-        for x in player.all_creatures:
-            if x.mode != 'not_appeared' and max([abs(x.xy[0]-player.ch.xy[0]),abs(x.xy[1]-player.ch.xy[1])])<=player.ch.attr['Mnd'] and clear_los(direct_path(player.ch.xy,x.xy)):
-                all_targets.append(x)
-        if len(all_targets):
-            message.message('choose_target')
-            i=msvcrt.getch()
-            l = len(all_targets)
-            i = ' '
-            current = 0
-            while 1:
-                target = all_targets[current]
-                current += 1
-                if current == l:
-                    current = 0
-                old_tag = target.tag
-                old_emotion = target.emotion
-                target.tag = '*'
-                target.emotion = 14
-                redraw_screen()
-                message.creature('current_target',target)
-                target.tag = old_tag
-                target.emotion = old_emotion
-                i = msvcrt.getch()
-                if ord(i) == 13:
-                    break
-            if player.ch.spells[player.ch.spell_cast]['effect'] == 'Damage/Healing':
-                target.life += eval('%s%d' %(player.ch.spells[player.ch.spell_cast]['action'],player.ch.spells[player.ch.spell_cast]['strength']))
-                if player.ch.spells[player.ch.spell_cast]['action'] == '-':
-                    target.mode = 'hostile'
-                    message_mode = 'spell_damage'
-                else:
-                    message_mode = 'spell_healing'
-                message.creature('%s' %message_mode,target,player.ch.spells[player.ch.spell_cast]['strength'])
-            elif player.ch.spells[player.ch.spell_cast]['effect'] == 'Invisibility':
-                target.attr['invisible']=player.ch.spells[player.ch.spell_cast]['strength']+5
-        else:
-            message.message('no_target')
-                
-
-    def devise_spell():
-        c.page()
-        c.write('''
-      Do you want to choose one of your known spells or create a new one?
-
-      a) Choose spell.
-      b) Create a new spell.''')
-        i=msvcrt.getch()
-        if i == 'a':
-            choose_spell()
-            return 0
-        elif i == 'b':
-            strength=0
-            target='None'
-            effect='unknown effect'
-            action=''
-            targets={'@':'Self','?':'Other'}
-            effects={'a':'Damage/Healing','l':'Invisibility'}
-            i1=''
-            while strength==0 or target=='None' or effect=='unknown effect' or action=='' or ord(i1)!=13:
-                c.page()
-                c.write('''
-      Choose the effect, strength (1-9) and target of your spell and press ENTER:
-
-       Target:  @) Self.   ?) Other.        Action: +) Positive.  -) Negative.
-             
-       Effect:  a) Damage/Healing           g) Spirit (affects Cre & End)
-                b) Fire (lighting, burning) h) Body (Str & Dex)
-                c) Ice (freezing)           i) Mind (Mnd & Int)
-                d) Water                    j) Life
-                e) Earth                    k) Death
-                f) Air (flying, wind)       l) Invisibility
-
-       Effect: %s Strength: %d Target: %s Action: %s''' %(effect,strength,target,action))
-                i1 = msvcrt.getch()
-                if i1 in 'al':
-                    effect = effects[i1]
-                elif i1 in '123456789':
-                    strength = float(i1)
-                elif i1 in '@?':
-                    target = targets[i1]
-                elif i1 in '-+':
-                    action = i1
-            effect_diffs = {'Damage/Healing':1.0,'Fizzle':0.0,'Invisibility':9.0}
-            target_diff = 5.0
-            action_diff = 5.0
-            total_diff = effect_diffs[effect]+target_diff+action_diff+strength
-            if player.ch.attr['Int']/total_diff > random.random():
-                if (player.ch.attr['Mnd']/target_diff)*.95-player.ch.attr['Mnd']/total_diff < random.random():
-                    if target == 'Self':
-                        target = 'Other'
-                    else:
-                        target = 'Self'
-                if (player.ch.attr['Mnd']/action_diff)*.95-player.ch.attr['Mnd']/total_diff < random.random():
-                    if action == '-':
-                        action = '+'
-                    else:
-                        action = '-'
-                if (player.ch.attr['Mnd']/(strength*2))*.95-player.ch.attr['Mnd']/total_diff < random.random():
-                    strength = random.randint(1,max([1,strength-1]))
-                if (player.ch.attr['Mnd']/effect_diffs[effect])*.95-player.ch.attr['Mnd']/total_diff < random.random():
-                    possible = []
-                    for x in effect_diffs:
-                        if effect_diffs[x] < effect_diffs[effect]:
-                            possible.append(x)
-                    effect = random.choice(possible)
-                create_spell(total_diff,effect,strength,target,action)
-            else:
-                create_spell(total_diff,0)
-
-    def create_spell(total_diff,effect,strength=0,target='',action=''):
-        c.page()
-        c.write('''
-      Write the name for your new spell. If you repeat the name of an
-      existing spell the old one will be overwritten! ''')
-        name = raw_input()
-        all_ings = inventory.herbs
-        ings = []
-        n = int(total_diff)/5
-        for x in range(n):
-            ings.append(random.choice(all_ings))
-        if effect == 0:
-            player.ch.spells[name]={'ingredients':ings}
-        else:
-            player.ch.spells[name]={'ingredients':ings,'effect':effect,'strength':strength,'target':target,'action':action}
-
-    def look():
+    def look(self):
         key = ' '
-        c.pos(*player.ch.xy)
-        xy = player.ch.xy[:]
+        self.c.pos(*self.player.xy)
+        xy = self.player.xy[:]
         changed=1
         while ord(key) != 13:
-            if player.ch.target and changed:
+            if self.player.target and changed:
                 changed=0
-                redraw_screen()
-                highlight_path(direct_path(player.ch.xy,player.ch.target))
-                c.scroll((player.ch.target[0],player.ch.target[1],player.ch.target[0]+1,player.ch.target[1]+1),1,1,236,'X')
-                c.pos(*xy)
+                self.redraw_screen()
+                self.highlight_path(self.direct_path(self.player.xy,self.player.target))
+                self.c.scroll((self.player.target[0],self.player.target[1],self.player.target[0]+1,self.player.target[1]+1),1,1,236,'X')
+                self.c.pos(*xy)
             if msvcrt.kbhit():
                 key = msvcrt.getch()
                 if key=='t':
                     changed=1
-                    player.ch.target=xy[:]
+                    self.player.target=xy[:]
                 md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
                   '6':[1,0], '7':[-1,-1], '8':[0,-1], '9':[1,-1], '0':[0,0]}
                 a = 0
@@ -2172,20 +1958,20 @@ class Game:
                         xy[0] -= md[key][0]
                         xy[1] -= md[key][1]
                     message.message('')
-                    c.pos(*xy)
-                    message.look(xy, player.all_beings, T, player.ch.known_areas)
-                    c.pos(*xy)
+                    self.c.pos(*xy)
+                    message.look(xy, self.all_beings, T, self.player.known_areas)
+                    self.c.pos(*xy)
                 except:
                     pass
 
-    def start_game(fl):
+    def start_game(self):
+        fl=glob('*')
         t = 0
         i = ''
         f = ''
         while t == 0:
-            T_matrix=[]
-            c.page()
-            c.write('''
+            self.c.page()
+            self.c.write('''
                    ___      _   _         _   _    _   ___   ____
                   |   \    / |  |        / |  |\   |  /   \ |
                   |___/   /  |  |       /  |  | \  |  |     |___
@@ -2199,10 +1985,10 @@ class Game:
                             ''')
             i = msvcrt.getch()
             if i == 'n':
-                create_character(fl)
-                t = draw_terr(player.ch.start_force)
+                self.create_character(fl)
+                t = self.draw_terr(self.player.start_force)
             if i == 'l':
-                c.write('Load which character? ')
+                self.c.write('Load which character? ')
                 a = ''
                 i = ' '
                 while ord(i) != 13:
@@ -2210,18 +1996,18 @@ class Game:
                     if ord(i) in range(65,91) or ord(i) in range(97,123) or ord(i) == 46:
                         c.write(i)
                         a += i
-                T_matrix = load_terr(a)
-        redraw_screen()
-        c.pos(*player.ch.xy)
+                self.load_terr(a)
+        self.redraw_screen()
+        self.c.pos(*self.player.xy)
         
-    def create_character(fl):
+    def create_character(self,fl):
         races = {'a':'elf','b':'gnome','c':'spirit of nature','d':'dryad','e':'water elemental','f':'fairy','g':'human',
                  'h':'dwarf','i':'spirit of order','j':'ork','k':'troll','l':'spirit of chaos','m':'goblin','n':'kraken',
                  'o':'imp'}
         i = ''
         while i not in races.keys():
-            c.page()
-            c.write("""
+            self.c.page()
+            self.c.write("""
      The form your character may take in Balance is completely controlled by his or
      her actions. If you like to go around and kill things, you are likely to end
      up with an ork, while a character that spends his time in the mine will slowly
@@ -2253,17 +2039,17 @@ class Game:
             force='Chaos'
         else:
             force='Order'
-        player.ch = player.make_player(race,force)
+        self.player = player.Player([0,0],race,force,self)
         player.take_force_effect()
-        player.all_beings = [player.ch]
+        self.all_beings = [self.player]
         i = 'z'
         too_heavy = 0
         heaviness = {'a':[1,['Nature']],'b':[2,['Nature','Chaos','Order']],'c':[3,['Nature']],
                      'd':[3,['Order']],'e':[2,['Order']],'f':[2,['Order']],'g':[4,['Order']],
                      'h':[3,['Chaos']],'i':[6,['Chaos']],'j':[2,['Chaos']]}
         while i not in 'abcdefghij' or too_heavy:
-            c.page()
-            c.write('''
+            self.c.page()
+            self.c.write('''
       The next step to building your character is to pick the starting inventory
       set of your choise. The sets are useful to a character of the respective
       Force as they contain some of the tools needed to deliver impact on the
@@ -2284,12 +2070,12 @@ class Game:
       j) Shaman: a book of magic and a herb set.''')
             i = msvcrt.getch()
             try:
-                if heaviness[i][0] > player.ch.attr['Str']:
-                    c.write('''\n\n  This set is too heavy for you to use!''')
+                if heaviness[i][0] > self.player.attr['Str']:
+                    self.c.write('''\n\n  This set is too heavy for you to use!''')
                     msvcrt.getch()
                     too_heavy = 1
                 elif force not in heaviness[i][1]:
-                    c.write('''\n\n  This set is only for %s characters!''' %(heaviness[i][1][0]))
+                    self.c.write('''\n\n  This set is only for %s characters!''' %(heaviness[i][1][0]))
                     msvcrt.getch()
                     too_heavy = 1
                 else:
@@ -2298,39 +2084,40 @@ class Game:
                 pass
         player.start_inv(i)
         while True:
-            c.page()
-            c.write('''
+            self.c.page()
+            self.c.write('''
       Finally, what is your character's name? ''')
             a = ''
             i = ' '
             while ord(i) != 13:
                 i = msvcrt.getch()
                 if ord(i) in range(65,91) or ord(i) in range(97,123) or ord(i) == 46:
-                    c.write(i)
+                    self.c.write(i)
                     a += i
-            c.write(i)
-            player.ch.name = a
-            if player.ch.name in fl:
+            self.c.write(i)
+            self.player.name = a
+            if self.player.name in fl:
                 print '\n  Character savefile already exists!'
                 i1=msvcrt.getch()
             else:
                 break
-        mkdir(curdir+'//%s_dir' %(a))
+        os.mkdir(os.curdir+'//%s_dir' %(a))
 
-    def change_place(area,direction):
+    def change_place(self,area,direction):
         if area!='areaB':
             run_away = {'Dex':0,'End':0,'Int':0,'Cre':0}
             hostiles = 0
             character_run = 0
-            for thing in player.all_creatures:
+            for thing in self.all_creatures:
                 ## Broqt se samo gadinite koito sa na 7 i po malko razstoqnie ot igracha
-                if thing.mode == 'hostile' and max([abs(thing.xy[0]-player.ch.xy[0]),abs(thing.xy[1]-player.ch.xy[1])])<8 and clear_los(direct_path(thing.xy,player.ch.xy)):
+                if thing.mode == 'hostile' and max([abs(thing.xy[0]-self.player.xy[0]),abs(thing.xy[1]-self.player.xy[1])])<8 and \
+                   self.clear_los(self.direct_path(thing.xy,self.player.xy)):
                     hostiles += 1
                     for x in run_away:
                         run_away[x] = max([run_away[x],thing.attr[x]])
                         if hostiles == 1:
-                            character_run += player.ch.attr[x]
-            if hostiles and 'invisible' not in player.ch.effects:
+                            character_run += self.player.attr[x]
+            if hostiles and 'invisible' not in self.player.effects:
                 difficulty = sum(run_away.values()+[hostiles])
                 chance = 50.0*character_run/difficulty
                 if random.randint(1,100) < chance:
@@ -2341,87 +2128,46 @@ class Game:
                     return 0
         if area != 'area0':
             old_temp=current_place['Temperature']
-            places = open('%s//%s_dir//new_%s.dat'%(curdir,player.ch.name,current_area), 'w')
-            pickle.dump(ground_items, places)
-            pickle.dump(current_place, places)
-            pickle.dump(terrain_type, places)
-            pickle.dump(current_area, places)
-            pickle.dump(directions, places)
-            pickle.dump(land, places)
-            pickle.dump(map_coords, places)
+            places = open('%s//%s_dir//new_%s.dat'%(os.curdir,self.player.name,current_area), 'w')
+            pickle.dump(self.ground_items, places)
+            pickle.dump(self.current_place, places)
+            pickle.dump(self.terrain_type, places)
+            pickle.dump(self.current_area, places)
+            pickle.dump(self.directions, places)
+            pickle.dump(self.land, places)
+            pickle.dump(self.map_coords, places)
             creatures_left=[]
-            for creature in player.all_creatures:
-                if creature not in player.ch.followers+player.ch.ride+player.ch.possessed:
+            for creature in self.all_creatures:
+                if creature not in self.player.followers+self.player.ride+self.player.possessed:
                     creatures_left.append(creature)
             pickle.dump(creatures_left, places)
-            if current_area not in player.ch.known_areas:
-                player.ch.known_areas.append(current_area)
+            if self.current_area not in self.player.known_areas:
+                self.player.known_areas.append(current_area)
             places.close()
-            new_terr(area,direction)
-            draw_hud()
-            player.ch.worked_places={'Nature':[],'Chaos':[],'Order':[]}
-            player.ch.target=[]
-            draw_move(player.ch, player.ch.xy[0], player.ch.xy[1])
-            if old_temp<33<=current_place['Temperature']:
-                for thing in player.ch.inventory:
+            self.new_terr(area,direction)
+            self.draw_hud()
+            self.player.worked_places={'Nature':[],'Chaos':[],'Order':[]}
+            self.player.target=[]
+            self.draw_move(self.player, self.player.xy[0], self.player.xy[1])
+            if old_temp<33<=self.current_place['Temperature']:
+                for thing in self.player.inventory:
                     if thing.name=='ring of winter':
                         thing.name+=' (melted)'
                         del(thing.effect['winterwalk'])
-            elif current_place['Temperature']<66<=old_temp:
-                for thing in player.ch.inventory:
+            elif self.current_place['Temperature']<66<=old_temp:
+                for thing in self.player.inventory:
                     if thing.name=='ring of summer':
                         thing.name+=' (withered)'
                         del(thing.effect['summerwalk'])
-            for x in player.all_creatures:
-                if x not in player.hidden and clear_los(direct_path(player.ch.xy,x.xy)):
-                    draw_move(x, x.xy[0], x.xy[1])
-            c.pos(*player.ch.xy)
+            for x in self.all_creatures:
+                if x not in self.hidden and self.clear_los(self.direct_path(self.player.xy,x.xy)):
+                    self.draw_move(x, x.xy[0], x.xy[1])
+            self.c.pos(*self.player.xy)
             return 1
         else:
             return 0
-    ## Currently unused, possible map function!
-    def world(current_area):
-        entered = -1
-        if current_area != 'world':
-            data = []
-            data.append(terrain_type+' '+current_area+' '+' '.join(directions)+'\n')
-            for i in range(23):
-                data.append(land[i]+'\n')
-            data.append(map_coords)
-            creatures_number = 0
-            for i in player.all_creatures:
-                if not i.random:
-                    creatures_number += 1
-            data.append(str(creatures_number)+'\n')
-            for thing in player.all_creatures:
-                if not thing.random:
-                    data.append(str(thing.id)+' '+str(thing.xy[0])+' '+str(thing.xy[1])+' '+str(thing.game_id)+' '+str(thing.appearance)+'\n')
-                else:
-                    data.append(str(thing.id)+' '+str(thing.xy[0])+' '+str(thing.xy[1])+' '+str(thing.game_id)+' '+str(player.ch.turn)+'\n')
-            if current_area not in player.ch.known_areas:
-                player.ch.known_areas.append(current_area)
-            places = open(current_area+'.dat', 'w')
-            for i in data:
-                places.write(i)
-            pickle.dump(ground_items, places)
 
-            places.close()
-            t = world()
-            current_area = 'world'
-            player.ch.place_time = 100
-        else:
-            for x in world_places:
-                if world_places[x] == player.ch.xy:
-                    change_place(x, 0)
-                    current_area = x
-                    player.ch.place_time = 1
-                    entered = 1
-                    break
-            if entered == -1:
-                entered = 0
-        return current_area, entered
-
-    def direct_path(a,b):
+    def direct_path(self,a,b):
         path=[a[:]]
         dif=[abs(a[0]-b[0]),abs(a[1]-b[1])]
         dirxy=[0,0]
@@ -2444,38 +2190,42 @@ class Game:
             path.append(point[:])
         return path
 
-    def clear_los(path):
+    def clear_los(self,path):
         if len(path)>2:
             for xy in path[1:-1]:
-                if not T[land[xy[1]-1][xy[0]-21]].clear_los:
+                if not T[self.land[xy[1]-1][xy[0]-21]].clear_los:
                     return 0
-        if not T[land[path[-1][1]-1][path[-1][0]-21]].pass_through:
+        if not T[self.land[path[-1][1]-1][path[-1][0]-21]].pass_through:
             return 0
         return 1
         
-    def highlight_path(way):
+    def highlight_path(self,way):
         if way != []:
             for step in way[1:]:
                 x = step[0]
                 y = step[1]
-                if way.index(step)<=player.ch.attr['Dex']:
-                    c.scroll((x, y, x+1, y+1), 1, 1, 14,'*')
+                if way.index(step)<=self.player.attr['Dex']:
+                    self.c.scroll((x, y, x+1, y+1), 1, 1, 14,'*')
                 else:
-                    c.scroll((x, y, x+1, y+1), 1, 1, 4,'*')
+                    self.c.scroll((x, y, x+1, y+1), 1, 1, 4,'*')
 
-    def good_place(thing,place):
+    def good_place(self,thing,place):
         no_pass = 0
-        for creature in player.all_creatures:
+        for creature in self.all_creatures:
             if creature.xy == place and not (creature.mode=='hostile' and thing.mode=='guarding') and not (thing.mode=='hostile' and creature.mode=='guarding'):
                 no_pass = 1
                 break
-        if (not T[land[place[1]-1][place[0]-21]].pass_through or no_pass or (T[land[place[1]-1][place[0]-21]].id in thing.terr_restr and thing.mode!='standing_hostile')) and not (thing.race=='spirit of order' and current_place['Order']>30 and T[land[place[1]-1][place[0]-21]].id in '#o+s') and not (thing.race=='spirit of chaos' and current_place['Chaos']>30 and T[land[place[1]-1][place[0]-21]].id in '#o+s') and not (thing.race=='gnome' and current_place['Nature']>30 and T[land[place[1]-1][place[0]-21]].id in 'nmA%') and not ('door_' in T[land[place[1]-1][place[0]-21]].world_name and thing.t=='sentient'):
+        if (not T[self.land[place[1]-1][place[0]-21]].pass_through or no_pass or (T[self.land[place[1]-1][place[0]-21]].id in thing.terr_restr and thing.mode!='standing_hostile')) \
+           and not (thing.race=='spirit of order' and self.current_place['Order']>30 and T[self.land[place[1]-1][place[0]-21]].id in '#o+s') \
+           and not (thing.race=='spirit of chaos' and self.current_place['Chaos']>30 and T[self.land[place[1]-1][place[0]-21]].id in '#o+s') \
+           and not (thing.race=='gnome' and self.current_place['Nature']>30 and T[self.land[place[1]-1][place[0]-21]].id in 'nmA%') \
+           and not ('door_' in T[self.land[place[1]-1][place[0]-21]].world_name and thing.t=='sentient'):
             return 0
         return 1
 
     ## NPCs only shoot at the player for now!
     ## NPCs guarding the player don't shoot at all!
-    def shoot(attacker):
+    def shoot(self,attacker):
         if attacker.energy > 50:
             attacker.energy-=10
             if attacker.tag=='@':
@@ -2490,14 +2240,14 @@ class Game:
                 if not found:
                     attacker.equipment['Ammunition']=[]
                     attacker.weight-=bullet.weight
-                shot_length=len(direct_path(attacker.xy,attacker.target))-1
+                shot_length=len(self.direct_path(attacker.xy,attacker.target))-1
                 learn = random.uniform(0,100)
                 if learn <= (attacker.attr['Dex'] - attacker.weapon_skill/5)/attacker.attr['Dex']*100 and shot_length>=attacker.attr['Dex']*3/4:
                     attacker.weapon_skill += 0.1*min([0.5,max([(shot_length*5)/attacker.weapon_skill,0.1])])
             else:
-                attacker.target=player.ch.xy[:]
+                attacker.target=self.player.xy[:]
                 bullet=attacker.attr['shoot'].duplicate(1)
-                shot_length=len(direct_path(attacker.xy,player.ch.xy))-1
+                shot_length=len(self.direct_path(attacker.xy,self.player.xy))-1
             shot_chance=75*attacker.weapon_skill/float(attacker.attr['Dex']*5)+(attacker.attr['Dex']-shot_length)*10
             chance=random.randint(0,100)
             if chance<=shot_chance:
@@ -2512,17 +2262,17 @@ class Game:
                     fall_spot[1] = 1
                 if (fall_spot[1] >= 24):
                     fall_spot[1] = 23
-            attack_path=direct_path(attacker.xy,fall_spot)[1:]
+            attack_path=self.direct_path(attacker.xy,fall_spot)[1:]
             for spot in attack_path:
-                if T[land[spot[1]-1][spot[0]-21]].pass_through: #id in "i:wWtL`S.gBaTdDFblOop,~'":
-                    for creature in player.all_beings:
-                        if creature not in player.hidden and creature.xy==spot:
+                if T[self.land[spot[1]-1][spot[0]-21]].pass_through: #id in "i:wWtL`S.gBaTdDFblOop,~'":
+                    for creature in self.all_beings:
+                        if creature not in self.hidden and creature.xy==spot:
                             dodge_chance=creature.attr['Dex']*attack_path.index(spot)/2
                             if attacker.tag=='@' and creature.mode!='hostile':
                                 dodge_chance-=20
-                            if not clear_los(direct_path(attacker.xy,creature.xy)):
+                            if not self.clear_los(self.direct_path(attacker.xy,creature.xy)):
                                 dodge_chance-=100
-                                if (creature.tag=='@' and 'elf3' in creature.tool_tags) or (creature.tag!='@' and creature.race=='elf' and current_place['Nature']>90):
+                                if (creature.tag=='@' and 'elf3' in creature.tool_tags) or (creature.tag!='@' and creature.race=='elf' and self.current_place['Nature']>90):
                                     dodge_chance+=80
                             if random.randint(1,100)>dodge_chance:
                                 add_dmg = 0
@@ -2534,15 +2284,15 @@ class Game:
                                     if creature.tag!='@':
                                         creature.mode='hostile'
                                     if 'elf3' in attacker.tool_tags and spot==attack_path[-1]:
-                                        kill_chance=current_place['Chaos']/4
-                                        if current_place['Nature']>=33 and current_place['Temperature']>=33:
+                                        kill_chance=self.current_place['Chaos']/4
+                                        if self.current_place['Nature']>=33 and self.current_place['Temperature']>=33:
                                             kill_chance+=25
                                         if random.randint(1,100)<=kill_chance:
                                             add_dmg+=creature.life+5
-                                            if kill_chance>12 and current_place['Chaos']>0:
+                                            if kill_chance>12 and self.current_place['Chaos']>0:
                                                 player.effect('force',{'Nature':{'terrain':1}})
                                     if add_dmg<creature.life+5:
-                                        for each_other in player.all_creatures:
+                                        for each_other in self.all_creatures:
                                             if each_other.force==creature.force and (creature.t=='sentient' and each_other.t=='sentient') and not (creature.force=='Chaos' and attacker.mode=='Chaos'):
                                                 each_other.mode='hostile'
                                 resisted=get_resisted_damage(creature)
@@ -2564,7 +2314,7 @@ class Game:
                                 creature.life -= damage
                                 creature.attr['loot'].append([bullet.id,65,1,1])
                                 if creature.life<=0:
-                                    defender_dead(creature,add_dmg,attacker)
+                                    self.defender_dead(creature,add_dmg,attacker)
                                 return 1
                             else:
                                 if attacker.tag=='@':
@@ -2573,27 +2323,27 @@ class Game:
                                     message.creature('creature_dodged',attacker)
                     x=spot[0]
                     y=spot[1]
-                    c.scroll((x, y, x+1, y+1), 1, 1, bullet.color,bullet.tag)
+                    self.c.scroll((x, y, x+1, y+1), 1, 1, bullet.color,bullet.tag)
                     sleep(.04)
                     if spot==attack_path[-1]:
-                        ground_items.append([attack_path[attack_path.index(spot)][0],attack_path[attack_path.index(spot)][1],bullet])
+                        self.ground_items.append([attack_path[attack_path.index(spot)][0],attack_path[attack_path.index(spot)][1],bullet])
                         return 0
                     else:
-                        c.scroll((x, y, x+1, y+1), 1, 1, T[land[spot[1]-1][spot[0]-21]].colour,T[land[spot[1]-1][spot[0]-21]].char)
-                        for be in player.all_beings:
+                        self.c.scroll((x, y, x+1, y+1), 1, 1, T[self.land[spot[1]-1][spot[0]-21]].colour,T[self.land[spot[1]-1][spot[0]-21]].char)
+                        for be in self.all_beings:
                             if be.xy==spot:
-                                draw_move(be,be.xy[0],be.xy[1])
+                                self.draw_move(be,be.xy[0],be.xy[1])
                                 break
-                    if T[land[spot[1]-1][spot[0]-21]].id in 'TDFboO':
+                    if T[self.land[spot[1]-1][spot[0]-21]].id in 'TDFboO':
                         chance=random.randint(0,100)-(attacker.attr['Dex']-attack_path.index(spot))*10
                         if chance>shot_chance:
-                            ground_items.append([spot[0],spot[1],bullet])
+                            self.ground_items.append([spot[0],spot[1],bullet])
                             return 0
                 else:
-                    ground_items.append([attack_path[attack_path.index(spot)-1][0],attack_path[attack_path.index(spot)-1][1],bullet])
+                    self.ground_items.append([attack_path[attack_path.index(spot)-1][0],attack_path[attack_path.index(spot)-1][1],bullet])
                     return 0
 
-    def combat(attacker,defender,second_swing=0):
+    def combat(self,attacker,defender,second_swing=0):
         for combatant in [attacker,defender]:
             if combatant.tag=='@':
                 if 'invisible' in combatant.effects:
@@ -2601,19 +2351,19 @@ class Game:
                 if combatant.possessed and 'spirit of nature3' in combatant.tool_tags:
                     self.possession_score(66,combatant)
         if attacker.energy > 50:
-            if attack(attacker, defender):
+            if self.attack(attacker, defender):
                 add_dmg = 0
                 crit = random.randint(1,100)
                 if crit <= attacker.attr['Dex']:
                     add_dmg = attacker.attr['Dex']/10 + 1
-                resisted=get_resisted_damage(defender)
+                resisted=self.get_resisted_damage(defender)
                 damage = random.randint(1,attacker.dmg) + attacker.weapon_dmg + add_dmg - resisted
                 if damage < 1:
                     damage = 0
                 if attacker.tag == '@':
                     if 'kraken2' in attacker.tool_tags and \
-                           T[land[attacker.xy[1]-1][attacker.xy[0]-21]].id in "wWt" and \
-                           T[land[defender.xy[1]-1][defender.xy[0]-21]].id in "wWt" and \
+                           T[self.land[attacker.xy[1]-1][attacker.xy[0]-21]].id in "wWt" and \
+                           T[self.land[defender.xy[1]-1][defender.xy[0]-21]].id in "wWt" and \
                            attacker.turn%2400>1200:
                         damage += defender.life+5
                         message.creature('kraken_death',defender)
@@ -2629,7 +2379,7 @@ class Game:
                         attacker.life-=fairy_dmg
                         message.creature('fairyland_hit',attacker,fairy_dmg)
                         if attacker.life<1:
-                            defender_dead(attacker,0,defender)
+                            self.defender_dead(attacker,0,defender)
                 else:
                     message.creatures('good_attack',attacker,defender,damage)
                 defender.life -= damage
@@ -2645,12 +2395,12 @@ class Game:
                 if defender.tag =='@':
                     pass
                 else:
-                    defender_dead(defender,add_dmg,attacker)
+                    self.defender_dead(defender,add_dmg,attacker)
             if attacker.tag == '@' and not second_swing and defender.life > 0:
                 if attacker.equiped_weaps == 2:
-                    combat(attacker,defender,1)
+                    self.combat(attacker,defender,1)
 
-    def get_resisted_damage(defender):
+    def get_resisted_damage(self,defender):
         chance = random.uniform(1,500)
         ## Resisted damage categories based on armour. If armour >=500 there's always a resisted amount
         cats = {5:[1,11],4:[11,26],3:[26,46],2:[46,71],1:[71,101]}
@@ -2662,12 +2412,12 @@ class Game:
                 if cat in range(*cats[x]):
                     resisted = x
                     break
-        if ((defender.tag=='@' and 'troll2' in defender.tool_tags) or (defender.tag!='@' and defender.race=='troll' and current_place['Chaos']>=60))\
-           and player.ch.turn%2400>=1200:
+        if ((defender.tag=='@' and 'troll2' in defender.tool_tags) or (defender.tag!='@' and defender.race=='troll' and self.current_place['Chaos']>=60))\
+           and self.player.turn%2400>=1200:
             resisted+=2
         return resisted
 
-    def attack(attacker,defender):
+    def attack(self,attacker,defender):
         ## Switch sides for learning if tow players are fighting
         for pc,other in [(defender,attacker),(attacker,defender)]:
             ## Uchi se orujieto ako umenieto e pod 100. Pri Atribut = 20 shansa da se vdigne poveche ot 100 e 0.
@@ -2710,7 +2460,7 @@ class Game:
             defence = 1
         return att/(att+defence)*100 > random.uniform(0,100)
 
-    def defender_dead(defender,add_dmg,attacker):
+    def defender_dead(self,defender,add_dmg,attacker):
         if attacker.tag=='@':
             if defender.race=='dwarf':
                 player.effect('force',{'Chaos':{'troll':0.02}})
@@ -2730,9 +2480,9 @@ class Game:
                 player.effect('force',{'Nature':{'water elemental':0.02}})
             elif defender.race=='water elemental':
                 player.effect('force',{'Chaos':{'kraken':0.02}})
-            c.scroll((defender.xy[0], defender.xy[1], defender.xy[0]+1, defender.xy[1]+1), 1, 1,
-                                 T[land[defender.xy[1]-1][defender.xy[0]-21]].colour,
-                                 T[land[defender.xy[1]-1][defender.xy[0]-21]].char)
+            self.c.scroll((defender.xy[0], defender.xy[1], defender.xy[0]+1, defender.xy[1]+1), 1, 1,
+                                 T[self.land[defender.xy[1]-1][defender.xy[0]-21]].colour,
+                                 T[self.land[defender.xy[1]-1][defender.xy[0]-21]].char)
             if add_dmg:
                 message.creature('crit_kill',defender)
             else:
@@ -2741,188 +2491,179 @@ class Game:
             message.creatures('kill',attacker,defender)
         found_item=inventory.put_item(defender.attr['loot'],defender.xy)
         if found_item:
-            draw_items()
-        player.all_creatures.remove(defender)
-        player.all_beings.remove(defender)
-        if defender in player.ch.followers:
-            player.ch.followers.remove(defender)
+            self.draw_items()
+        self.all_creatures.remove(defender)
+        self.all_beings.remove(defender)
+        if defender in self.player.followers:
+            self.player.followers.remove(defender)
         del(defender)
 
     ## Load-va savenat fail
-    def load_terr(f):
+    def load_terr(self,f):
         try:
             terr = open(f, 'r')
         except:
             print 'No such file!'
             terr = msvcrt.getch()
             return 0,0
-        c.page()
+        self.c.page()
         land = []
         for i in range(23):
-            land.append(terr.read(58))
+            self.land.append(terr.read(58))
             terr.read(1)
         for x in range(1,24):
-            c.pos(21, x)
+            self.c.pos(21, x)
             for y in range(21,79):
-                c.scroll((y,x,y+1,x+1), 1, 1, T[land[x-1][y-21]].colour, T[land[x-1][y-21]].char)
-        player.ch = pickle.load(terr)
-        player.ch.inventory = pickle.load(terr)
-        player.ch.equipment = pickle.load(terr)
-        player.ch.skills = pickle.load(terr)
-        player.ch.spells = pickle.load(terr)
-        player.ch.forces = pickle.load(terr)
-        player.ch.races = pickle.load(terr)
-        player.ch.effects = pickle.load(terr)
-        player.ch.land_effects = pickle.load(terr)
-        player.ch.known_areas = pickle.load(terr)
-        player.ch.weapon_skills = pickle.load(terr)
-        player.ch.attr_colors = pickle.load(terr)
-        player.all_creatures = pickle.load(terr)
+                self.c.scroll((y,x,y+1,x+1), 1, 1, T[self.land[x-1][y-21]].colour, T[self.land[x-1][y-21]].char)
+        self.player = pickle.load(terr)
+        self.player.inventory = pickle.load(terr)
+        self.player.equipment = pickle.load(terr)
+        self.player.skills = pickle.load(terr)
+        self.player.forces = pickle.load(terr)
+        self.player.races = pickle.load(terr)
+        self.player.effects = pickle.load(terr)
+        self.player.land_effects = pickle.load(terr)
+        self.player.known_areas = pickle.load(terr)
+        self.player.weapon_skills = pickle.load(terr)
+        self.player.attr_colors = pickle.load(terr)
+        self.all_creatures = pickle.load(terr)
         max_id=0
         creature_coords=[]
-        for c in player.all_creatures:
+        for c in self.all_creatures:
             max_id=max([max_id,c.game_id])
             creature_coords.append(c.xy)
-        for fol in player.ch.followers+player.ch.ride+player.ch.possessed:
+        for fol in self.player.followers+self.player.ride+self.player.possessed:
             if fol.mode!='standing':
-                player.all_beings.append(fol)
-                player.all_creatures.append(fol)
+                self.all_beings.append(fol)
+                self.all_creatures.append(fol)
                 fol.game_id=max_id+1
                 max_id+=1
             if fol.mode=='standing' and fol.attr['area']==area:
-                player.all_beings.append(fol)
-                player.all_creatures.append(fol)
+                self.all_beings.append(fol)
+                self.all_creatures.append(fol)
                 fol.game_id=max_id+1
                 max_id+=1
-        player.hidden = pickle.load(terr)
-        for one in player.hidden:
-            for two in player.all_creatures:
+        self.hidden = pickle.load(terr)
+        for one in self.hidden:
+            for two in self.all_creatures:
                 if one.game_id == two.game_id:
-                    player.all_creatures.remove(two)
-                    player.all_creatures.append(one)
+                    self.all_creatures.remove(two)
+                    self.all_creatures.append(one)
                     break
-        player.all_beings = player.all_creatures + [player.ch]
-        ground_items = pickle.load(terr)
-        directions = pickle.load(terr)
-        world_places = pickle.load(terr)
-        top_world_places = pickle.load(terr)
-        place_descriptions = pickle.load(terr)
-        map_coords = pickle.load(terr)
-        current_area = pickle.load(terr)
-        current_place = pickle.load(terr)
-        treasure_modifier = pickle.load(terr)
-        lTm = pickle.load(terr)
+        self.all_beings = self.all_creatures + [self.player]
+        self.ground_items = pickle.load(terr)
+        self.directions = pickle.load(terr)
+        self.world_places = pickle.load(terr)
+        self.top_world_places = pickle.load(terr)
+        self.place_descriptions = pickle.load(terr)
+        self.map_coords = pickle.load(terr)
+        self.current_area = pickle.load(terr)
+        self.current_place = pickle.load(terr)
+        self.treasure_modifier = pickle.load(terr)
+        self.T_matrix = pickle.load(terr)
         terr.close()
-        return lTm
 
     ## Load-va nachalnata mestnost
-    def draw_terr(start_force):
+    def draw_terr(self,start_force):
         ## Generation of terrain matrix
-        for x in range(map_size):
-            T_matrix.append([])
-            for y in range(map_size):
-                T_matrix[x].append({'Nature':33,'Chaos':33,'Order':33,'Population':0,'Treasure':1,'Temperature':0,
+        for x in range(self.map_size):
+            self.T_matrix.append([])
+            for y in range(self.map_size):
+                self.T_matrix[x].append({'Nature':33,'Chaos':33,'Order':33,'Population':0,'Treasure':1,'Temperature':0,
                                     'Water':10})
         force_points={}
         for each in ['Nature','Chaos','Order','Population','Water']:
             force_points[each]=[]
-            for i in range(map_size/2):
-                fx = random.randint(0,map_size-1)
-                fy = random.randint(0,map_size-1)
+            for i in range(self.map_size/2):
+                fx = random.randint(0,self.map_size-1)
+                fy = random.randint(0,self.map_size-1)
                 if each=='Population':
                     amplitude = random.choice([35,45,60])
                 else:
                     amplitude = random.choice([10,20,30,40,50])
-                for x in range(map_size):
-                    for y in range(map_size):
+                for x in range(self.map_size):
+                    for y in range(self.map_size):
                         if abs(x-fx)+abs(y-fy)<amplitude/10:
                             if each in ['Nature','Chaos','Order']:
                                 rest=amplitude-(abs(x-fx)+abs(y-fy))*10
-                                T_matrix[x][y][each] = min([T_matrix[x][y][each]+rest,100])
+                                self.T_matrix[x][y][each] = min([self.T_matrix[x][y][each]+rest,100])
                                 restf=list(set(['Nature','Chaos','Order'])-set([each]))
-                                while rest>0 and not (T_matrix[x][y][restf[0]]==0 and T_matrix[x][y][restf[1]]==0):
-                                    T_matrix[x][y][restf[0]] -= 1
-                                    if T_matrix[x][y][restf[0]]>=0:
+                                while rest>0 and not (self.T_matrix[x][y][restf[0]]==0 and self.T_matrix[x][y][restf[1]]==0):
+                                    self.T_matrix[x][y][restf[0]] -= 1
+                                    if self.T_matrix[x][y][restf[0]]>=0:
                                         rest-=1
                                     else:
-                                        T_matrix[x][y][restf[0]]=0
-                                    T_matrix[x][y][restf[1]] -= 1
-                                    if T_matrix[x][y][restf[1]]>=0:
+                                        self.T_matrix[x][y][restf[0]]=0
+                                    self.T_matrix[x][y][restf[1]] -= 1
+                                    if self.T_matrix[x][y][restf[1]]>=0:
                                         rest-=1
                                     else:
-                                        T_matrix[x][y][restf[1]]=0
+                                        self.T_matrix[x][y][restf[1]]=0
                             elif each=='Population' or each=='Water':
-                                T_matrix[x][y][each] = min([T_matrix[x][y][each]+(amplitude-(abs(x-fx)+abs(y-fy))*10),100])
-                        if T_matrix[x][y]["Nature"]+T_matrix[x][y]['Order']+T_matrix[x][y]['Chaos']>100:
-                            print "Mapping Error:",T_matrix[x][y]["Nature"],T_matrix[x][y]['Order'],T_matrix[x][y]['Chaos']
+                                self.T_matrix[x][y][each] = min([self.T_matrix[x][y][each]+(amplitude-(abs(x-fx)+abs(y-fy))*10),100])
+                        if self.T_matrix[x][y]["Nature"]+self.T_matrix[x][y]['Order']+self.T_matrix[x][y]['Chaos']>100:
+                            print "Mapping Error:",self.T_matrix[x][y]["Nature"],self.T_matrix[x][y]['Order'],self.T_matrix[x][y]['Chaos']
                             raw_input()
                             raise
         temp_borders=[random.randint(0,30),random.randint(70,100)]
-        temp_step=(temp_borders[1]-temp_borders[0])/map_size
+        temp_step=(temp_borders[1]-temp_borders[0])/self.map_size
         temp_direction=random.choice([[0,1],[1,-1]])
-        for x in range(map_size):
+        for x in range(self.map_size):
             the_temp=temp_borders[temp_direction[0]]+x*temp_direction[1]*temp_step
-            for y in range(map_size):
-                T_matrix[x][y]['Temperature']+=the_temp
-                T_matrix[x][y]['Water']=max([T_matrix[x][y]['Water']-max([the_temp-66,0]),1])
+            for y in range(self.map_size):
+                self.T_matrix[x][y]['Temperature']+=the_temp
+                self.T_matrix[x][y]['Water']=max([self.T_matrix[x][y]['Water']-max([the_temp-66,0]),1])
                 chance=random.randint(-90,10)
                 if chance>0:
-                    T_matrix[x][y]['Treasure']+=chance
-                if T_matrix[x][y][start_force]>max([T_matrix[x][y][f] for f in (set(['Nature','Chaos','Order'])-set([start_force]))]):
-                    force_points[start_force].append([T_matrix[x][y][start_force],x,y])
+                    self.T_matrix[x][y]['Treasure']+=chance
+                if self.T_matrix[x][y][start_force]>max([self.T_matrix[x][y][f] for f in (set(['Nature','Chaos','Order'])-set([start_force]))]):
+                    force_points[start_force].append([self.T_matrix[x][y][start_force],x,y])
         ##Generation of starting terrain - terrain generation procedure
         starter=force_points[start_force][:]
         starter.sort()
         if starter:
             starting_point=starter[-1][1:]
         else:
-            starting_point=[random.randint(1,map_size),random.randint(1,map_size)]
+            starting_point=[random.randint(1,self.map_size),random.randint(1,self.map_size)]
         direction = 2
-        if T_matrix[starting_point[0]][starting_point[1]]['Population']<60:
-            T_matrix[starting_point[0]][starting_point[1]]['Population']=60
-        current_place=T_matrix[starting_point[0]][starting_point[1]]
-        print current_place,1
-        raw_input()
-        unknown_terrain(starting_point,direction)
-        place_descriptions = {'world':'Your country.'}
-        area_number=starting_point[0]*map_size+starting_point[1]
-        place_descriptions['area%s' %(area_number)] = 'A place of %s.' %(start_force)
-        world_places = {'world':[0,0]}
-        top_world_places = {}
+        if self.T_matrix[starting_point[0]][starting_point[1]]['Population']<60:
+            self.T_matrix[starting_point[0]][starting_point[1]]['Population']=60
+        self.current_place=self.T_matrix[starting_point[0]][starting_point[1]]
+        self.unknown_terrain(starting_point,direction)
+        area_number=starting_point[0]*self.map_size+starting_point[1]
+        self.place_descriptions['area%s' %(area_number)] = 'A place of %s.' %(start_force)
         return 1
 
-    def unknown_terrain(coords,direction):
-        c.page()
-        land = []
-        directions = []
-        area_number=coords[0]*map_size+coords[1]
-        current_area = 'area%s' %(area_number)
-        treasure_modifier = T_matrix[coords[0]][coords[1]]['Treasure']
-        if area_number+map_size>(map_size*map_size-1):
+    def unknown_terrain(self,coords,direction):
+        self.c.page()
+        area_number=coords[0]*self.map_size+coords[1]
+        self.current_area = 'area%s' %(area_number)
+        treasure_modifier = self.T_matrix[coords[0]][coords[1]]['Treasure']
+        if area_number+self.map_size>(self.map_size*self.map_size-1):
             down_dir=0
         else:
-            down_dir=area_number+map_size
-        if area_number%map_size==0:
+            down_dir=area_number+self.map_size
+        if area_number%self.map_size==0:
             left_dir=0
         else:
             left_dir=area_number-1
-        if (area_number+1)%map_size==0:
+        if (area_number+1)%self.map_size==0:
             right_dir=0
         else:
             right_dir=area_number+1
-        directions = [max([0,area_number-map_size]),down_dir,left_dir,right_dir,0,0]
-        for x in range(len(directions)):
-            directions[x]=str(directions[x])
-        land=generate_terr(coords)
+        self.directions = [max([0,area_number-self.map_size]),down_dir,left_dir,right_dir,0,0]
+        for x in range(len(self.directions)):
+            self.directions[x]=str(self.directions[x])
+        self.land=self.generate_terr(coords)
         for x in range(1,24):
             for y in range(21,79):
-                c.scroll((y,x,y+1,x+1), 1, 1, T[land[x-1][y-21]].colour, T[land[x-1][y-21]].char)
-        map_coords = '47 22;47 2;77 12;22 12;0 0;0 0'
-        new_coords = map_coords.split(';')
+                self.c.scroll((y,x,y+1,x+1), 1, 1, T[self.land[x-1][y-21]].colour, T[self.land[x-1][y-21]].char)
+        self.map_coords = '47 22;47 2;77 12;22 12;0 0;0 0'
+        new_coords = self.map_coords.split(';')
         for i in range(6):
             new_coords[i] = new_coords[i].split(' ')
         spot=[int(new_coords[direction][0]),int(new_coords[direction][1])]
-        while not T[land[spot[1]-1][spot[0]-21]].pass_through:
+        while not T[self.land[spot[1]-1][spot[0]-21]].pass_through:
             if direction==0:
                 spot[1]-=1
             elif direction==1:
@@ -2931,60 +2672,59 @@ class Game:
                 spot[0]-=1
             elif direction==3:
                 spot[1]+=1
-        for i in range(2):
-            player.ch.xy[i] = spot[i]
-            
-    def unknown_Bterrain(coords,direction):
+        self.player.xy = spot[:]
+
+    ## Generate the underground place where the battle of the Forces takes place!
+    def unknown_Bterrain(self,coords,direction):
         ## The direction sets the spot in which the character appears, according to his race
-        current_place={'Nature':33,'Chaos':33,'Order':33,'Population':0,'Treasure':50,'Temperature':0,'Water':10,
+        self.current_place={'Nature':33,'Chaos':33,'Order':33,'Population':0,'Treasure':50,'Temperature':0,'Water':10,
                                    'Nspirit':0,'Ospirit':0,'Cspirit':0,'Npop':0,'Opop':0,'Cpop':0}
-        for x in range(map_size):
-            for y in range(map_size):
-                current_place['Nature']=max([T_matrix[x][y]['Nature'],current_place['Nature']])
-                current_place['Order']=max([T_matrix[x][y]['Order'],current_place['Order']])
-                current_place['Chaos']=max([T_matrix[x][y]['Chaos'],current_place['Chaos']])
-                if not T_matrix[x][y]['Nature']==T_matrix[x][y]['Order']==T_matrix[x][y]['Chaos']:
-                    predominant_f={T_matrix[x][y]['Nature']:'Nature',T_matrix[x][y]['Order']:'Order',
-                                   T_matrix[x][y]['Chaos']:'Chaos'}
+        for x in range(self.map_size):
+            for y in range(self.map_size):
+                self.current_place['Nature']=max([self.T_matrix[x][y]['Nature'],self.current_place['Nature']])
+                self.current_place['Order']=max([self.T_matrix[x][y]['Order'],self.current_place['Order']])
+                self.current_place['Chaos']=max([self.T_matrix[x][y]['Chaos'],self.current_place['Chaos']])
+                if not self.T_matrix[x][y]['Nature']==self.T_matrix[x][y]['Order']==self.T_matrix[x][y]['Chaos']:
+                    predominant_f={self.T_matrix[x][y]['Nature']:'Nature',self.T_matrix[x][y]['Order']:'Order',
+                                   self.T_matrix[x][y]['Chaos']:'Chaos'}
                     if predominant_f.keys().count(max(predominant_f.keys()))==1:
                         the_force=predominant_f[max(predominant_f.keys())]
-                        the_power=T_matrix[x][y][the_force]-(100-T_matrix[x][y][the_force])/2
-                        if T_matrix[x][y]['Population']>20:
-                            current_place['%spop' %(the_force[0])]+=the_power
+                        the_power=self.T_matrix[x][y][the_force]-(100-self.T_matrix[x][y][the_force])/2
+                        if self.T_matrix[x][y]['Population']>20:
+                            self.current_place['%spop' %(the_force[0])]+=the_power
                         else:
-                            current_place['%sspirit' %(the_force[0])]+=the_power
-    ##                    else:
-        c.page()
-        land = []
-        directions = []
-        area_number=coords[0]*map_size+coords[1]
-        current_area = 'area%s' %(area_number)
-        treasure_modifier = T_matrix[coords[0]][coords[1]]['Treasure']
-        if area_number+map_size>(map_size*map_size-1):
+                            self.current_place['%sspirit' %(the_force[0])]+=the_power
+        self.c.page()
+        self.land = []
+        self.directions = []
+        area_number=coords[0]*self.map_size+coords[1]
+        self.current_area = 'area%s' %(area_number)
+        self.treasure_modifier = self.T_matrix[coords[0]][coords[1]]['Treasure']
+        if area_number+self.map_size>(self.map_size*self.map_size-1):
             down_dir=0
         else:
-            down_dir=area_number+map_size
-        if area_number%map_size==0:
+            down_dir=area_number+self.map_size
+        if area_number%self.map_size==0:
             left_dir=0
         else:
             left_dir=area_number-1
-        if (area_number+1)%map_size==0:
+        if (area_number+1)%self.map_size==0:
             right_dir=0
         else:
             right_dir=area_number+1
-        directions = [max([0,area_number-map_size]),down_dir,left_dir,right_dir,0,0]
-        for x in range(len(directions)):
-            directions[x]=str(directions[x])
-        land=generate_terr(coords)
+        self.directions = [max([0,area_number-self.map_size]),down_dir,left_dir,right_dir,0,0]
+        for x in range(len(self.directions)):
+            self.directions[x]=str(self.directions[x])
+        self.land=self.generate_terr(coords)
         for x in range(1,24):
             for y in range(21,79):
-                c.scroll((y,x,y+1,x+1), 1, 1, T[land[x-1][y-21]].colour, T[land[x-1][y-21]].char)
-        map_coords = '47 22;47 2;77 12;22 12;0 0;0 0'
-        new_coords = map_coords.split(';')
+                self.c.scroll((y,x,y+1,x+1), 1, 1, T[self.land[x-1][y-21]].colour, T[self.land[x-1][y-21]].char)
+        self.map_coords = '47 22;47 2;77 12;22 12;0 0;0 0'
+        new_coords = self.map_coords.split(';')
         for i in range(6):
             new_coords[i] = new_coords[i].split(' ')
         spot=[int(new_coords[direction][0]),int(new_coords[direction][1])]
-        while not T[land[spot[1]-1][spot[0]-21]].pass_through:
+        while not T[self.land[spot[1]-1][spot[0]-21]].pass_through:
             if direction==0:
                 spot[1]-=1
             elif direction==1:
@@ -2993,24 +2733,23 @@ class Game:
                 spot[0]-=1
             elif direction==3:
                 spot[1]+=1
-        for i in range(2):
-            player.ch.xy[i] = spot[i]
+        self.player.xy = spot[:]
 
     ##Random terrain generation
-    def generate_terr(starting_point):
-        tp=T_matrix[starting_point[0]][starting_point[1]]
+    def generate_terr(self,starting_point):
+        tp=self.T_matrix[starting_point[0]][starting_point[1]]
         temp_select = min([tp['Temperature']/33,2])
         terrain_selection={}
         swamp_add=[]
         if tp['Water']>60:
             swamp_add=['~']
-        for f in force_terrains:
+        for f in self.force_terrains:
             if tp[f]<33:
-                terrain_selection[f]=force_terrains[f][temp_select][:2]+swamp_add
+                terrain_selection[f]=self.force_terrains[f][temp_select][:2]+swamp_add
             elif tp[f]<66:
-                terrain_selection[f]=force_terrains[f][temp_select][:-1]+swamp_add
+                terrain_selection[f]=self.force_terrains[f][temp_select][:-1]+swamp_add
             else:
-                terrain_selection[f]=force_terrains[f][temp_select][1:]+swamp_add
+                terrain_selection[f]=self.force_terrains[f][temp_select][1:]+swamp_add
         lands=[]
         all_land=''
         done_lands=0
@@ -3049,7 +2788,7 @@ class Game:
         ##Dobavqne na fermi, kushti, kladenci, ezera
         land_features={}
         game_ids=[]
-        creature_coords=[player.ch.xy[:]]
+        creature_coords=[self.player.xy[:]]
         if random.random()<tp['Water']/100.:
             terrain_type='w'
             size=random.randint(7,min([15,max([7,tp['Water']/5])]))
@@ -3094,7 +2833,7 @@ class Game:
                         y = random.randint(1,23)
                     creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
                     creature_coords.append(creation.xy[:])
-                    player.all_creatures.append(creation)
+                    self.all_creatures.append(creation)
                     game_ids.append(game_id)
         else:
             terrain_type=''
@@ -3159,7 +2898,7 @@ class Game:
                     add_id=1
                 for i in range(creatures):
                     c_force=random.choice(resident_type)
-                    c_race=random.choice(player.ch.races[c_force].keys())
+                    c_race=random.choice(self.player.races[c_force].keys())
                     ID = 1
                     game_id = i+add_id+1
                     game_ids.append(game_id)
@@ -3170,7 +2909,7 @@ class Game:
                         y = random.randint(1,23)
                     creation = player.wood.duplicate(x,y,game_id,c_force,c_race,True)
                     creature_coords.append(creation.xy[:])
-                    player.all_creatures.append(creation)
+                    self.all_creatures.append(creation)
         if random.randint(0,100)<100-tp['Population']:
             creatures = random.randint(0,3)
             if creatures:
@@ -3201,7 +2940,7 @@ class Game:
                         y = random.randint(1,23)
                     creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
                     creature_coords.append(creation.xy[:])
-                    player.all_creatures.append(creation)
+                    self.all_creatures.append(creation)
                     
         if tp['Population']>35:
             village_type=[]
@@ -3249,7 +2988,7 @@ class Game:
                         else:
                             add_id=1
                         c_force=house_type
-                        c_race=random.choice(player.ch.races[c_force].keys())
+                        c_race=random.choice(self.player.races[c_force].keys())
                         ID = 2
                         game_id = 1+add_id
                         game_ids.append(game_id)
@@ -3260,8 +2999,8 @@ class Game:
                             y = random.randint(1,23)
                         creation = player.wood_perm.duplicate(x,y,game_id,c_force,c_race,False)
                         creature_coords.append(creation.xy[:])
-                        player.all_creatures.append(creation)
-                    ground_items.append([center[1]+21,center[0]+1,add_on.duplicate(1)])
+                        self.all_creatures.append(creation)
+                    self.ground_items.append([center[1]+21,center[0]+1,add_on.duplicate(1)])
                     land_features[tuple(spot)]=size
                     door=random.randint(0,size-1)
                     for y in range(size):
@@ -3324,49 +3063,45 @@ class Game:
                                 if door==y:
                                     the_wall[random.randint(0,1)]='+'
                                 lands[spot[0]+y]=lands[spot[0]+y][:spot[1]]+the_wall[0]+to_add+the_wall[1]+lands[spot[0]+y][spot[1]+size:]
-        player.all_beings += player.all_creatures
-        return lands
+        self.all_beings += self.all_creatures
+        self.land=lands[:]
 
     ## Loads terrain when traveling
-    def new_terr(area,direction,f=''):
-        if area in player.ch.known_areas:
+    def new_terr(self,area,direction,f=''):
+        if area in self.player.known_areas:
             try:
-                f = curdir+'//%s_dir//new_%s.dat' %(player.ch.name,area)
+                f = os.curdir+'//%s_dir//new_%s.dat' %(self.player.name,area)
                 terr = open(f, 'r')
             except IOError:
-                f = curdir+'//%s_dir//%s.dat' %(player.ch.name,area)
+                f = os.curdir+'//%s_dir//%s.dat' %(self.player.name,area)
                 try:
                     terr = open(f, 'r')
                 except IOError:
-                    player.ch.known_areas.remove(area)
-                    new_terr(area,direction)
+                    self.player.known_areas.remove(area)
+                    self.new_terr(area,direction)
                     return 0
-            ground_items = pickle.load(terr)
-            current_place = pickle.load(terr)
+            self.ground_items = pickle.load(terr)
+            self.current_place = pickle.load(terr)
             tp=current_place
-            c.page()
-            terrain_type = pickle.load(terr)
-            current_area = pickle.load(terr)
-            directions = pickle.load(terr)
+            self.c.page()
+            self.terrain_type = pickle.load(terr)
+            self.current_area = pickle.load(terr)
+            self.directions = pickle.load(terr)
             if terrain_type=='w':
                 waters=36
             else:
                 waters=0
-            land = pickle.load(terr)
-            map_coords = pickle.load(terr)
-            player.all_creatures = pickle.load(terr)
+            self.land = pickle.load(terr)
+            self.map_coords = pickle.load(terr)
+            self.all_creatures = pickle.load(terr)
             for x in range(1,24):
                 for y in range(21,79):
-                    c.scroll((y,x,y+1,x+1), 1, 1, T[land[x-1][y-21]].colour, T[land[x-1][y-21]].char)
-    ##        map_coords = terr.readline()
-    ##        new_coords = map_coords[:len(map_coords)-1].split(';')
-                    
+                    self.c.scroll((y,x,y+1,x+1), 1, 1, T[self.land[x-1][y-21]].colour, T[self.land[x-1][y-21]].char)
             new_coords = map_coords.split(';')
-            
             for i in range(6):
                 new_coords[i] = new_coords[i].split(' ')
             spot=[int(new_coords[direction][0]),int(new_coords[direction][1])]
-            while not T[land[spot[1]-1][spot[0]-21]].pass_through:
+            while not T[self.land[spot[1]-1][spot[0]-21]].pass_through:
                 if direction==0:
                     spot[1]-=1
                 elif direction==1:
@@ -3375,42 +3110,42 @@ class Game:
                     spot[0]-=1
                 elif direction==3:
                     spot[1]+=1
-            player.ch.xy = spot[:]
-            treasure_modifier = current_place['Treasure']
-            player.hidden = []
-            player.all_beings = [player.ch]
-            creature_coords=[player.ch.xy[:]]
+            self.player.xy = spot[:]
+            self.treasure_modifier = self.current_place['Treasure']
+            self.hidden = []
+            self.all_beings = [self.player]
+            creature_coords=[self.player.xy[:]]
             game_ids = []
             randoms=0
-            if len(player.all_creatures):
+            if len(self.all_creatures):
                 to_remove=[]
-                for each_creature in player.all_creatures:
+                for each_creature in self.all_creatures:
                     if each_creature.random:
-                        appear = 100-min([99,player.ch.turn-each_creature.appearance])
+                        appear = 100-min([99,self.player.turn-each_creature.appearance])
                         if random.randint(1,100)<=appear:
                             randoms=1
-                            player.all_beings.append(each_creature)
+                            self.all_beings.append(each_creature)
                             creature_coords.append(each_creature.xy[:])
                             game_ids.append(each_creature.game_id)
                         else:
                             to_remove.append(each_creature)
                     else:
                         if each_creature.appearance == 0:
-                            player.all_beings.append(each_creature)
+                            self.all_beings.append(each_creature)
                             creature_coords.append(each_creature.xy[:])
                             game_ids.append(each_creature.game_id)
                         else: #if each_creature.id not in player.random_creatures:
                             if random.randint(1,1000)>each_creature.appearance:
                                 each_creature.mode = 'not_appeared'
-                                player.hidden.append(each_creature)
+                                self.hidden.append(each_creature)
                             else:
-                                player.all_beings.append(each_creature)
+                                self.all_beings.append(each_creature)
                                 creature_coords.append(each_creature.xy[:])
                                 game_ids.append(each_creature.game_id)
                 for rem in to_remove:
-                    player.all_creatures.remove(rem)
+                    self.all_creatures.remove(rem)
             if not randoms:
-                if current_place['Population']<20:
+                if self.current_place['Population']<20:
                     creatures = random.randint(0,2)
                     if creatures:
                         if game_ids:
@@ -3433,14 +3168,14 @@ class Game:
                             game_ids.append(game_id)
                             x = random.randint(21,78)
                             y = random.randint(1,23)
-                            while [x,y] in creature_coords or not T[land[y-1][x-21]].pass_through or \
-                                  (T[land[y-1][x-21]].id in thing.terr_restr and thing.race!='plant') or \
-                                  T[land[y-1][x-21]].id in ['pa']:
+                            while [x,y] in creature_coords or not T[self.land[y-1][x-21]].pass_through or \
+                                  (T[self.land[y-1][x-21]].id in thing.terr_restr and thing.race!='plant') or \
+                                  T[self.land[y-1][x-21]].id in ['pa']:
                                 x = random.randint(21,78)
                                 y = random.randint(1,23)
                             creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
                             creature_coords.append(creation.xy[:])
-                            player.all_creatures.append(creation)
+                            self.all_creatures.append(creation)
                 else:
                     creatures = random.randint(0,tp['Population']/10)
                     if creatures:
@@ -3457,18 +3192,18 @@ class Game:
                             add_id=1
                         for i in range(creatures):
                             c_force=random.choice(resident_type)
-                            c_race=random.choice(player.ch.races[c_force].keys())
+                            c_race=random.choice(self.player.races[c_force].keys())
                             ID = 1
                             game_id = i+add_id+1
                             game_ids.append(game_id)
                             x = random.randint(21,78)
                             y = random.randint(1,23)
-                            while [x,y] in creature_coords or not T[land[y-1][x-21]].pass_through or T[land[y-1][x-21]].id in player.wood.terr_restr:
+                            while [x,y] in creature_coords or not T[self.land[y-1][x-21]].pass_through or T[self.land[y-1][x-21]].id in player.wood.terr_restr:
                                 x = random.randint(21,78)
                                 y = random.randint(1,23)
                             creation = player.wood.duplicate(x,y,game_id,c_force,c_race,True)
                             creature_coords.append(creation.xy[:])
-                            player.all_creatures.append(creation)
+                            self.all_creatures.append(creation)
                 if waters>35:
                     creatures = random.randint(0,2)
                     if creatures:
@@ -3490,59 +3225,361 @@ class Game:
                                 y = random.randint(1,23)
                             creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
                             creature_coords.append(creation.xy[:])
-                            player.all_creatures.append(creation)
+                            self.all_creatures.append(creation)
                                 
-            player.all_beings += player.all_creatures
-            draw_items()
+            self.all_beings += self.all_creatures
+            self.draw_items()
             terr.close()
         else:
             an=area[4:]
             if an=='B':
                 coords=[0,0]
-                player.all_creatures = []
-                player.hidden = []
-                ground_items = []
-                player.all_beings = [player.ch]
-                unknown_Bterrain(coords,direction)
+                self.all_creatures = []
+                self.hidden = []
+                self.ground_items = []
+                self.all_beings = [self.player]
+                self.unknown_Bterrain(coords,direction)
                 predominant_f={current_place['Nature']:'Nature',current_place['Order']:'Order',
                                current_place['Chaos']:'Chaos'}
-                place_descriptions['area%s' %(an)] = 'A place of %s.' %(predominant_f[max(predominant_f.keys())])
+                self.place_descriptions['area%s' %(an)] = 'A place of %s.' %(predominant_f[max(predominant_f.keys())])
             else:
                 an=int(an)
                 coords=[an/map_size,an%map_size]
-                current_place=T_matrix[coords[0]][coords[1]]
-                player.all_creatures = []
-                player.hidden = []
-                ground_items = []
-                player.all_beings = [player.ch]
-                unknown_terrain(coords,direction)
+                self.current_place=self.T_matrix[coords[0]][coords[1]]
+                self.all_creatures = []
+                self.hidden = []
+                self.ground_items = []
+                self.all_beings = [self.player]
+                self.unknown_terrain(coords,direction)
                 predominant_f={T_matrix[coords[0]][coords[1]]['Nature']:'Nature',T_matrix[coords[0]][coords[1]]['Order']:'Order',
                                T_matrix[coords[0]][coords[1]]['Chaos']:'Chaos'}
-                place_descriptions['area%s' %(an)] = 'A place of %s.' %(predominant_f[max(predominant_f.keys())])
+                self.place_descriptions['area%s' %(an)] = 'A place of %s.' %(predominant_f[max(predominant_f.keys())])
         max_id=0
         creature_coords=[]
-        for c in player.all_creatures:
+        for c in self.all_creatures:
             max_id=max([max_id,c.game_id])
             creature_coords.append(c.xy)
-        for fol in player.ch.followers+player.ch.ride+player.ch.possessed:
+        for fol in self.player.followers+self.player.ride+self.player.possessed:
             if fol.mode!='standing':
-                player.all_beings.append(fol)
-                player.all_creatures.append(fol)
+                self.all_beings.append(fol)
+                self.all_creatures.append(fol)
                 fol.game_id=max_id+1
                 max_id+=1
-                if fol in player.ch.ride or fol in player.ch.possessed:
+                if fol in self.player.ride or fol in self.player.possessed:
                     x = 1
                     y = 1
                 else:
-                    x = random.randint(max([player.ch.xy[0]-3,21]),min([78,player.ch.xy[0]+3]))
-                    y = random.randint(max([player.ch.xy[1]-3,1]),min([23,player.ch.xy[1]+3]))
+                    x = random.randint(max([self.player.xy[0]-3,21]),min([78,self.player.xy[0]+3]))
+                    y = random.randint(max([self.player.xy[1]-3,1]),min([23,self.player.xy[1]+3]))
                     while [x,y] in creature_coords or not T[land[y-1][x-21]].pass_through or T[land[y-1][x-21]].id in fol.terr_restr:
-                        x = random.randint(max([player.ch.xy[0]-3,21]),min([78,player.ch.xy[0]+3]))
-                        y = random.randint(max([player.ch.xy[1]-3,1]),min([23,player.ch.xy[1]+3]))
+                        x = random.randint(max([self.player.xy[0]-3,21]),min([78,self.player.xy[0]+3]))
+                        y = random.randint(max([self.player.xy[1]-3,1]),min([23,self.player.xy[1]+3]))
                 fol.xy=[x,y]
             if fol.mode=='standing' and fol.attr['area']==area:
-                player.all_beings.append(fol)
-                player.all_creatures.append(fol)
+                self.all_beings.append(fol)
+                self.all_creatures.append(fol)
                 fol.game_id=max_id+1
                 max_id+=1
         return 1
+    
+    def save(self):
+        try:
+            f = open(self.player.name, 'w')
+        except:
+            return 0
+        for x in range(23):
+            f.write(self.land[x]+'\n')
+        pickle.dump(self.player, f)
+        pickle.dump(self.player.inventory, f)
+        pickle.dump(self.player.equipment, f)
+        pickle.dump(self.player.skills, f)
+        pickle.dump(self.player.forces, f)
+        pickle.dump(self.player.races, f)
+        pickle.dump(self.player.effects, f)
+        pickle.dump(self.player.land_effects, f)
+        pickle.dump(self.player.known_areas, f)
+        pickle.dump(self.player.weapon_skills, f)
+        pickle.dump(self.player.attr_colors, f)
+        creatures_left=[]
+        for creature in self.all_creatures:
+            if creature not in self.player.followers+self.player.ride+self.player.possessed:
+                creatures_left.append(creature)
+        pickle.dump(creatures_left, f)
+        pickle.dump(self.hidden, f)
+        pickle.dump(self.ground_items, f)
+        pickle.dump(self.directions, f)
+        pickle.dump(self.world_places, f)
+        pickle.dump(self.top_world_places, f)
+        pickle.dump(self.place_descriptions, f)
+        pickle.dump(self.map_coords, f)
+        pickle.dump(self.current_area, f)
+        pickle.dump(self.current_place, f)
+        pickle.dump(self.treasure_modifier, f)
+        pickle.dump(self.T_matrix, f)
+        f.close()
+        ## area files update
+        os.chdir(os.curdir+r'\%s_dir' %(self.player.name))
+        new_files=glob('new_area*.dat')
+        for f in [every.split('_')[-1] for every in new_files]:
+            os.system('del %s' %(f))
+        for f in new_files:
+            os.system('ren %s %s' %(f,f.split('_')[-1]))
+        os.chdir('..')
+        return 1
+
+if __name__=='__main__':
+    the_game=Game()
+    the_game.start_game()
+    i = ' '
+    clock = 1
+    riding=0
+    while i:
+        if msvcrt.kbhit():
+            message.message('')
+            i = msvcrt.getch()
+            if the_game.player.ride and the_game.player.ride[0].food>24 and i in ['1','2','3','4','5','6','7','8','9']:
+                if riding:
+                    the_game.player.move(i)
+                    the_game.player.ride[0].food-=1
+                    riding=0
+                    continue
+                else:
+                    riding=1
+            if i == '0':
+                i = '-1'
+            if i == 'S':
+                message.message('q')
+                i = msvcrt.getch()
+                if i == 'y' or i == 'Y':
+                    if save():
+                        the_game.redraw_screen()
+                        i = '0'
+                    else:
+                        message.message('')
+                        message.message('save_failed')
+                else:
+                    message.message('')
+                continue
+            if i == 'Q':
+                break
+            if i == 'c':
+                the_game.character()
+                the_game.redraw_screen()
+                continue
+            if i == 'l':
+                message.message('look')
+                the_game.look()
+                the_game.redraw_screen()
+    ##            message.message('')
+                continue
+                i = '0'
+            ## Form-dependent actions
+            if 'waterform' not in the_game.player.effects:
+                if i == 's':
+                    if the_game.player.ride:
+                        message.message('dismount')
+                        the_game.player.ride[0].mode='follow'
+                        the_game.player.ride[0].xy=the_game.player.xy[:]
+                        the_game.player.backpack-=the_game.player.ride[0].attr['Str']*2
+                        while the_game.player.backpack<0:
+                            drop = the_game.player.inventory[-1].drop_item('yes',10000)
+                            dropped = 0
+                            for item in the_game.ground_items:
+                                if item[:2] == the_game.player.xy and item[2].id == drop.id and item[2].stackable and item[2].name == drop.name:
+                                    item[2].qty += drop.qty
+                                    dropped = 1
+                            if not dropped:
+                                the_game.ground_items.append([the_game.player.xy[0], the_game.player.xy[1],drop])
+                            message.use('create_drop',drop)
+                            msvcrt.getch()
+                        the_game.player.followers.append(the_game.player.ride[0])
+                        the_game.player.ride=[]
+                        i='0'
+                    elif the_game.player.possessed:
+                        if the_game.player.possessed[0].mode=='temp':
+                            message.creature('transform_outof',the_game.player.possessed[0])
+                        else:
+                            message.creature('unpossess',the_game.player.possessed[0])
+                            the_game.player.possessed[0].xy=the_game.player.xy[:]
+                            the_game.player.possessed[0].mode='wander'
+                        the_game.player.life-=the_game.player.possessed[0].life
+                        the_game.player.max_life-=the_game.player.possessed[0].life
+                        if the_game.player.life<=0:
+                            the_game.player.possessed[0].life+=the_game.player.life
+                            the_game.player.life=1
+                        for at in the_game.player.attr:
+                            the_game.player.attr[at]=the_game.player.max_attr[at]
+                        the_game.player.possessed=[]
+                        for cr in self.all_creatures:
+                            if cr not in the_game.player.followers+the_game.player.ride+the_game.player.possessed:
+                                if cr.force=='Nature':
+                                    if the_game.player.forces['Chaos']:
+                                        if the_game.player.forces['Nature']-the_game.player.forces['Chaos']<\
+                                           the_game.current_place['Nature']-the_game.current_place['Chaos']:
+                                            cr.mode='hostile'
+                                elif cr.force=='Order':
+                                    if the_game.player.forces['Chaos']:
+                                        if the_game.player.forces['Order']-the_game.player.forces['Chaos']<\
+                                           the_game.current_place['Order']-the_game.current_place['Chaos']:
+                                            cr.mode='hostile'
+                                elif cr.force=='Chaos':
+                                    if the_game.player.forces['Order']:
+                                        if the_game.player.forces['Chaos']-the_game.player.forces['Order']<\
+                                           the_game.current_place['Chaos']-the_game.current_place['Order']:
+                                            cr.mode='hostile'
+                                    if the_game.player.forces['Nature']:
+                                        if the_game.player.forces['Chaos']-the_game.player.forces['Nature']<\
+                                           the_game.current_place['Chaos']-the_game.current_place['Nature']:
+                                            cr.mode='hostile'
+                                    if 'spirit of order3' in the_game.player.tool_tags and random.randint(1,30)>cr.attr['Mnd']:
+                                        cr.mode='fearfull'
+                        i='0'
+                    else:
+                        if not T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].sittable:
+                            message.message('no_sit')
+                            i = '0'
+                        else:
+                            the_game.player.sit = True
+                            the_game.player.rest = 25
+                            message.message('sit')
+                            i = '0'
+                if i == 'm':
+                    if the_game.player.mode == 'Nature':
+                        the_game.player.mode = 'Order'
+                    elif the_game.player.mode == 'Order':
+                        the_game.player.mode = 'Chaos'
+                    elif the_game.player.mode == 'Chaos':
+                        the_game.player.mode = 'Nature'
+                    the_game.draw_mode()
+                    the_game.c.pos(*the_game.player.xy)
+                    continue
+                    i = '0'
+                if i == 'q':
+                    the_game.drink(the_game.player.xy)
+                    i = '0'
+                if not the_game.player.possessed:
+                    if i=='h':
+                        if the_game.player.target:
+                            if (the_game.player.equipment['Right hand'] and 'ranged' in the_game.player.equipment['Right hand'].type) or (the_game.player.equipment['Left hand'] and 'ranged' in the_game.player.equipment['Left hand'].type):
+                                if the_game.player.equipment['Right hand']:
+                                    handed='Right hand'
+                                else:
+                                    handed='Left hand'
+                                if the_game.player.equipment['Ammunition']:
+                                    if the_game.player.equipment['Ammunition'].effect['shoot']==the_game.player.equipment[handed].effect['shoot']:
+                                        the_game.shoot(the_game.player)
+                                    else:
+                                        message.message('wrong_ammo')
+                                else:
+                                    message.message('need_ammo')
+                            else:
+                                message.message('need_ranged_weapon')
+                        else:
+                            message.message('target_first')
+                        i='0'
+                    if i == 'i':
+                        the_game.draw_inv()
+                        the_game.redraw_screen()
+                        i = '0'
+                    if i == 'e':
+                        the_game.draw_equip()
+                        the_game.redraw_screen()
+                        i = '0'
+                    if i == 'k':
+                        the_game.cook()
+                        the_game.redraw_screen()
+                        i = '0'
+                    if i == 'b' and not the_game.player.ride:
+                        if 'human1' in the_game.player.tool_tags or 'dwarf1' in the_game.player.tool_tags:
+                            the_game.build()
+                        else:
+                            message.message('need_human1&dwarf1')
+                        continue
+                        i = '0'
+                    if i == 't':
+                        if 'dryad3' in the_game.player.tool_tags:
+                            the_game.dryad_grow()
+                        else:
+                            message.message('need_dryad3')
+                        continue
+                        i = '0'
+                    if i == 'C' and not the_game.player.ride:
+                        the_game.create()
+                        i = '0'
+                    if i == '+':
+                        opened = the_game.find_to_open(the_game.player.xy)
+                        if opened:
+                            the_game.redraw_screen()
+                        i = '0'
+                    if i == 'p':
+                        the_game.player.pick_up(the_game.ground_items)
+                        i = '0'
+                    if i == 'w' and not the_game.player.ride:
+                        the_game.player.sit = False
+                        the_game.player.rest = 1
+                        message.message('work')
+                        i = ''
+                        while not i:        
+                            if msvcrt.kbhit():
+                                i = msvcrt.getch()
+                        the_game.work(i)
+                        continue
+                        i = '0'
+                    if i == 'r':
+                        if 'human3' in the_game.player.tool_tags:
+                            the_game.research()
+                            the_game.redraw_screen()
+                        else:
+                            message.message('need_human3')
+                        continue
+                elif i in 'rwp+bkeiCt':
+                    message.message('not_when_possessed')
+                    msvcrt.getch()
+                    i='0'
+            elif i in 'rwmp+bkqseiCt':
+                message.message('not_in_waterform')
+                msvcrt.getch()
+                i='0'
+    ##        if i == '<':
+    ##            the_game.player.sit = False
+    ##            if terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '<':
+    ##                the_game.change_place('area'+the_game.directions[5],5)
+    ##                message.message('going_down')
+    ##                i = '0'
+    ##            elif terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '>':
+    ##                message.message('nowhere_togo')
+    ##                i = '0'
+    ##            else:
+    ##                message.message('no_stairs')
+    ##                i = '0'
+    ##        if i == '>':
+    ##            the_game.player.sit = False
+    ##            if terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '>':
+    ##                the_game.change_place('area'+the_game.directions[4],4)
+    ##                message.message('going_up')
+    ##                i = '0'
+    ##            elif terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '<':
+    ##                message.message('nowhere_togo')
+    ##                i = '0'
+    ##            else:
+    ##                message.message('no_stairs')
+    ##                i = '0'
+            if (i != '0') and (i != '5') and (i != '-1'):
+                the_game.player.sit = False
+                the_game.player.rest = 1
+            clock = player.game_time(i)
+            if clock == 0:
+                break
+            the_game.c.pos(*the_game.player.xy)
+    ## area files clean-up
+    new_files=glob(r'%s_dir\new_area*.dat' %(the_game.player.name))
+    all_files=glob(r'%s_dir\*' %(the_game.player.name))
+    local_files=glob('*')
+    for f in new_files:
+        os.system('del %s' %(f))
+    if '%s' %(the_game.player.name) not in local_files:
+        for f in all_files:
+            os.system('del %s' %(f))
+        os.system('rd %s_dir' %(the_game.player.name))
+    raw_input("\nIf you got an error, please send it to the creator!\nOtherwise press ENTER to exit (no pun intended).")
+    os._exit(0)

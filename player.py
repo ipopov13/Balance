@@ -1,6 +1,5 @@
 import message
 import msvcrt
-import init_screen
 from terrain import T
 import random
 from inventory import put_item
@@ -28,7 +27,8 @@ race_attrs={'elf':              {'Str':15,'End':16,'Dex':20,'Int':17,'Cre':5, 'M
 
 
 class Player:
-    def __init__(self, xy, race,force):
+    def __init__(self, xy, race,force,game):
+        self.game=game
         self.xy = xy
         self.base_attr = race_attrs[race]
         self.attr = {}
@@ -79,8 +79,6 @@ class Player:
         self.att_att=''
         self.def_att=''
         self.skills = {}
-        self.spells = {}
-        self.spell_cast = 0
         self.tool_tags = ['inherent']
         self.attr_colors = {'Str':7,'End':7,'Dex':7,'Int':7,'Cre':7,'Mnd':7}
         self.weapon_dmg = 0
@@ -146,10 +144,6 @@ class Player:
                 xy[0] = x
                 xy[1] = y
                 return 1
-    ##       ##World movement disabled!
-    ##            else:
-    ##                init_screen.current_area, entered = init_screen.world(init_screen.current_area)
-    ##                init_screen.redraw_screen()
             elif not int(init_screen.directions[direction]) and init_screen.current_area == 'world':
                 xy[0] = x
                 xy[1] = y
@@ -1011,11 +1005,6 @@ class Animal(NPC):
             duplica.appearance=0
         return duplica
 
-def make_player(race,f):
-    pl = Player([0, 0],race,f)
-    return pl
-
-ch = 0
 ## Taming tags - pet, guard, ride, farm. [tag,difficulty,item requirement for taming,farming product id]
 wood = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',1,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
 wood_perm = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',2,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
@@ -1047,10 +1036,6 @@ random_by_force = {'Nature':{'cold':[5,4,11,12,16,20],'warm':[3,9,5,4,13,18,19,2
 water_creatures = [100]
 game_creatures = [wood,wood_perm,random_squirrel,bear,fish,wolf,dog,hyena,grizzly,snake,poison_snake,polar_bear,polar_wolf,
                   wild_horse,camel,giant_lizard,penguin,monkey,carnivore_bush,wild_chicken,wild_cattle]
-all_beings = []
-all_creatures = []
-hidden = [] ## Sudurja skritite sushtestva i tezi koito ne sa se poqvili, no se poqvqvat po princip v mestnostta i sa
-            ## unikalni (ne random) i imat mode = 'not_appeared'!!!
 
 ##['Backpack','Head','Neck','Chest','Jewel','Back','Arms','Right hand','Left hand','On hands',
 ## 'Left ring','Right ring','Belt','Legs','Feet','Sheath','Belt tool 1','Belt tool 2','Quiver/stone pouch']
@@ -1574,8 +1559,6 @@ def effect(k,v,xy=[],ot=''):
             return 0
     elif k=='transform':
         init_screen.possess(v,'trans')
-    elif k=='devise_spell':
-        init_screen.devise_spell()
     elif k=='plant_seed':
         if init_screen.land[ch.xy[1]-1][ch.xy[0]-21] in ['.','a','g']:
             message.message('plant_seed')
@@ -1729,9 +1712,6 @@ def game_time(i = '0'):
                     effect('research',{ch.research_force:{'force':0.01}})
             if ch.possessed and ch.possessed[0].mode=='temp':
                 effect('force',{'Nature':{'terrain':0.1}})
-        if ch.spell_cast:
-            init_screen.execute_spell(init_screen.combat_buffer)
-            ch.spell_cast = 0
         for x in all_creatures:
             if x.mode != 'not_appeared':
                 if x.life < 1:
@@ -1786,7 +1766,7 @@ def game_time(i = '0'):
             ch.energy += ch.rest * ch.place_time
         if (ch.energy > ch.max_energy):
             ch.energy = ch.max_energy
-        if (ch.life < ch.max_life) and init_screen.current_area != 'world' and ch.life!=0:
+        if (ch.life < ch.max_life) and ch.life!=0:
             if ch.energy == ch.max_energy:
                 ch.life += 1
                 ch.energy -= 100

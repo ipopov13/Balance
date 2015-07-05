@@ -1,4 +1,3 @@
-import init_screen
 import msvcrt
 
 def message(x):
