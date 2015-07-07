@@ -6,8 +6,8 @@ from inventory import stone
 from inventory import wood_arrow
 from inventory import wood_bolt
 
-class Player:
-    def __init__(self, xy, race,force,start_force,game):
+class Living_thing(object):
+    def __init__(self):
         self.race_attrs={
             'elf':              {'Str':15,'End':16,'Dex':20,'Int':17,'Cre':5, 'Mnd':15},
             'gnome':            {'Str':12,'End':14,'Dex':14,'Int':20,'Cre':14,'Mnd':15},
@@ -27,7 +27,8 @@ class Player:
             'kraken':           {'Str':19,'End':17,'Dex':14,'Int':15,'Cre':4, 'Mnd':13},
             'imp':              {'Str':10,'End':15,'Dex':16,'Int':15,'Cre':8, 'Mnd':15}}
 
-        self.game=game
+class Player(Living_thing):
+    def __init__(self, xy, race,force,start_force):
         self.xy = xy
         self.base_attr = self.race_attrs[race]
         self.attr = {}
@@ -692,11 +693,11 @@ class Player:
                 else:
                     effect('force',{'Nature':{'force':0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
 
-class NPC(object):
+class NPC(Living_thing):
     __refs__ = []
-    def __init__(self,replica):
-        if not replica:
-            self.__refs__.append(self)
+
+    def __init__(self):
+        self.__refs__.append(self)
 
     def creature_move(self):
         md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
@@ -853,32 +854,36 @@ class NPC(object):
             self.xy[0] = x
             self.xy[1] = y
             return 1
-        elif T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in self.terr_restr and not self.mode=='standing_hostile':
+        elif T[self.game.land[self.xy[1]-1][self.xy[0]-21]].id in self.terr_restr and not self.mode=='standing_hostile':
             self.xy[0] = x
             self.xy[1] = y
             return 1
-        elif T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].pass_through or (self.race=='spirit of order' and init_screen.current_place['Order']>30 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in '#o+`sS') or (self.race=='spirit of chaos' and init_screen.current_place['Chaos']>30 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in '#o+`sS') or (self.race=='gnome' and init_screen.current_place['Nature']>30 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in 'nmA%'):
-            for a in all_beings:
+        elif T[self.game.land[self.xy[1]-1][self.xy[0]-21]].pass_through or \
+             (self.race=='spirit of order' and self.game.current_place['Order']>30 and T[self.game.land[self.xy[1]-1][self.xy[0]-21]].id in '#o+`sS') or \
+             (self.race=='spirit of chaos' and self.game.current_place['Chaos']>30 and T[self.game.land[self.xy[1]-1][self.xy[0]-21]].id in '#o+`sS') or \
+             (self.race=='gnome' and self.game.current_place['Nature']>30 and T[self.game.land[self.xy[1]-1][self.xy[0]-21]].id in 'nmA%'):
+            for a in self.game.all_beings:
                 if a.xy == self.xy and a.game_id != self.game_id:
                     self.xy[0] = x
                     self.xy[1] = y
-                    if (self.mode=='guarding' and a.mode=='hostile') or (a.mode=='guarding' and self.mode=='hostile') or (a.xy == ch.xy and self.mode in ['hostile','standing_hostile'] and 'waterform' not in ch.effects):
-                        init_screen.combat(self,a)
+                    if (self.mode=='guarding' and a.mode=='hostile') or (a.mode=='guarding' and self.mode=='hostile') or\
+                       (a.xy == ch.xy and self.mode in ['hostile','standing_hostile'] and 'waterform' not in self.game.player.effects):
+                        self.game.combat(self,a)
                     return 1
-            if T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].tire_move>self.energy:
-                if T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].drowning and self.race!='fish':
+            if T[self.game.land[self.xy[1]-1][self.xy[0]-21]].tire_move>self.energy:
+                if T[self.game.land[self.xy[1]-1][self.xy[0]-21]].drowning and self.race!='fish':
                     self.life -= 1
                 self.xy[0] = x
                 self.xy[1] = y
-            elif not (self.race=='kraken' and init_screen.current_place['Chaos']>30 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in 'wWt~')\
-                 and not (self.race=='fairy' and init_screen.current_place['Nature']>60 and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in "'i,")\
-                 and not (self.race=='fish' and T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].id in "Wwt~"):
-                self.energy-=T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].tire_move
+            elif not (self.race=='kraken' and self.game.current_place['Chaos']>30 and T[self.game.land[self.xy[1]-1][self.xy[0]-21]].id in 'wWt~')\
+                 and not (self.race=='fairy' and self.game.current_place['Nature']>60 and T[self.game.land[self.xy[1]-1][self.xy[0]-21]].id in "'i,")\
+                 and not (self.race=='fish' and T[self.game.land[self.xy[1]-1][self.xy[0]-21]].id in "Wwt~"):
+                self.energy-=T[self.game.land[self.xy[1]-1][self.xy[0]-21]].tire_move
             if self.mode=='standing_hostile':
                 self.xy[0] = x
                 self.xy[1] = y
-        elif 'door_' in T[init_screen.land[self.xy[1]-1][self.xy[0]-21]].world_name:
-            init_screen.open_door(self.xy,self)
+        elif 'door_' in T[self.game.land[self.xy[1]-1][self.xy[0]-21]].world_name:
+            self.game.open_door(self.xy,self)
             self.xy[0] = x
             self.xy[1] = y
         else:
@@ -887,8 +892,8 @@ class NPC(object):
 
     
 class Human(NPC):
-    def __init__(self,xy,area,path,terr_restr,emotion,fear,tag,name,mode,id,attr,WD,armour,f,r,game_id=0,replica=False):
-        super(Human,self).__init__(replica)
+    def __init__(self,xy,area,path,terr_restr,emotion,fear,tag,name,mode,id,attr,WD,armour,f,r,game_id=0):
+        super(Human,self).__init__()
         self.xy = xy[:]
         self.area = area[:]
         self.path = path[:]
@@ -921,54 +926,54 @@ class Human(NPC):
         arm=self.armour
         WD=0
         for a in self.attr:
-            attr_d[a]=int(self.race_attrs[r][a]*init_screen.current_place[f]/100.)
+            attr_d[a]=int(self.race_attrs[r][a]*self.game.current_place[f]/100.)
         if f=='Nature':
             emo=2
-            arm=init_screen.current_place[f]*3.5
-            WD=init_screen.current_place[f]/60
-            if ch.forces['Chaos']:
-                if ch.forces['Nature']-ch.forces['Chaos']<init_screen.current_place['Nature']-init_screen.current_place['Chaos']:
+            arm=self.game.current_place[f]*3.5
+            WD=self.game.current_place[f]/60
+            if self.game.player.forces['Chaos']:
+                if self.game.player.forces['Nature']-self.game.player.forces['Chaos']<self.game.current_place['Nature']-self.game.current_place['Chaos']:
                     mode='hostile'
             ammo=wood_arrow
         elif f=='Order':
             emo=7
-            arm=init_screen.current_place[f]*2.75
-            WD=init_screen.current_place[f]/40
-            if ch.forces['Chaos']:
-                if ch.forces['Order']-ch.forces['Chaos']<init_screen.current_place['Order']-init_screen.current_place['Chaos']:
+            arm=self.game.current_place[f]*2.75
+            WD=self.game.current_place[f]/40
+            if self.game.player.forces['Chaos']:
+                if self.game.player.forces['Order']-self.game.player.forces['Chaos']<self.game.current_place['Order']-self.game.current_place['Chaos']:
                     mode='hostile'
             ammo=wood_bolt
         elif f=='Chaos':
             emo=12
-            arm=init_screen.current_place[f]*2
-            WD=init_screen.current_place[f]/30
-            if ch.forces['Order']:
-                if ch.forces['Chaos']-ch.forces['Order']<init_screen.current_place['Chaos']-init_screen.current_place['Order']:
+            arm=self.game.current_place[f]*2
+            WD=self.game.current_place[f]/30
+            if self.game.player.forces['Order']:
+                if self.game.player.forces['Chaos']-self.game.player.forces['Order']<self.game.current_place['Chaos']-self.game.current_place['Order']:
                     mode='hostile'
-            if ch.forces['Nature']:
-                if ch.forces['Chaos']-ch.forces['Nature']<init_screen.current_place['Chaos']-init_screen.current_place['Nature']:
+            if self.game.player.forces['Nature']:
+                if self.game.player.forces['Chaos']-self.game.player.forces['Nature']<self.game.current_place['Chaos']-self.game.current_place['Nature']:
                     mode='hostile'
-            if 'spirit of order3' in ch.tool_tags and random.randint(1,30)>attr_d['Mnd']:
+            if 'spirit of order3' in self.game.player.tool_tags and random.randint(1,30)>attr_d['Mnd']:
                 mode='fearfull'
             ammo=stone
-        if ch.possessed:
+        if self.game.player.possessed:
             mode='wander'
         duplica = Human(xy,self.area,self.path,self.terr_restr,emo,self.fear,r[0].upper(),r,
-                        mode,self.id,attr_d,WD,arm,f,r,game_id=g_id,replica=True)
+                        mode,self.id,attr_d,WD,arm,f,r,game_id=g_id)
         duplica.learning=random.random()
-        duplica.attr['loot']=[[1310,100,1,4],[r,init_screen.current_place[f]+init_screen.current_place['Treasure']*10]]
+        duplica.attr['loot']=[[1310,100,1,4],[r,self.game.current_place[f]+self.game.current_place['Treasure']*10]]
         duplica.attr['shoot']=ammo
         if rand:
             duplica.random = True
-            duplica.appearance=ch.turn
+            duplica.appearance=self.game.player.turn
         else:
             duplica.random = False
             duplica.appearance=0
         return duplica
 
 class Animal(NPC):
-    def __init__(self,xy,area,path,terr_restr,emotion,tag,name,mode,id,life,attr,WS,armour,f,r,game_id=0,replica=False):
-        super(Animal,self).__init__(replica)
+    def __init__(self,xy,area,path,terr_restr,emotion,tag,name,mode,id,life,attr,WS,armour,f,r,game_id=0):
+        super(Animal,self).__init__()
         self.xy = xy[:]
         self.area = area[:]
         self.path = path[:]
@@ -992,50 +997,18 @@ class Animal(NPC):
         self.energy = self.attr['End']*100
         self.max_energy = self.attr['End']*100
         self.dmg = max([self.attr['Str'] / 5, 1])
-        
-    def duplicate(self,x,y,g_id,f,r,rand=False):
+
+    def duplicate(self,x,y,g_id,f,r,rand=True):
         xy = [x, y]
         duplica = Animal(xy,self.area,self.path,self.terr_restr,self.emotion,self.tag,self.name,
-                         self.mode,self.id,self.life,self.attr,self.weapon_skill,self.armour,f,r,game_id=g_id,
-                         replica=True)
+                         self.mode,self.id,self.life,self.attr,self.weapon_skill,self.armour,f,r,game_id=g_id)
         duplica.learning=0
-        if self.mode in ['hostile','fearfull_hide','fearfull'] and 'elf1' in ch.tool_tags and self.t=='animal':
+        if self.mode in ['hostile','fearfull_hide','fearfull'] and 'elf1' in self.game.player.tool_tags and self.t=='animal':
             duplica.mode = 'wander'
         if rand:
             duplica.random = True
-            duplica.appearance=ch.turn
+            duplica.appearance=self.game.player.turn
         else:
             duplica.random = False
             duplica.appearance=0
         return duplica
-
-## Taming tags - pet, guard, ride, farm. [tag,difficulty,item requirement for taming,farming product id]
-wood = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',1,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
-#wood_perm = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',2,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
-##squirrel = Animal([30, 20],[],[],'wW',7,'s','squirrel','fearfull_hide',2,1,{'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1},1,5,'Nature','squirrel')
-random_squirrel = Animal([30, 20],[],[],'wW',7,'s','squirrel','wander',3,1,{'tame':['pet',25,1315],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,70,1,1],['squirrel skin',100,1,1]]},1,5,'Nature','squirrel')
-bear = Animal([30, 20],[],[],'',6,'b','bear','wander',4,12,{'tame':['guard',95,1302],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':12,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','bear')
-wolf = Animal([30, 20],[],[],'',7,'w','wolf','wander',5,8,{'tame':['guard',60,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':12,'loot':[[1326,100,1,3],[1310,100,1,4],['wolf skin',100,3,6]]},10,50,'Nature','wolf')
-dog = Animal([30, 20],[],[],'',6,'d','dog','wander',6,8,{'tame':['guard',40,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':3,'loot':[[1326,100,1,2],[1310,100,1,4],['dog skin',100,2,5]]},10,50,'Order','dog')
-hyena = Animal([30, 20],[],[],'',8,'h','hyena','hostile',7,8,{'Str':12,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':9,'loot':[[1326,100,1,3],[1310,100,1,4],['hyena skin',100,2,5]]},10,50,'Chaos','hyena')
-grizzly = Animal([30, 20],[],[],'',7,'b','grizzly bear','hostile',8,12,{'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':13,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','grizzly')
-snake = Animal([30, 20],[],[],'',10,'s','snake','wander',9,2,{'tame':['pet',70,1310],'Str':1,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':7,'loot':[[1310,70,1,1],['snake skin',100,1,1]]},6,5,'Nature','snake')
-poison_snake = Animal([30, 20],[],[],'',10,'s','poisonous snake','hostile',10,5,{'Str':15,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':7,'loot':[[1310,70,1,1],['snake skin',100,1,1]]},6,5,'Chaos','poison snake')
-polar_bear = Animal([30, 20],[],[],'',15,'b','polar bear','wander',11,12,{'tame':['guard',95,1310],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':13,'loot':[[1326,100,4,6],[1310,100,3,9],['polar bear skin',100,6,10]]},5,150,'Nature','polar bear')
-polar_wolf = Animal([30, 20],[],[],'',15,'w','polar wolf','wander',12,8,{'tame':['guard',60,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':13,'loot':[[1326,100,1,4],[1310,100,1,4],['polar wolf skin',100,3,6]]},10,50,'Nature','polar wolf')
-wild_horse = Animal([30, 20],[],[],'',6,'h','wild horse','wander',13,12,{'tame':['ride',60,902],'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':10,'loot':[[1326,100,4,6],[1310,100,2,6],['horse skin',100,4,7]]},8,80,'Nature','wild horse')
-camel = Animal([30, 20],[],[],'wWt',6,'c','camel','wander',14,12,{'tame':['ride',60,902],'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':5,'loot':[[1326,100,4,6],[1310,100,1,5],['camel skin',100,4,7]]},8,120,'Nature','camel')
-giant_lizard = Animal([30, 20],[],[],'',2,'l','giant lizard','wander',15,15,{'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':6,'loot':[[1326,100,2,5],[1310,100,1,4],['lizard skin',100,2,5]]},8,150,'Chaos','giant lizard')
-penguin = Animal([30, 20],[],[],'',8,'p','penguin','wander',16,2,{'tame':['pet',80,1310],'Str':1,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':4,'loot':[[1310,100,1,2]]},6,5,'Nature','penguin')
-monkey = Animal([30, 20],[],[],'wWt',6,'m','monkey','wander',17,5,{'tame':['pet',50,1301],'Str':5,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':10,'loot':[[1310,100,1,3],['monkey skin',100,2,4]]},6,10,'Nature','monkey')
-carnivore_bush = Animal([30, 20],[],[],".,+><aABdDfFgiIJlLmnoOpsStTwW%#`'~:",10,'#','carnivore plant','standing_hostile',18,10,{'Str':17,'End':10,'Dex':5,'Int':5,'Cre':1,'Mnd':5,'loot':[]},6,100,'Nature','plant')
-wild_chicken = Animal([30, 20],[],[],'wWt',7,'c','wild chicken','wander',19,1,{'tame':['farm',25,1315,1321],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':2,'loot':[[1310,100,1,1],[1323,100,10,20]]},1,5,'Order','chicken')
-wild_cattle = Animal([30, 20],[],[],'wWt',8,'c','wild cattle','wander',20,15,{'tame':['farm',35,902,1322],'Str':25,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':4,'loot':[[1326,100,4,6],[1310,100,10,15],['buffalo skin',100,3,8]]},1,100,'Order','cattle')
-fish = Animal([30, 20],[],[],".,+><aAbBdDfFgiIJlLmnoOpsST%#`'~:",1,'f','fish','wander',100,5,{'Str':1,'End':4,'Dex':5,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,100,1,1]]},5,20,'Nature','fish')
-
-game_creatures=NPC.__refs__[:]
-##game_creatures = [wood,wood_perm,random_squirrel,bear,fish,wolf,dog,hyena,grizzly,snake,poison_snake,polar_bear,polar_wolf,
-##                  wild_horse,camel,giant_lizard,penguin,monkey,carnivore_bush,wild_chicken,wild_cattle]
-
-##['Backpack','Head','Neck','Chest','Jewel','Back','Arms','Right hand','Left hand','On hands',
-## 'Left ring','Right ring','Belt','Legs','Feet','Sheath','Belt tool 1','Belt tool 2','Quiver/stone pouch']

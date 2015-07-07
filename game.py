@@ -44,8 +44,31 @@ class Game:
                    'Order':{'cold':[12,16,20,6],'warm':[9,6,13,19,20],'hot':[14,9,10,6]},
                    'Chaos':{'cold':[12,7],'warm':[7,8,10,19,20],'hot':[15,10,9]}}
         self.water_creatures = [100]
-        for creature in player.game_creatures:
-            creature.game=self
+        Living_thing.game=self
+        ## Taming tags - pet, guard, ride, farm. [tag,difficulty,item requirement for taming,farming product id]
+        self.wood = Player.Human([53, 20],[],[],'',7,0,'W','woodsman','wander',1,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
+        #wood_perm = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',2,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
+        ##squirrel = Animal([30, 20],[],[],'wW',7,'s','squirrel','fearfull_hide',2,1,{'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1},1,5,'Nature','squirrel')
+        self.random_squirrel = Player.Animal([30, 20],[],[],'wW',7,'s','squirrel','wander',3,1,{'tame':['pet',25,1315],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,70,1,1],['squirrel skin',100,1,1]]},1,5,'Nature','squirrel')
+        self.bear = Player.Animal([30, 20],[],[],'',6,'b','bear','wander',4,12,{'tame':['guard',95,1302],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':12,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','bear')
+        self.wolf = Player.Animal([30, 20],[],[],'',7,'w','wolf','wander',5,8,{'tame':['guard',60,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':12,'loot':[[1326,100,1,3],[1310,100,1,4],['wolf skin',100,3,6]]},10,50,'Nature','wolf')
+        self.dog = Player.Animal([30, 20],[],[],'',6,'d','dog','wander',6,8,{'tame':['guard',40,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':3,'loot':[[1326,100,1,2],[1310,100,1,4],['dog skin',100,2,5]]},10,50,'Order','dog')
+        self.hyena = Player.Animal([30, 20],[],[],'',8,'h','hyena','hostile',7,8,{'Str':12,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':9,'loot':[[1326,100,1,3],[1310,100,1,4],['hyena skin',100,2,5]]},10,50,'Chaos','hyena')
+        self.grizzly = Player.Animal([30, 20],[],[],'',7,'b','grizzly bear','hostile',8,12,{'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':13,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','grizzly')
+        self.snake = Player.Animal([30, 20],[],[],'',10,'s','snake','wander',9,2,{'tame':['pet',70,1310],'Str':1,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':7,'loot':[[1310,70,1,1],['snake skin',100,1,1]]},6,5,'Nature','snake')
+        self.poison_snake = Player.Animal([30, 20],[],[],'',10,'s','poisonous snake','hostile',10,5,{'Str':15,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':7,'loot':[[1310,70,1,1],['snake skin',100,1,1]]},6,5,'Chaos','poison snake')
+        self.polar_bear = Player.Animal([30, 20],[],[],'',15,'b','polar bear','wander',11,12,{'tame':['guard',95,1310],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':13,'loot':[[1326,100,4,6],[1310,100,3,9],['polar bear skin',100,6,10]]},5,150,'Nature','polar bear')
+        self.polar_wolf = Player.Animal([30, 20],[],[],'',15,'w','polar wolf','wander',12,8,{'tame':['guard',60,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':13,'loot':[[1326,100,1,4],[1310,100,1,4],['polar wolf skin',100,3,6]]},10,50,'Nature','polar wolf')
+        self.wild_horse = Player.Animal([30, 20],[],[],'',6,'h','wild horse','wander',13,12,{'tame':['ride',60,902],'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':10,'loot':[[1326,100,4,6],[1310,100,2,6],['horse skin',100,4,7]]},8,80,'Nature','wild horse')
+        self.camel = Player.Animal([30, 20],[],[],'wWt',6,'c','camel','wander',14,12,{'tame':['ride',60,902],'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':5,'loot':[[1326,100,4,6],[1310,100,1,5],['camel skin',100,4,7]]},8,120,'Nature','camel')
+        self.giant_lizard = Player.Animal([30, 20],[],[],'',2,'l','giant lizard','wander',15,15,{'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':6,'loot':[[1326,100,2,5],[1310,100,1,4],['lizard skin',100,2,5]]},8,150,'Chaos','giant lizard')
+        self.penguin = Player.Animal([30, 20],[],[],'',8,'p','penguin','wander',16,2,{'tame':['pet',80,1310],'Str':1,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':4,'loot':[[1310,100,1,2]]},6,5,'Nature','penguin')
+        self.monkey = Player.Animal([30, 20],[],[],'wWt',6,'m','monkey','wander',17,5,{'tame':['pet',50,1301],'Str':5,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':10,'loot':[[1310,100,1,3],['monkey skin',100,2,4]]},6,10,'Nature','monkey')
+        self.carnivore_bush = Player.Animal([30, 20],[],[],".,+><aABdDfFgiIJlLmnoOpsStTwW%#`'~:",10,'#','carnivore plant','standing_hostile',18,10,{'Str':17,'End':10,'Dex':5,'Int':5,'Cre':1,'Mnd':5,'loot':[]},6,100,'Nature','plant')
+        self.wild_chicken = Player.Animal([30, 20],[],[],'wWt',7,'c','wild chicken','wander',19,1,{'tame':['farm',25,1315,1321],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':2,'loot':[[1310,100,1,1],[1323,100,10,20]]},1,5,'Order','chicken')
+        self.wild_cattle = Player.Animal([30, 20],[],[],'wWt',8,'c','wild cattle','wander',20,15,{'tame':['farm',35,902,1322],'Str':25,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':4,'loot':[[1326,100,4,6],[1310,100,10,15],['buffalo skin',100,3,8]]},1,100,'Order','cattle')
+        self.fish = Player.Animal([30, 20],[],[],".,+><aAbBdDfFgiIJlLmnoOpsST%#`'~:",1,'f','fish','wander',100,5,{'Str':1,'End':4,'Dex':5,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,100,1,1]]},5,20,'Nature','fish')
+        self.game_creatures=NPC.__refs__[:]
 
     def draw_items(self,the_spot=[]):
         for x in self.ground_items:
@@ -1164,7 +1187,7 @@ class Game:
             animal.appearance-=10
             if animal.appearance<=0:
                 animal.random=True
-                for a in player.game_creatures:
+                for a in self.game_creatures:
                     if a.id==animal.id:
                         animal.name=a.name
                         break
@@ -2828,7 +2851,7 @@ class Game:
             if creatures:
                 for i in range(creatures):
                     ID = random.choice(self.water_creatures)
-                    for thing in player.game_creatures:
+                    for thing in self.game_creatures:
                         if ID == thing.id:
                             break
                     game_id = i+1
@@ -2837,7 +2860,7 @@ class Game:
                     while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in thing.terr_restr:
                         x = random.randint(21,78)
                         y = random.randint(1,23)
-                    creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
+                    creation = thing.duplicate(x,y,game_id,thing.force,thing.race)
                     creature_coords.append(creation.xy[:])
                     self.all_creatures.append(creation)
                     game_ids.append(game_id)
@@ -2913,7 +2936,7 @@ class Game:
                     while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in player.wood.terr_restr:
                         x = random.randint(21,78)
                         y = random.randint(1,23)
-                    creation = player.wood.duplicate(x,y,game_id,c_force,c_race,True)
+                    creation = self.wood.duplicate(x,y,game_id,c_force,c_race)
                     creature_coords.append(creation.xy[:])
                     self.all_creatures.append(creation)
         if random.randint(0,100)<100-tp['Population']:
@@ -2932,7 +2955,7 @@ class Game:
                     else:
                         c_temp='hot'
                     ID = random.choice(self.random_by_force[c_force][c_temp])
-                    for thing in player.game_creatures:
+                    for thing in self.game_creatures:
                         if ID == thing.id:
                             break
                     game_id = i+add_id+1
@@ -2944,7 +2967,7 @@ class Game:
                           T[lands[y-1][x-21]].id in ['pa']:
                         x = random.randint(21,78)
                         y = random.randint(1,23)
-                    creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
+                    creation = thing.duplicate(x,y,game_id,thing.force,thing.race)
                     creature_coords.append(creation.xy[:])
                     self.all_creatures.append(creation)
                     
@@ -3003,7 +3026,7 @@ class Game:
                         while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in player.wood.terr_restr:
                             x = random.randint(21,78)
                             y = random.randint(1,23)
-                        creation = player.wood_perm.duplicate(x,y,game_id,c_force,c_race,False)
+                        creation = self.wood_perm.duplicate(x,y,game_id,c_force,c_race)
                         creature_coords.append(creation.xy[:])
                         self.all_creatures.append(creation)
                     self.ground_items.append([center[1]+21,center[0]+1,add_on.duplicate(1)])
@@ -3167,7 +3190,7 @@ class Game:
                             else:
                                 c_temp='hot'
                             ID = random.choice(self.random_by_force[c_force][c_temp])
-                            for thing in player.game_creatures:
+                            for thing in self.game_creatures:
                                 if ID == thing.id:
                                     break
                             game_id = i+add_id+1
@@ -3179,7 +3202,7 @@ class Game:
                                   T[self.land[y-1][x-21]].id in ['pa']:
                                 x = random.randint(21,78)
                                 y = random.randint(1,23)
-                            creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
+                            creation = thing.duplicate(x,y,game_id,thing.force,thing.race)
                             creature_coords.append(creation.xy[:])
                             self.all_creatures.append(creation)
                 else:
@@ -3207,7 +3230,7 @@ class Game:
                             while [x,y] in creature_coords or not T[self.land[y-1][x-21]].pass_through or T[self.land[y-1][x-21]].id in player.wood.terr_restr:
                                 x = random.randint(21,78)
                                 y = random.randint(1,23)
-                            creation = player.wood.duplicate(x,y,game_id,c_force,c_race,True)
+                            creation = self.wood.duplicate(x,y,game_id,c_force,c_race)
                             creature_coords.append(creation.xy[:])
                             self.all_creatures.append(creation)
                 if waters>35:
@@ -3219,7 +3242,7 @@ class Game:
                             add_id=1
                         for i in range(creatures):
                             ID = random.choice(self.water_creatures)
-                            for thing in player.game_creatures:
+                            for thing in self.game_creatures:
                                 if ID == thing.id:
                                     break
                             game_id = i+add_id+1
@@ -3229,7 +3252,7 @@ class Game:
                             while [x,y] in creature_coords or not T[land[y-1][x-21]].pass_through or T[land[y-1][x-21]].id in thing.terr_restr:
                                 x = random.randint(21,78)
                                 y = random.randint(1,23)
-                            creation = thing.duplicate(x,y,game_id,thing.force,thing.race,True)
+                            creation = thing.duplicate(x,y,game_id,thing.force,thing.race)
                             creature_coords.append(creation.xy[:])
                             self.all_creatures.append(creation)
                                 
