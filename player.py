@@ -1,7 +1,6 @@
-import message
 import msvcrt
-from terrain import T
 import random
+from terrain import T
 from inventory import stone
 from inventory import wood_arrow
 from inventory import wood_bolt
@@ -29,6 +28,7 @@ class Living_thing(object):
 
 class Player(Living_thing):
     def __init__(self, xy, race,force,start_force):
+        super(Player,self).__init__()
         self.xy = xy
         self.base_attr = self.race_attrs[race]
         self.attr = {}
@@ -111,11 +111,11 @@ class Player(Living_thing):
         if (key == '0'):
             return 1
         if 'troll2' in self.tool_tags and self.turn%2 and self.turn%2400<1200:
-            message.message('day_troll')
+            self.game.message.message('day_troll')
             return 1
         if (key == '5'):
-            message.message('')
-            message.message('wait')
+            self.game.message.message('')
+            self.game.message.message('wait')
             if (self.energy < self.max_energy) and not (self.hunger>79 or self.thirst>79):
                 self.energy += 1
         elif self.possessed and 'spirit of nature3' in self.tool_tags:
@@ -136,14 +136,14 @@ class Player(Living_thing):
             elif (xy[1] == 24):
                 direction = 1
             if not int(self.game.directions[direction]) and self.game.current_area != 'world':
-                message.message('leave_world')
+                self.game.message.message('leave_world')
                 xy[0] = x
                 xy[1] = y
                 return 1
             elif not int(self.game.directions[direction]) and self.game.current_area == 'world':
                 xy[0] = x
                 xy[1] = y
-                message.message('nowhere_togo')
+                self.game.message.message('nowhere_togo')
             else:
                 xy[0] = x
                 xy[1] = y
@@ -158,18 +158,18 @@ class Player(Living_thing):
             if 'waterform' in self.effects:
                 return 0
             for a in self.game.all_creatures:
-                if (a.xy == xy) and (a not in hidden):
+                if (a.xy == xy) and (a not in self.game.hidden):
                     if a.mode in ['hostile','standing_hostile']:
                         if not self.ride:
-                            init_screen.combat(self, a)
+                            self.game.combat(self, a)
                         else:
-                            message.message('no_riding_fighting')
+                            self.game.message.message('no_riding_fighting')
                         xy[0] = x
                         xy[1] = y
                         return 1
                     else:
                         if a.t=='sentient' and not self.possessed:
-                            message.creature('talk',a)
+                            self.game.message.creature('talk',a)
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 xy[0] = x
@@ -177,9 +177,9 @@ class Player(Living_thing):
                                 self.game.talk(a)
                                 return 1
                             else:
-                                message.message('')
+                                self.game.message.message('')
                                 if 'goblin1' in self.tool_tags:
-                                    message.creature('steal',a)
+                                    self.game.message.creature('steal',a)
                                     answer=msvcrt.getch()
                                     if answer.lower()=='y':
                                         effect('force',{'Chaos':{'force':0.02,'goblin':0.02},'Nature':{'all':-.01},'Order':{'all':-.01}})
@@ -188,10 +188,10 @@ class Player(Living_thing):
                                         self.game.pickpocket(a)
                                         return 1
                                     else:
-                                        message.message('')
+                                        self.game.message.message('')
                         elif 'tame' in a.attr and 'tame' not in a.name and 'human2' in self.tool_tags\
                               and not self.possessed:
-                            message.creature('tame',a)
+                            self.game.message.creature('tame',a)
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 effect('force',{'Order':{'force':0.02,'human':0.02}})
@@ -200,10 +200,10 @@ class Player(Living_thing):
                                 xy[1] = y
                                 return 1
                             else:
-                                message.message('')
+                                self.game.message.message('')
                         elif a in self.followers and 'human2' in self.tool_tags\
                               and not self.possessed:
-                            message.creature('tamed_use',a)
+                            self.game.message.creature('tamed_use',a)
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 effect('force',{'Order':{'force':0.01,'human':0.01}})
@@ -212,9 +212,9 @@ class Player(Living_thing):
                                 xy[1] = y
                                 return 1
                             else:
-                                message.message('')
+                                self.game.message.message('')
                         elif 'spirit of nature2' in self.tool_tags and not self.possessed and not self.ride:
-                            message.creature('possess',a)
+                            self.game.message.creature('possess',a)
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 effect('force',{'Nature':{'force':0.03,'spirit of nature':0.03}})
@@ -223,9 +223,9 @@ class Player(Living_thing):
                                 xy[1] = y
                                 return 1
                             else:
-                                message.message('')
+                                self.game.message.message('')
                         if not self.ride:
-                            message.creature('attack',a)
+                            self.game.message.creature('attack',a)
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
                                 a.mode='hostile'
@@ -235,7 +235,7 @@ class Player(Living_thing):
                                         each_other.mode='hostile'
                                 self.game.combat(self, a)
                             else:
-                                message.message('')
+                                self.game.message.message('')
                         xy[0] = x
                         xy[1] = y
                         return 1
@@ -244,67 +244,67 @@ class Player(Living_thing):
                ('winterwalk' in self.effects and T[self.game.land[xy[1]-1][xy[0]-21]].id in "'i") and not \
                ('summerwalk' in self.effects and T[self.game.land[xy[1]-1][xy[0]-21]].id in ",") and not \
                (self.possessed and self.possessed[0].race=='fish' and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
-                message.emotion('tired')
+                self.game.message.emotion('tired')
                 if T[self.game.land[self.xy[1]-1][self.xy[0]-21]].drowning:
                     self.life -= 1
-                    message.message('drown')
+                    self.game.message.message('drown')
                 xy[0] = x
                 xy[1] = y
             elif not (self.possessed and self.possessed[0].race=='fish' and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wWt'):
                 if ('kraken1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wWt~'):
-                    message.message('kraken_move')
+                    self.game.message.message('kraken_move')
                 elif ('winterwalk' in self.effects and T[self.game.land[xy[1]-1][xy[0]-21]].id in "'i"):
-                    message.message('fairy_%smove' %(T[self.game.land[xy[1]-1][xy[0]-21]].name))
+                    self.game.message.message('fairy_%smove' %(T[self.game.land[xy[1]-1][xy[0]-21]].name))
                 elif ('summerwalk' in self.effects and T[self.game.land[xy[1]-1][xy[0]-21]].id in ","):
-                    message.message('fairy_%smove' %(T[self.game.land[xy[1]-1][xy[0]-21]].name))
+                    self.game.message.message('fairy_%smove' %(T[self.game.land[xy[1]-1][xy[0]-21]].name))
                 elif ('gnome1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'nmA%'):
                     self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
                     if T[self.game.land[xy[1]-1][xy[0]-21]].id != 'n':
                         self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'n'+self.game.land[xy[1]-1][xy[0]-20:]
                         effect('force',{'Nature':{'force':0.01,'gnome':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
-                    message.message('gnome_move')
-                elif ('spirit of nature1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'd'):
-                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'g'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    self.game.message.message('gnome_move')
+                elif ('spirit of nature1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'd'):
+                    self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
+                    self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'g'+self.game.land[xy[1]-1][xy[0]-20:]
                     effect('force',{'Nature':{'force':0.01,'spirit of nature':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
-                    message.message('nature_spirit_move')
-                elif ('fairy1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in '.a'):
-                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'g'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    self.game.message.message('nature_spirit_move')
+                elif ('fairy1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in '.a'):
+                    self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
+                    self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'g'+self.game.land[xy[1]-1][xy[0]-20:]
                     effect('force',{'Nature':{'force':0.01,'fairy':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
-                    message.message('fairy_move')
-                elif ('dryad1' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'D'):
-                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'T'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    self.game.message.message('fairy_move')
+                elif ('dryad1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'D'):
+                    self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
+                    self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'T'+self.game.land[xy[1]-1][xy[0]-20:]
                     effect('force',{'Nature':{'force':0.01,'dryad':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
-                    message.message('dryad_move')
-                elif ('goblin2' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'wW'):
-                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                    init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'t'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    self.game.message.message('dryad_move')
+                elif ('goblin2' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wW'):
+                    self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
+                    self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'t'+self.game.land[xy[1]-1][xy[0]-20:]
                     effect('force',{'Chaos':{'force':0.01,'goblin':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
-                    message.message('goblin_move')
-                elif ('spirit of chaos2' in self.tool_tags and T[init_screen.land[xy[1]-1][xy[0]-21]].id in 'gT'):
-                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                    if T[init_screen.land[xy[1]-1][xy[0]-21]].id=='g':
-                        init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'d'+init_screen.land[xy[1]-1][xy[0]-20:]
-                    elif T[init_screen.land[xy[1]-1][xy[0]-21]].id=='T':
-                        init_screen.land[xy[1]-1]=init_screen.land[xy[1]-1][:xy[0]-21]+'D'+init_screen.land[xy[1]-1][xy[0]-20:]
+                    self.game.message.message('goblin_move')
+                elif ('spirit of chaos2' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'gT'):
+                    self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
+                    if T[self.game.land[xy[1]-1][xy[0]-21]].id=='g':
+                        self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'d'+self.game.land[xy[1]-1][xy[0]-20:]
+                    elif T[self.game.land[xy[1]-1][xy[0]-21]].id=='T':
+                        self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'D'+self.game.land[xy[1]-1][xy[0]-20:]
                     effect('force',{'Chaos':{'force':0.01,'spirit of chaos':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
-                    message.message('chaos_spirit_move')
+                    self.game.message.message('chaos_spirit_move')
                 else:
-                    self.energy -= T[init_screen.land[xy[1]-1][xy[0]-21]].tire_move
-                    message.message(T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
-                for item in init_screen.ground_items:
+                    self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
+                    self.game.message.message(T[self.game.land[xy[1]-1][xy[0]-21]].mess)
+                for item in self.game.ground_items:
                     if item[:2] == xy:
-                        message.use('gr_item',item[2],item[2].qty,xy)
+                        self.game.message.use('gr_item',item[2],item[2].qty,xy)
                         break
-        elif 'door_' in T[init_screen.land[xy[1]-1][xy[0]-21]].world_name:
-            init_screen.open_door(xy,self)
+        elif 'door_' in T[self.game.land[xy[1]-1][xy[0]-21]].world_name:
+            self.game.open_door(xy,self)
             xy[0] = x
             xy[1] = y
         else:
-            if not T[init_screen.land[xy[1]-1][xy[0]-21]].pass_through:
-                message.message(T[init_screen.land[xy[1]-1][xy[0]-21]].mess)
+            if not T[self.game.land[xy[1]-1][xy[0]-21]].pass_through:
+                self.game.message.message(T[self.game.land[xy[1]-1][xy[0]-21]].mess)
             xy[0] = x
             xy[1] = y
 
@@ -316,11 +316,11 @@ class Player(Living_thing):
                 pile.append(item)
         if len(pile) > 1:
             it = 1
-            init_screen.c.page()
-            init_screen.c.write(' You search through the items on the ground.\n What do you want to pick up?\n\n')
+            self.game.c.page()
+            self.game.c.write(' You search through the items on the ground.\n What do you want to pick up?\n\n')
             for i in range(len(pile)):
                 print ' '+chr(i+97)+')  ', pile[i][2].name+', %d x %s stones' %(pile[i][2].qty,str(pile[i][2].weight))
-                init_screen.c.text(4,i+3,pile[i][2].tag,pile[i][2].color)
+                self.game.c.text(4,i+3,pile[i][2].tag,pile[i][2].color)
             print '\n You can carry %s more stones.\n Your backpack can take %s more stones.' %(str(self.max_weight - self.weight),
                                                                                                 str(self.backpack))
             i1 = ' '
@@ -328,45 +328,45 @@ class Player(Living_thing):
                 if msvcrt.kbhit():
                     i1 = msvcrt.getch()
                     break
-            init_screen.c.rectangle((0,0,60,2))
+            self.game.c.rectangle((0,0,60,2))
         elif len(pile) == 1:
             i1 = 'a'
             it = 1
         if len(pile) > 0:
             try:
                 if pile[ord(i1)-97][2].qty > 1 and self.equipment['Backpack'] != []:
-                    message.message('pickup')                    
+                    self.game.message.message('pickup')                    
                     a = ''
                     i = ' '
                     while ord(i) != 13:
                         i = msvcrt.getch()
                         if ord(i) in range(48,58):
-                            init_screen.c.write(i)
+                            self.game.c.write(i)
                             a += i
-                    message.message('')
+                    self.game.message.message('')
                     if a =='' or int(a)==0:
-                        init_screen.redraw_screen()
+                        self.game.redraw_screen()
                         return 1
                     a=int(a)
                 else:
                     a = 1
             except IndexError:
-                init_screen.redraw_screen()
+                self.game.redraw_screen()
                 return 0
             if a > pile[ord(i1)-97][2].qty:
                 a = pile[ord(i1)-97][2].qty
             if self.weight + pile[ord(i1)-97][2].weight * a <= self.max_weight and pile[ord(i1)-97][2].weight * a <= self.backpack:
                 pile[ord(i1)-97][2].get_item(a)
                 if len(pile) > 1:
-                    init_screen.redraw_screen()
+                    self.game.redraw_screen()
                 if a < pile[ord(i1)-97][2].qty:
                     pile[ord(i1)-97][2].qty -= a
                 else:
                     ground.remove(pile[ord(i1)-97])
             elif self.weight + pile[ord(i1)-97][2].weight * a > self.max_weight:
                 if len(pile) > 1:
-                    init_screen.redraw_screen()
-                message.use('cant_carry', pile[ord(i1)-97][2])
+                    self.game.redraw_screen()
+                self.game.message.use('cant_carry', pile[ord(i1)-97][2])
             elif pile[ord(i1)-97][2].weight * a > self.backpack:
                 if self.equipment['Backpack'] == []:
                     if 'two_handed' in pile[ord(i1)-97][2].type:
@@ -381,19 +381,19 @@ class Player(Living_thing):
                         else:
                             ground.remove(pile[ord(i1)-97])
                         if len(pile) > 1:
-                            init_screen.redraw_screen()
+                            self.game.redraw_screen()
                         self.backpack = 0
                     else:
                         if len(pile) > 1:
-                            init_screen.redraw_screen()
-                        message.message('drop_first')
+                            self.game.redraw_screen()
+                        self.game.message.message('drop_first')
                 else:
                     if len(pile) > 1:
-                        init_screen.redraw_screen()
-                    message.use('cant_fit_in_backpack', pile[ord(i1)-97][2])
+                        self.game.redraw_screen()
+                    self.game.message.use('cant_fit_in_backpack', pile[ord(i1)-97][2])
             
         if it == 0:
-            message.message('no_pickup')
+            self.game.message.message('no_pickup')
 
     def take_off(self,item):
         has_it = 0
@@ -411,12 +411,12 @@ class Player(Living_thing):
             drop = self.equipment[self.equip_tags[item]].duplicate(self.equipment[self.equip_tags[item]].qty)
             print ' There\'s no place in your backpack so you drop\n the %s to the ground!' %drop.name
             wait = msvcrt.getch()
-            for i in init_screen.ground_items:
+            for i in self.game.ground_items:
                 if i[:2] == self.xy and i[2].id == drop.id and i[2].name == drop.name and i[2].stackable:
                     i[2].qty += drop.qty
                     dropped = 1
             if not dropped:
-                init_screen.ground_items.append([self.xy[0], self.xy[1],drop])
+                self.game.ground_items.append([self.xy[0], self.xy[1],drop])
                 dropped = 1
         if 'weapon' in self.equipment[self.equip_tags[item]].type and self.equip_tags[item] in ['Right hand','Left hand']:
             if self.equiped_weaps == 1:
@@ -501,7 +501,7 @@ class Player(Living_thing):
                 self.inventory[-1].effect['contains'].append(i)
                 self.inventory[-1].weight += i.weight * i.qty
                 self.weight += i.weight * i.qty
-            init_screen.ground_items.append([self.xy[0], self.xy[1], self.inventory[-1]])
+            self.game.ground_items.append([self.xy[0], self.xy[1], self.inventory[-1]])
             self.inventory[-1].lose_item()
             self.backpack = 0
         elif not dropped and self.equipment['Backpack'] != []:
@@ -510,7 +510,7 @@ class Player(Living_thing):
             self.weapon_dmg -= self.equipment[self.equip_tags[item]].dmg
         if self.equip_tags[item] in ['Right hand','Left hand']:
             self.weapon_weight -= self.equipment[self.equip_tags[item]].weight
-            take_effect()
+            self.game.take_effect()
             if self.equipment['Backpack'] != []:
                 self.free_hands += 1
                 if 'two_handed' in self.equipment[self.equip_tags[item]].type:
@@ -537,7 +537,7 @@ class Player(Living_thing):
             self.inventory.remove(item)
         if self.equip_tags[slot] in ['Right hand','Left hand']:
             self.weapon_weight += item.weight
-            take_effect()
+            self.game.take_effect()
             if 'two_handed' in item.type:
                 if self.equip_tags[slot] == 'Right hand' and self.equipment['Left hand'] != []:
                     self.take_off(self.equip_tags.index('Left hand'))
@@ -583,7 +583,7 @@ class Player(Living_thing):
             if self.turn%2400<1200:
                 item.effect['midnight fears']=0
             else:
-                self.effects['midnight fears']=1200-ch.turn%1200
+                self.effects['midnight fears']=1200-self.turn%1200
             if item.effect['midnight fears']==0:
                 item.name+=' (withered)'
                 item.effect.pop('midnight fears')
@@ -591,7 +591,7 @@ class Player(Living_thing):
             if self.turn%2400>=1200:
                 item.effect['sun armour']=0
             else:
-                self.effects['sun armour']=1200-ch.turn%2400
+                self.effects['sun armour']=1200-self.turn%2400
                 self.sun_armour=0
             if item.effect['sun armour']==0:
                 item.name+=' (withered)'
@@ -614,20 +614,20 @@ class Player(Living_thing):
                 dropped = 0
                 print ' There\'s no place in your backpack for the %s so you drop it to the ground!\n' %drop.name
                 wait = msvcrt.getch()
-                for i in init_screen.ground_items:
+                for i in self.game.ground_items:
                     if i[:2] == self.xy and i[2].id == drop.id and i[2].name == drop.name and i[2].stackable:
                         i[2].qty += drop.qty
                         dropped = 1
                 if not dropped:
-                    init_screen.ground_items.append([self.xy[0], self.xy[1],drop])
+                    self.game.ground_items.append([self.xy[0], self.xy[1],drop])
         elif self.equipment['Backpack'] != []:
             self.backpack += item.weight
         if self.equip_tags[slot] in ['Right hand','Left hand'] or 'armour' in item.type:
             self.weapon_dmg += item.dmg
 
     def find_equipment(self,slot):
-        init_screen.c.page()
-        init_screen.c.pos(0,3)
+        self.game.c.page()
+        self.game.c.pos(0,3)
         found = 0
         items = ''
         for i in self.inventory:
@@ -644,7 +644,7 @@ class Player(Living_thing):
             i1 = msvcrt.getch()
             return 0
         else:
-            init_screen.c.pos(0,1)
+            self.game.c.pos(0,1)
             print ' What do you want to equip?'
             i1 = msvcrt.getch()
             if i1 in items:
@@ -660,7 +660,7 @@ class Player(Living_thing):
                 else:
                     effect('force',{'Nature':{'all':-0.02},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
             elif defender.force=='Order':
-                if init_screen.current_place['Chaos']>=init_screen.current_place['Nature']:
+                if self.game.current_place['Chaos']>=self.game.current_place['Nature']:
                     effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
                 else:
                     effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
@@ -678,7 +678,7 @@ class Player(Living_thing):
                 if defender.t=='animal':
                     effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
                 else:
-                    if init_screen.current_place['Chaos']>=init_screen.current_place['Order']:
+                    if self.game.current_place['Chaos']>=self.game.current_place['Order']:
                         effect('force',{'Nature':{'all':-0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
                     else:
                         effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
@@ -697,6 +697,7 @@ class NPC(Living_thing):
     __refs__ = []
 
     def __init__(self):
+        super(NPC,self).__init__()
         self.__refs__.append(self)
 
     def creature_move(self):
@@ -816,19 +817,19 @@ class NPC(Living_thing):
             if (abs(self.game.player.xy[0]-x) + abs(self.game.player.xy[1]-y)) < 7:
                 self.xy[0] += cmp(self.area[4],x)
                 self.xy[1] += cmp(self.area[5],y)
-                if ((cmp(self.area[4],x) == 0) and (cmp(self.area[5],y) == 0)) and (self not in hidden):
-                    hidden.append(self)
+                if ((cmp(self.area[4],x) == 0) and (cmp(self.area[5],y) == 0)) and (self not in self.game.hidden):
+                    self.game.hidden.append(self)
                 key = '0'
             else:
                 key = str(random.randint(1,9))
-            if (self in hidden) and ([x,y] != self.area[4:]):
-                hidden.remove(self)
+            if (self in self.game.hidden) and ([x,y] != self.area[4:]):
+                self.game.hidden.remove(self)
         if mode == 'standing':
             key='5'
         for a in range(2):            
             self.xy[a] = self.xy[a] + md[key][a]
         self.creature_passage(x, y)
-        if self in hidden:
+        if self in self.game.hidden:
             if self.game.player.xy != self.xy:
                 self.game.hide(self)
         else:
@@ -867,7 +868,7 @@ class NPC(Living_thing):
                     self.xy[0] = x
                     self.xy[1] = y
                     if (self.mode=='guarding' and a.mode=='hostile') or (a.mode=='guarding' and self.mode=='hostile') or\
-                       (a.xy == ch.xy and self.mode in ['hostile','standing_hostile'] and 'waterform' not in self.game.player.effects):
+                       (a.xy == self.game.player.xy and self.mode in ['hostile','standing_hostile'] and 'waterform' not in self.game.player.effects):
                         self.game.combat(self,a)
                     return 1
             if T[self.game.land[self.xy[1]-1][self.xy[0]-21]].tire_move>self.energy:

@@ -1,14 +1,14 @@
 import Console
-from terrain import T
-import player
-import msvcrt
-import pickle
-import message
-import inventory
 import random
 import os
+import msvcrt
+import pickle
 from time import sleep
 from glob import glob
+import player
+import message
+import inventory
+from terrain import T
 
 
 class Game:
@@ -28,7 +28,8 @@ class Game:
         self.place_descriptions = {'world':'Your country.'}
         self.ground_items = []
         self.combat_buffer = ''
-        Item.game=self
+        self.message=message.Message_system(self)
+        inventory.Item.game=self
         self.I = {}
         for i in inventory.all_items:
             self.I[i.id] = (i)
@@ -44,31 +45,31 @@ class Game:
                    'Order':{'cold':[12,16,20,6],'warm':[9,6,13,19,20],'hot':[14,9,10,6]},
                    'Chaos':{'cold':[12,7],'warm':[7,8,10,19,20],'hot':[15,10,9]}}
         self.water_creatures = [100]
-        Living_thing.game=self
+        player.Living_thing.game=self
         ## Taming tags - pet, guard, ride, farm. [tag,difficulty,item requirement for taming,farming product id]
-        self.wood = Player.Human([53, 20],[],[],'',7,0,'W','woodsman','wander',1,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
-        #wood_perm = Human([53, 20],[],[],'',7,0,'W','woodsman','wander',2,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
+        self.wood = player.Human([53, 20],[],[],'',7,0,'W','woodsman','wander',1,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
+        self.wood_perm = player.Human([53, 20],[],[],'',7,0,'W','woodsman','wander',2,{'Str':6,'End':6,'Dex':4,'Int':4,'Cre':2,'Mnd':3},0,0,'Nature','elf')
         ##squirrel = Animal([30, 20],[],[],'wW',7,'s','squirrel','fearfull_hide',2,1,{'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1},1,5,'Nature','squirrel')
-        self.random_squirrel = Player.Animal([30, 20],[],[],'wW',7,'s','squirrel','wander',3,1,{'tame':['pet',25,1315],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,70,1,1],['squirrel skin',100,1,1]]},1,5,'Nature','squirrel')
-        self.bear = Player.Animal([30, 20],[],[],'',6,'b','bear','wander',4,12,{'tame':['guard',95,1302],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':12,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','bear')
-        self.wolf = Player.Animal([30, 20],[],[],'',7,'w','wolf','wander',5,8,{'tame':['guard',60,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':12,'loot':[[1326,100,1,3],[1310,100,1,4],['wolf skin',100,3,6]]},10,50,'Nature','wolf')
-        self.dog = Player.Animal([30, 20],[],[],'',6,'d','dog','wander',6,8,{'tame':['guard',40,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':3,'loot':[[1326,100,1,2],[1310,100,1,4],['dog skin',100,2,5]]},10,50,'Order','dog')
-        self.hyena = Player.Animal([30, 20],[],[],'',8,'h','hyena','hostile',7,8,{'Str':12,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':9,'loot':[[1326,100,1,3],[1310,100,1,4],['hyena skin',100,2,5]]},10,50,'Chaos','hyena')
-        self.grizzly = Player.Animal([30, 20],[],[],'',7,'b','grizzly bear','hostile',8,12,{'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':13,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','grizzly')
-        self.snake = Player.Animal([30, 20],[],[],'',10,'s','snake','wander',9,2,{'tame':['pet',70,1310],'Str':1,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':7,'loot':[[1310,70,1,1],['snake skin',100,1,1]]},6,5,'Nature','snake')
-        self.poison_snake = Player.Animal([30, 20],[],[],'',10,'s','poisonous snake','hostile',10,5,{'Str':15,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':7,'loot':[[1310,70,1,1],['snake skin',100,1,1]]},6,5,'Chaos','poison snake')
-        self.polar_bear = Player.Animal([30, 20],[],[],'',15,'b','polar bear','wander',11,12,{'tame':['guard',95,1310],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':13,'loot':[[1326,100,4,6],[1310,100,3,9],['polar bear skin',100,6,10]]},5,150,'Nature','polar bear')
-        self.polar_wolf = Player.Animal([30, 20],[],[],'',15,'w','polar wolf','wander',12,8,{'tame':['guard',60,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':13,'loot':[[1326,100,1,4],[1310,100,1,4],['polar wolf skin',100,3,6]]},10,50,'Nature','polar wolf')
-        self.wild_horse = Player.Animal([30, 20],[],[],'',6,'h','wild horse','wander',13,12,{'tame':['ride',60,902],'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':10,'loot':[[1326,100,4,6],[1310,100,2,6],['horse skin',100,4,7]]},8,80,'Nature','wild horse')
-        self.camel = Player.Animal([30, 20],[],[],'wWt',6,'c','camel','wander',14,12,{'tame':['ride',60,902],'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':5,'loot':[[1326,100,4,6],[1310,100,1,5],['camel skin',100,4,7]]},8,120,'Nature','camel')
-        self.giant_lizard = Player.Animal([30, 20],[],[],'',2,'l','giant lizard','wander',15,15,{'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':6,'loot':[[1326,100,2,5],[1310,100,1,4],['lizard skin',100,2,5]]},8,150,'Chaos','giant lizard')
-        self.penguin = Player.Animal([30, 20],[],[],'',8,'p','penguin','wander',16,2,{'tame':['pet',80,1310],'Str':1,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':4,'loot':[[1310,100,1,2]]},6,5,'Nature','penguin')
-        self.monkey = Player.Animal([30, 20],[],[],'wWt',6,'m','monkey','wander',17,5,{'tame':['pet',50,1301],'Str':5,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':10,'loot':[[1310,100,1,3],['monkey skin',100,2,4]]},6,10,'Nature','monkey')
-        self.carnivore_bush = Player.Animal([30, 20],[],[],".,+><aABdDfFgiIJlLmnoOpsStTwW%#`'~:",10,'#','carnivore plant','standing_hostile',18,10,{'Str':17,'End':10,'Dex':5,'Int':5,'Cre':1,'Mnd':5,'loot':[]},6,100,'Nature','plant')
-        self.wild_chicken = Player.Animal([30, 20],[],[],'wWt',7,'c','wild chicken','wander',19,1,{'tame':['farm',25,1315,1321],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':2,'loot':[[1310,100,1,1],[1323,100,10,20]]},1,5,'Order','chicken')
-        self.wild_cattle = Player.Animal([30, 20],[],[],'wWt',8,'c','wild cattle','wander',20,15,{'tame':['farm',35,902,1322],'Str':25,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':4,'loot':[[1326,100,4,6],[1310,100,10,15],['buffalo skin',100,3,8]]},1,100,'Order','cattle')
-        self.fish = Player.Animal([30, 20],[],[],".,+><aAbBdDfFgiIJlLmnoOpsST%#`'~:",1,'f','fish','wander',100,5,{'Str':1,'End':4,'Dex':5,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,100,1,1]]},5,20,'Nature','fish')
-        self.game_creatures=NPC.__refs__[:]
+        self.random_squirrel = player.Animal([30, 20],[],[],'wW',7,'s','squirrel','wander',3,1,{'tame':['pet',25,1315],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,70,1,1],['squirrel skin',100,1,1]]},1,5,'Nature','squirrel')
+        self.bear = player.Animal([30, 20],[],[],'',6,'b','bear','wander',4,12,{'tame':['guard',95,1302],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':12,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','bear')
+        self.wolf = player.Animal([30, 20],[],[],'',7,'w','wolf','wander',5,8,{'tame':['guard',60,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':12,'loot':[[1326,100,1,3],[1310,100,1,4],['wolf skin',100,3,6]]},10,50,'Nature','wolf')
+        self.dog = player.Animal([30, 20],[],[],'',6,'d','dog','wander',6,8,{'tame':['guard',40,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':3,'loot':[[1326,100,1,2],[1310,100,1,4],['dog skin',100,2,5]]},10,50,'Order','dog')
+        self.hyena = player.Animal([30, 20],[],[],'',8,'h','hyena','hostile',7,8,{'Str':12,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':9,'loot':[[1326,100,1,3],[1310,100,1,4],['hyena skin',100,2,5]]},10,50,'Chaos','hyena')
+        self.grizzly = player.Animal([30, 20],[],[],'',7,'b','grizzly bear','hostile',8,12,{'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':13,'loot':[[1326,100,4,6],[1310,100,3,9],['bear skin',100,6,10]]},5,150,'Nature','grizzly')
+        self.snake = player.Animal([30, 20],[],[],'',10,'s','snake','wander',9,2,{'tame':['pet',70,1310],'Str':1,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':7,'loot':[[1310,70,1,1],['snake skin',100,1,1]]},6,5,'Nature','snake')
+        self.poison_snake = player.Animal([30, 20],[],[],'',10,'s','poisonous snake','hostile',10,5,{'Str':15,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':7,'loot':[[1310,70,1,1],['snake skin',100,1,1]]},6,5,'Chaos','poison snake')
+        self.polar_bear = player.Animal([30, 20],[],[],'',15,'b','polar bear','wander',11,12,{'tame':['guard',95,1310],'Str':15,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':13,'loot':[[1326,100,4,6],[1310,100,3,9],['polar bear skin',100,6,10]]},5,150,'Nature','polar bear')
+        self.polar_wolf = player.Animal([30, 20],[],[],'',15,'w','polar wolf','wander',12,8,{'tame':['guard',60,1310],'Str':8,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':13,'loot':[[1326,100,1,4],[1310,100,1,4],['polar wolf skin',100,3,6]]},10,50,'Nature','polar wolf')
+        self.wild_horse = player.Animal([30, 20],[],[],'',6,'h','wild horse','wander',13,12,{'tame':['ride',60,902],'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':10,'loot':[[1326,100,4,6],[1310,100,2,6],['horse skin',100,4,7]]},8,80,'Nature','wild horse')
+        self.camel = player.Animal([30, 20],[],[],'wWt',6,'c','camel','wander',14,12,{'tame':['ride',60,902],'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':5,'loot':[[1326,100,4,6],[1310,100,1,5],['camel skin',100,4,7]]},8,120,'Nature','camel')
+        self.giant_lizard = player.Animal([30, 20],[],[],'',2,'l','giant lizard','wander',15,15,{'Str':15,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':6,'loot':[[1326,100,2,5],[1310,100,1,4],['lizard skin',100,2,5]]},8,150,'Chaos','giant lizard')
+        self.penguin = player.Animal([30, 20],[],[],'',8,'p','penguin','wander',16,2,{'tame':['pet',80,1310],'Str':1,'End':1,'Dex':6,'Int':2,'Cre':1,'Mnd':4,'loot':[[1310,100,1,2]]},6,5,'Nature','penguin')
+        self.monkey = player.Animal([30, 20],[],[],'wWt',6,'m','monkey','wander',17,5,{'tame':['pet',50,1301],'Str':5,'End':10,'Dex':10,'Int':5,'Cre':1,'Mnd':10,'loot':[[1310,100,1,3],['monkey skin',100,2,4]]},6,10,'Nature','monkey')
+        self.carnivore_bush = player.Animal([30, 20],[],[],".,+><aABdDfFgiIJlLmnoOpsStTwW%#`'~:",10,'#','carnivore plant','standing_hostile',18,10,{'Str':17,'End':10,'Dex':5,'Int':5,'Cre':1,'Mnd':5,'loot':[]},6,100,'Nature','plant')
+        self.wild_chicken = player.Animal([30, 20],[],[],'wWt',7,'c','wild chicken','wander',19,1,{'tame':['farm',25,1315,1321],'Str':1,'End':1,'Dex':3,'Int':2,'Cre':1,'Mnd':2,'loot':[[1310,100,1,1],[1323,100,10,20]]},1,5,'Order','chicken')
+        self.wild_cattle = player.Animal([30, 20],[],[],'wWt',8,'c','wild cattle','wander',20,15,{'tame':['farm',35,902,1322],'Str':25,'End':10,'Dex':5,'Int':2,'Cre':1,'Mnd':4,'loot':[[1326,100,4,6],[1310,100,10,15],['buffalo skin',100,3,8]]},1,100,'Order','cattle')
+        self.fish = player.Animal([30, 20],[],[],".,+><aAbBdDfFgiIJlLmnoOpsST%#`'~:",1,'f','fish','wander',100,5,{'Str':1,'End':4,'Dex':5,'Int':2,'Cre':1,'Mnd':1,'loot':[[1310,100,1,1]]},5,20,'Nature','fish')
+        self.game_creatures=player.NPC.__refs__[:]
 
     def draw_items(self,the_spot=[]):
         for x in self.ground_items:
@@ -294,7 +295,7 @@ class Game:
                     else:
                         mats[i[2].effect['build']]=i[2].qty
                 else:
-                    message.message('clear_build_site')
+                    self.message.message('clear_build_site')
                     return 1
         mat_keys=mats.keys()
         selected_recipes={}
@@ -324,10 +325,10 @@ class Game:
             self.c.page()
             self.c.pos(1,0)
             self.c.write('''These are the structures you can build. YOU MUST PUT ALL THE NEEDED MATERIALS
-     ON THE GROUND AT THE SPOT YOU WANT TO BUILD ON, AND HAVE THE TOOLS IN YOUR
-     INVENTORY! ('B' to build, SPACE to exit)
+ ON THE GROUND AT THE SPOT YOU WANT TO BUILD ON, AND HAVE THE TOOLS IN YOUR
+ INVENTORY! ('B' to build, SPACE to exit)
 
-     You have:                  You can build:\n''')
+ You have:                  You can build:\n''')
             for i1 in range(len(mat_keys)):
                 print '   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]])
             if selected_recipes:
@@ -354,13 +355,13 @@ class Game:
                 self.ground_items=new_ground_items[:]
                 return 1
             elif building == -2:
-                message.emotion('not_tough')
+                self.message.emotion('not_tough')
             elif building == -1:
-                message.emotion('tired')
+                self.message.emotion('tired')
             elif building == -4:
-                message.emotion('exhausted')
+                self.message.emotion('exhausted')
             elif building == -3:
-                message.emotion('hostiles')
+                self.message.emotion('hostiles')
             return 1
         else:
             self.redraw_screen()
@@ -407,8 +408,8 @@ class Game:
         if gems:
             self.c.page()
             self.c.write('''
-      You can imbue the item with the power of gems you posses:
-      (choose the gem you'd like to use or SPACE to continue)\n\n''')
+  You can imbue the item with the power of gems you posses:
+  (choose the gem you'd like to use or SPACE to continue)\n\n''')
             for x in range(len(gems)): 
                 self.c.write('  %s) %-12s (gives %d %s)' %(chr(97+x),gems[x].name.capitalize(),gems[x].effect['talisman']['temp_attr'][0][1],
                                                     gems[x].effect['talisman']['temp_attr'][0][0]))
@@ -435,8 +436,8 @@ class Game:
             possible={}
             self.c.page()
             self.c.write('''
-      You can use the rare flowers you found to make the crown special!
-      (choose the effect you'd like to use)
+  You can use the rare flowers you found to make the crown special!
+  (choose the effect you'd like to use)
 
       ''')
             offset=4
@@ -449,39 +450,39 @@ class Game:
                 if '2' in flowers:
                     possible['2']=[{'sun armour':1},'sunlit']
                     self.c.write("""2) Sunlit crown (use ONLY AT DAY! Lasts till sunset or until you
-      take it off. Envelops you in shining light that may absorb the power of
-      enemy strikes. Clothes interfere with the power, and it is strongest at
-      noon.)\n  """)
+  take it off. Envelops you in shining light that may absorb the power of
+  enemy strikes. Clothes interfere with the power, and it is strongest at
+  noon.)\n  """)
                     self.c.text(5,offset,'Sunlit crown',flowers['2'].color)
                     offset+=4
                 if '3' in flowers:
                     possible['3']=[{'midnight fears':1},'midnight']
                     self.c.write("""3) Midnight crown (use ONLY AT NIGHT! Lasts till sunrise or
-      until you take it off. Makes enemies that don't see you fearfull as time
-      passes. Effect is strongest around midnight.)\n  """)
+  until you take it off. Makes enemies that don't see you fearfull as time
+  passes. Effect is strongest around midnight.)\n  """)
                     self.c.text(5,offset,'Midnight crown',flowers['3'].color)
                     offset+=3
                 if '4' in flowers:
                     possible['4']=[{'winterwalk':1},'ring of winter']
                     self.c.write("""4) Ring of winter (allows you to travel in the coldest parts of the
-      world without any trouble. Ice and snow will not slow you down any more. The
-      ring can only exist in COLD places, unless coupled with a ring of summer.)\n  """)
+  world without any trouble. Ice and snow will not slow you down any more. The
+  ring can only exist in COLD places, unless coupled with a ring of summer.)\n  """)
                     self.c.text(5,offset,'Ring of winter',flowers['4'].color)
                     offset+=3
                 if '5' in flowers:
                     possible['5']=[{'summerwalk':1},'ring of summer']
                     self.c.write("""5) Ring of summer (allows you to travel in the hottest parts of the
-      world without any trouble. Sands will not slow you down any more. The
-      ring can only exist in HOT places, unless coupled with a ring of winter.)\n  """)
+  world without any trouble. Sands will not slow you down any more. The
+  ring can only exist in HOT places, unless coupled with a ring of winter.)\n  """)
                     self.c.text(5,offset,'Ring of summer',flowers['5'].color)
                     offset+=3
             if 'fairy3' in self.player.tool_tags:
                 self.c.write("""6) Dress of the fae. The most beautifull expression of a fairy's soul,
-      this gown (or robe, when made for male fairies) makes all faerie magicks
-      linger for eternity. In addition, all who strike at the fairy suffer greatly
-      as their minds witness the destruction of such beauty. (Needs 50 wild
-      flowers and one of each rare flower (rare, noon, midnight, frost and desert)
-      in your bag!)\n""")
+  this gown (or robe, when made for male fairies) makes all faerie magicks
+  linger for eternity. In addition, all who strike at the fairy suffer greatly
+  as their minds witness the destruction of such beauty. (Needs 50 wild
+  flowers and one of each rare flower (rare, noon, midnight, frost and desert)
+  in your bag!)\n""")
                 self.c.text(5,offset,'Dress of the fae',12)
                 self.c.text(64,offset+3,'50',12)
                 if len(flowers)==5:
@@ -501,7 +502,7 @@ class Game:
                             for each in flowers:
                                 flowers[each].lose_item(1)
                     if not found:
-                        message.message('flower_dress')
+                        self.message.message('flower_dress')
                         return creation
                 if i in ['4','5']:
                     creation.name=possible[i][1]
@@ -521,14 +522,14 @@ class Game:
         if 'dwarf3' in self.player.tool_tags:
             self.c.page()
             self.c.write('''\n  As a dwarf you now can choose the kind of metal you want to use for
-      your items. If the chosen metal is not available at your location you will
-      not be able to craft anything. Various metals may give different properties
-      to the created items...
+  your items. If the chosen metal is not available at your location you will
+  not be able to craft anything. Various metals may give different properties
+  to the created items...
 
-       a) Iron
-       b) Copper
-       c) Silver
-       d) Gold''')
+   a) Iron
+   b) Copper
+   c) Silver
+   d) Gold''')
             metal_chosen=msvcrt.getch()
         if -1<ord(metal_chosen)-97<4:
             metal_chosen=['iron','copper','silver','gold'][ord(metal_chosen)-97]
@@ -589,10 +590,10 @@ class Game:
             self.c.page()
             self.c.pos(1,0)
             self.c.write('''These are the items you can craft. YOU MUST PUT ALL THE NEEDED MATERIALS
-     ON THE GROUND AT THE SPOT YOU WANT TO CRAFT ON, AND HAVE THE TOOLS IN YOUR
-     INVENTORY (not the forge and anvil...)! (1-9 to craft, SPACE to exit)
+ ON THE GROUND AT THE SPOT YOU WANT TO CRAFT ON, AND HAVE THE TOOLS IN YOUR
+ INVENTORY (not the forge and anvil...)! (1-9 to craft, SPACE to exit)
 
-     You have:                  You can build:\n''')
+ You have:                  You can build:\n''')
             for i1 in range(len(mat_keys)):
                 print '   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]])
             if selected_recipes:
@@ -613,10 +614,10 @@ class Game:
             self.c.page()
             self.c.pos(1,0)
             self.c.write('''These are the items you can craft. YOU MUST PUT ALL THE NEEDED MATERIALS
-     ON THE GROUND AT THE SPOT YOU WANT TO CRAFT ON, AND HAVE THE TOOLS IN YOUR
-     INVENTORY (not the forge and anvil...)! (1-9 to craft, SPACE to exit)
-     May need:%s
-     You have:                  You can build:\n''' %(', '.join(tools_needed[craft_group])))
+ ON THE GROUND AT THE SPOT YOU WANT TO CRAFT ON, AND HAVE THE TOOLS IN YOUR
+ INVENTORY (not the forge and anvil...)! (1-9 to craft, SPACE to exit)
+ May need:%s
+ You have:                  You can build:\n''' %(', '.join(tools_needed[craft_group])))
             for i1 in range(len(mat_keys)):
                 print '   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]])
             line=0
@@ -656,13 +657,13 @@ class Game:
                 self.ground_items= new_ground_items[:]
                 return 1
             elif building == -2:
-                message.emotion('not_tough')
+                self.message.emotion('not_tough')
             elif building == -1:
-                message.emotion('tired')
+                self.message.emotion('tired')
             elif building == -4:
-                message.emotion('exhausted')
+                self.message.emotion('exhausted')
             elif building == -3:
-                message.emotion('hostiles')
+                self.message.emotion('hostiles')
             return 1
         else:
             self.redraw_screen()
@@ -677,11 +678,11 @@ class Game:
             while i!=' ':
                 self.c.pos(0,0)
                 self.c.write('''\n  You touch the tree next to you and feel it shudder. Under your quiet
-      chanting a new branch grows out of the trunk and forms into the shape
-      of your choosing (SPACE to exit):
+  chanting a new branch grows out of the trunk and forms into the shape
+  of your choosing (SPACE to exit):
 
-      1) Weapons and ammunition
-      2) Living wood armour''')
+  1) Weapons and ammunition
+  2) Living wood armour''')
                 i=msvcrt.getch()
                 if i in ['1','2']:
                     si[0]=int(i)-1
@@ -693,12 +694,12 @@ class Game:
                 if i=='1':
                     self.c.pos(0,0)
                     self.c.write('''\n  You touch the tree next to you and feel it shudder. Under your quiet
-      chanting a new branch grows out of the trunk and forms into the shape
-      of your choosing (SPACE to exit):
+  chanting a new branch grows out of the trunk and forms into the shape
+  of your choosing (SPACE to exit):
 
-      1) A totem staff
-      2) A dryad bow
-      3) 20 living wood arrows''')
+  1) A totem staff
+  2) A dryad bow
+  3) 20 living wood arrows''')
                     i1=msvcrt.getch()
                     if i1 in ['1','2','3']:
                         si[1]=int(i1)-1
@@ -706,23 +707,23 @@ class Game:
                 elif i=='2':
                     self.c.pos(0,0)
                     self.c.write('''\n  You touch the tree next to you and feel it shudder. Under your quiet
-      chanting a new branch grows out of the trunk and forms into the shape
-      of your choosing (SPACE to exit):
+  chanting a new branch grows out of the trunk and forms into the shape
+  of your choosing (SPACE to exit):
 
-      1) Cloak of leaves
-      2) Living wood boots
-      3) Living wood chestplate
-      4) Living wood pants
-      5) Living wood gloves
-      6) Living wood helm
-      7) Living wood belt''')
+  1) Cloak of leaves
+  2) Living wood boots
+  3) Living wood chestplate
+  4) Living wood pants
+  5) Living wood gloves
+  6) Living wood helm
+  7) Living wood belt''')
                     i1=msvcrt.getch()
                     if int(i1) in range(1,8):
                         si[1]=int(i1)-1
                         break
             if si[0]!=None and si[1]!=None:
                 self.c.write('''\n\n  The bark breaks open and you take the item. You will need to repay
-      Nature for this gift and restore your standing as a dryad.''')
+  Nature for this gift and restore your standing as a dryad.''')
                 msvcrt.getch()
                 make_list=[[50,56,1318],[604,606,600,601,603,605,602]]
                 if si==[0,2]:
@@ -737,7 +738,7 @@ class Game:
                 self.ground_items.append([self.player.xy[0],self.player.xy[1],grown_item])
                 self.effect('force',{'Nature':{'dryad':-1.}})
         else:
-            message.message('dryad_song')
+            self.message.message('dryad_song')
             msvcrt.getch()
             if self.player.energy>100:
                 self.effect('dryad song',1)
@@ -760,9 +761,9 @@ class Game:
                 if i in self.player.tool_tags:
                     ok = 1
                     if 'dryad2' in self.player.tool_tags and T[old_ter].id==':' and self.player.mode=='Nature':
-                        message.message('dryad_heal_tree')
+                        self.message.message('dryad_heal_tree')
                     else:
-                        message.message(T[old_ter].degr_mess[self.player.mode])
+                        self.message.message(T[old_ter].degr_mess[self.player.mode])
                     hostiles=self.game_time('0')
                     if hostiles==2:
                         self.player.work=0
@@ -782,11 +783,11 @@ class Game:
                             if 'gnome2' in self.player.tool_tags and T[old_ter].id in ['%','n','m'] and self.player.mode=='Nature':
                                 found_loot+=self.put_loot([['gnome_touch',5,1,1]], xy)
                                 if found_loot:
-                                    message.message('gnome_touch')
+                                    self.message.message('gnome_touch')
                             elif 'fairy1' in self.player.tool_tags and T[old_ter].id in ['g','O'] and self.player.mode=='Nature':
                                 found_loot+=self.put_loot([['fairy_flowers',5,1,1]], xy)
                                 if found_loot:
-                                    message.message('fairy_flowers')
+                                    self.message.message('fairy_flowers')
                             if T[self.land[xy[1]-1][xy[0]-21]].pass_through:
                                 found_loot+=self.put_loot(T[old_ter].loot[self.player.mode], xy)
                             else:
@@ -803,7 +804,7 @@ class Game:
                 return 0
 
     def work(self,i):
-        message.message('')
+        self.message.message('')
         try:
             md = {'1':[-1,1], '2':[0,1], '3':[1,1], '4':[-1,0], '5':[0,0],
                   '6':[1,0], '7':[-1,-1], '8':[0,-1], '9':[1,-1], '0':[0,0]}
@@ -813,37 +814,37 @@ class Game:
             for a in range(2):
                     xy[a] = xy[a] + md[i][a]
             if T[self.land[xy[1]-1][xy[0]-21]].workable:
-                d = degrade_terr(self.land[xy[1]-1][xy[0]-21], xy, x, y)
+                d = self.degrade_terr(self.land[xy[1]-1][xy[0]-21], xy, x, y)
                 if d == 1:
                     xy[0] = x
                     xy[1] = y
                     self.draw_move(self.player, x, y)
                 elif d == -2:
-                    message.emotion('not_tough')
+                    self.message.emotion('not_tough')
                     xy[0] = x
                     xy[1] = y
                 elif d == -1:
-                    message.emotion('tired')
+                    self.message.emotion('tired')
                     xy[0] = x
                     xy[1] = y
                 elif d == -4:
-                    message.emotion('exhausted')
+                    self.message.emotion('exhausted')
                     xy[0] = x
                     xy[1] = y
                 elif d == -3:
-                    message.emotion('hostiles')
+                    self.message.emotion('hostiles')
                     xy[0] = x
                     xy[1] = y
                 else:
-                    message.tool_msg('no_tool',T[self.land[xy[1]-1][xy[0]-21]].degrade_tool[self.player.mode])
+                    self.message.tool_msg('no_tool',T[self.land[xy[1]-1][xy[0]-21]].degrade_tool[self.player.mode])
                     xy[0] = x
                     xy[1] = y
             else:
-                message.message('cant_work')
+                self.message.message('cant_work')
                 xy[0] = x
                 xy[1] = y
         except KeyError:
-            message.message('direction')
+            self.message.message('direction')
 
     def draw_inv(self,put_in=None, container=None):
         self.c.page()
@@ -865,11 +866,11 @@ class Game:
                 space = self.I[container.id].weight*7 - container.weight
                 drop = self.player.inventory[ord(i1)-97].drop_item('',space)
                 if not drop:
-                    message.message('cant_fit_in_container')
+                    self.message.message('cant_fit_in_container')
                     msvcrt.getch()
                 return drop
             elif put_in and self.player.inventory[ord(i1)-97] == container:
-                message.message('cant_fit_container')
+                self.message.message('cant_fit_container')
                 msvcrt.getch()
                 return None
         except IndexError:
@@ -1104,24 +1105,24 @@ class Game:
         self.c.pos(1,1)
         self.c.write('''      RESEARCHING FORCES AND RACES
 
-     As a highly attuned human you have the ability
-     to study the world that surrounds you. This
-     gives you the chance to learn skills and
-     abilities that belong to the other races of
-     Order, and even the races of Nature and Chaos!
-     To begin studying a race you need to select
-     them to the right, and then spend time in the
-     respective environment observing it.
-     Take note that the maximum total force
-     knowledge of all three forces can be 100%,
-     and the maximum total race knowledge in a
-     force can't be more than the force knowledge
-     itself (like your own attunement). If you want
-     to stop studying and fix the numbers the way
-     they are, simply select human as a study race.
-     
-     IF YOU LOSE YOUR HIGH HUMAN ATTUNEMENT (90%)
-     YOU WILL LOSE ALL COLLECTED KNOWLEDGE!''')
+ As a highly attuned human you have the ability
+ to study the world that surrounds you. This
+ gives you the chance to learn skills and
+ abilities that belong to the other races of
+ Order, and even the races of Nature and Chaos!
+ To begin studying a race you need to select
+ them to the right, and then spend time in the
+ respective environment observing it.
+ Take note that the maximum total force
+ knowledge of all three forces can be 100%,
+ and the maximum total race knowledge in a
+ force can't be more than the force knowledge
+ itself (like your own attunement). If you want
+ to stop studying and fix the numbers the way
+ they are, simply select human as a study race.
+ 
+ IF YOU LOSE YOUR HIGH HUMAN ATTUNEMENT (90%)
+ YOU WILL LOSE ALL COLLECTED KNOWLEDGE!''')
 
         self.c.text(1,22,'Researching: %s -> %s' %(self.player.research_force,self.player.research_race.capitalize()))
         self.c.text(49,1,'NATURE %17.2f' %self.player.research_forces['Nature']+'%',10)
@@ -1163,11 +1164,11 @@ class Game:
     def tame(self,animal):
         diff=animal.attr['tame'][1]
         if animal.attr['tame'][2] not in [i.id for i in self.player.inventory]:
-            message.use('taming_item',I[animal.attr['tame'][2]])
+            self.message.use('taming_item',I[animal.attr['tame'][2]])
             return 0
         chance=random.randint(1,100)
         if chance+self.player.forces['Nature']>=diff:
-            message.creature('tame_success',animal)
+            self.message.creature('tame_success',animal)
             if animal.random:
                 animal.random=False
                 animal.appearance=100
@@ -1183,7 +1184,7 @@ class Game:
                     animal.farm=0
                     self.player.followers.append(animal)
         else:
-            message.creature('tame_fail',animal)
+            self.message.creature('tame_fail',animal)
             animal.appearance-=10
             if animal.appearance<=0:
                 animal.random=True
@@ -1193,36 +1194,36 @@ class Game:
                         break
 
     def command_tamed(self,animal):
-        message.message('')
+        self.message.message('')
         self.c.text(1,0,'Choose command:   a)change mode   b)manipulate',7)
         choice=msvcrt.getch()
         if choice.lower()=='a':
-            message.message('')
+            self.message.message('')
             self.c.text(1,0,'Choose mode:   a)follow   b)stay   c)guard',7)
             ch_mode=msvcrt.getch()
             if ch_mode.lower()=='a':
-                message.message('')
+                self.message.message('')
                 animal.mode='follow'
-                message.creature('command_follow',animal)
+                self.message.creature('command_follow',animal)
             elif ch_mode.lower()=='b':
-                message.message('')
+                self.message.message('')
                 animal.mode='standing'
                 animal.attr['area']=current_area
-                message.creature('command_stay',animal)
+                self.message.creature('command_stay',animal)
             elif ch_mode.lower()=='c':
-                message.message('')
+                self.message.message('')
                 if animal.attr['tame'][0]=='guard':
                     animal.mode='guarding'
-                    message.creature('command_guard',animal)
+                    self.message.creature('command_guard',animal)
                 else:
-                    message.message('cant_guard')
+                    self.message.message('cant_guard')
             else:
-                message.message('')
+                self.message.message('')
         elif choice.lower()=='b':
-            message.message('')
+            self.message.message('')
             self.c.text(1,0,'Choose action:   a)feed   b)farm   c)ride',7)
             ch_action=msvcrt.getch()
-            message.message('')
+            self.message.message('')
             if ch_action.lower()=='a':
                 chosen_food=0
                 for i in self.player.inventory:
@@ -1230,15 +1231,15 @@ class Game:
                         chosen_food=i
                         break
                 if chosen_food and animal.food<100:
-                    message.creature('feed',animal)
+                    self.message.creature('feed',animal)
                     i.lose_item(1)
                     animal.food=min([animal.food+random.randint(10,20),100])
                 elif chosen_food and animal.food==100:
-                    message.message('full_animal')
+                    self.message.message('full_animal')
                 else:
-                    message.use('feed_item',I[animal.attr['tame'][2]])
+                    self.message.use('feed_item',I[animal.attr['tame'][2]])
             elif ch_action.lower()=='b':
-                message.message('')
+                self.message.message('')
                 if animal.attr['tame'][0]=='farm':
                     if animal.farm:
                         if 'container' in self.I[animal.attr['tame'][3]].effect:
@@ -1250,19 +1251,19 @@ class Game:
                                     found=1
                                     break
                             if not found:
-                                message.use('needed_container',needed)
+                                self.message.use('needed_container',needed)
                                 return 0
                         creation=self.I[animal.attr['tame'][3]].duplicate(1)
                         self.ground_items.append([self.player.xy[0],self.player.xy[1],creation])
                         self.player.pick_up(self.ground_items)
-                        message.use('farm_harvest',creation)
+                        self.message.use('farm_harvest',creation)
                         animal.farm-=1
                     else:
-                        message.message('nothing_to_farm')
+                        self.message.message('nothing_to_farm')
                 else:
-                    message.message('cant_farm')
+                    self.message.message('cant_farm')
             elif ch_action.lower()=='c':
-                message.message('')
+                self.message.message('')
                 if animal.attr['tame'][0]=='ride' and not self.player.ride and not self.player.possessed:
                     self.player.followers.remove(animal)
                     self.player.ride.append(animal)
@@ -1270,21 +1271,21 @@ class Game:
                     self.hide(animal)
                     animal.xy=[1,1]
                     animal.mode='follow'
-                    message.creature('mount',animal)
+                    self.message.creature('mount',animal)
                     if animal.food<25:
-                        message.message('hungry_mount')
+                        self.message.message('hungry_mount')
                     elif animal.food<75:
-                        message.message('normal_mount')
+                        self.message.message('normal_mount')
                     else:
-                        message.message('well_fed_mount')
+                        self.message.message('well_fed_mount')
                 else:
                     if self.player.ride:
-                        message.message('cant_ride_two')
+                        self.message.message('cant_ride_two')
                     else:
-                        message.message('cant_ride')
+                        self.message.message('cant_ride')
 
     def possess(self,animal,tr=''):
-        message.message('')
+        self.message.message('')
         chance=float(self.player.attr['Mnd'])/(self.player.attr['Mnd']+animal.attr['Mnd'])
         tried=random.random()
         if tried<chance or tr:
@@ -1294,9 +1295,9 @@ class Game:
             self.player.life+=animal.life
             self.player.max_life+=animal.life
             if tr=='trans':
-                message.creature('transform_into',animal)
+                self.message.creature('transform_into',animal)
             else:
-                message.creature('possessed_animal',animal)
+                self.message.creature('possessed_animal',animal)
                 self.hide(animal)
                 animal.xy=[1,1]
                 animal.mode='follow'
@@ -1326,7 +1327,7 @@ class Game:
                             self.player.equipment[the_slot].name='%s totem' %(animal.name)
         elif tried>.95:
             animal.mode='hostile'
-            message.creature('anger_animal',animal)
+            self.message.creature('anger_animal',animal)
 
     def pickpocket(self,target):
         target_awareness=(target.attr['Int']+target.attr['Mnd'])/2.
@@ -1339,111 +1340,111 @@ class Game:
             if len(target.attr['loot'])==1 and 'picked_dry' not in target.attr:
                 self.put_loot([[1000,75,1,10]],self.player.xy)
                 target.attr['picked_dry']=1
-                message.creature('pilfer_last',target)
+                self.message.creature('pilfer_last',target)
             elif len(target.attr['loot'])>1:
                 self.put_loot([target.attr['loot'][1]],self.player.xy)
                 target.attr['loot']=[target.attr['loot'][0]]+target.attr['loot'][2:]
-                message.creature('pilfer',target)
+                self.message.creature('pilfer',target)
             elif len(target.attr['loot'])==1 and 'picked_dry' in target.attr:
-                message.creature('no_pilfer',target)
+                self.message.creature('no_pilfer',target)
         else:
             target.mode='hostile'
-            message.creature('steal_failed',target)
+            self.message.creature('steal_failed',target)
 
     def talk(self,target):
         race_answers={'fairy':{'learn':
-    """  Being a fairy isn't hard at all! You just go around cleaning the wells,
-      decorating walls with pretty clay you find around the wells, hanging
-      flowers on the fences of farmers and the doors of their houses. A fairy
-      does best around humans, because their villages can always be made much
-      more beautiful. If you are lighthearted enough to be a fairy go
-      %s of here, where you will find a human village.
+"""  Being a fairy isn't hard at all! You just go around cleaning the wells,
+  decorating walls with pretty clay you find around the wells, hanging
+  flowers on the fences of farmers and the doors of their houses. A fairy
+  does best around humans, because their villages can always be made much
+  more beautiful. If you are lighthearted enough to be a fairy go
+  %s of here, where you will find a human village.
 
-      Oh, and don't forget that if you are at least one third a fairy, grass will
-      grow magically under your feet, making you even more powerful, and if you
-      find some rare flowers you can make a magical flower crown and other pretty
-      things!
-      
-      Do what I taught you and return sometimes to tell me of what you have seen
-      and done!""",'trade':"""\n  I can only give you food and water, or some pretty flowers. What else
-      would a fairy need?\n\n"""},'elf':{'learn':
-    """  The elves are the warriors of the forest, they protect Nature from the
-      teeth of trolls and the axes of men! Animals do not attack elves, and woe
-      to the elf that strikes down an innocent creature without need. Elves tend
-      to ailing grasses and fruit-giving bushes and trees, living off the land's
-      gifts.
+  Oh, and don't forget that if you are at least one third a fairy, grass will
+  grow magically under your feet, making you even more powerful, and if you
+  find some rare flowers you can make a magical flower crown and other pretty
+  things!
+  
+  Do what I taught you and return sometimes to tell me of what you have seen
+  and done!""",'trade':"""\n  I can only give you food and water, or some pretty flowers. What else
+  would a fairy need?\n\n"""},'elf':{'learn':
+"""  The elves are the warriors of the forest, they protect Nature from the
+  teeth of trolls and the axes of men! Animals do not attack elves, and woe
+  to the elf that strikes down an innocent creature without need. Elves tend
+  to ailing grasses and fruit-giving bushes and trees, living off the land's
+  gifts.
 
-      The bow is the greatest possession of an elf. When you are surrounded by
-      the forest and every tiny sound of moving leaves and breaking twigs resounds
-      in your ears, you can feel other living things without seeing them.
-      And when you smell an ork from a hundred paces you can put an arrow through
-      his neck in a heartbeat, without making a sound. So practice your bow, give
-      Nature its due, and you may become an elf one day...%s""",'trade':'''\n  If you have some food or water I can barter arrows or even a spare bow,
-      if I have one.\n\n'''},'gnome':{'learn':
-    """  Oh, so you want to be a gnome? Well, I'll tell you what a gnome is then.
-      He's a fairy with a dwarf's beard, hahahaha! No, I'm serious, a gnome has a
-      dwarf's love of stone and gems, but shows it much like a fairy's love for
-      grasses and flowers. A dwarf breaks the stone to build a house, while we
-      tend and nurture it, and live directly in it. We can find the gems hidden
-      in the stone just by looking inside! These gems are our magic, the way we
-      wield the force of Nature. Every gem can be used under certain conditions
-      to a certain effect, which you'll have to find for yourself.
+  The bow is the greatest possession of an elf. When you are surrounded by
+  the forest and every tiny sound of moving leaves and breaking twigs resounds
+  in your ears, you can feel other living things without seeing them.
+  And when you smell an ork from a hundred paces you can put an arrow through
+  his neck in a heartbeat, without making a sound. So practice your bow, give
+  Nature its due, and you may become an elf one day...%s""",'trade':'''\n  If you have some food or water I can barter arrows or even a spare bow,
+  if I have one.\n\n'''},'gnome':{'learn':
+"""  Oh, so you want to be a gnome? Well, I'll tell you what a gnome is then.
+  He's a fairy with a dwarf's beard, hahahaha! No, I'm serious, a gnome has a
+  dwarf's love of stone and gems, but shows it much like a fairy's love for
+  grasses and flowers. A dwarf breaks the stone to build a house, while we
+  tend and nurture it, and live directly in it. We can find the gems hidden
+  in the stone just by looking inside! These gems are our magic, the way we
+  wield the force of Nature. Every gem can be used under certain conditions
+  to a certain effect, which you'll have to find for yourself.
 
-      I'll only share this one piece of gem-lore with you: use a lapis lazuli to
-      enter the world of stone, the gnomes' homeland.\n%s""",'trade':'''\n  I am only interested in shiny stones, but you will need to give me
-      a lot of food for one of them!\n\n'''},
-        'spirit of nature':{'learn':
-    """  A spirit connects with the environment in any place he visits.
-      He tends to the grass and burries the remains of creatures so they can
-      become one with Nature again. He heals the ground wherever he steps and
-      he can possess animals that do not attack him. If you are a strong enough
-      spirit you can make a totem of the animal from a staff when you control
-      it. The totem will accumulate the essence of the animal and allow you to
-      use it as you wish. If your totem is strong enough it will allow you to
-      assume the form of the creature once until you possess it again.
+  I'll only share this one piece of gem-lore with you: use a lapis lazuli to
+  enter the world of stone, the gnomes' homeland.\n%s""",'trade':'''\n  I am only interested in shiny stones, but you will need to give me
+  a lot of food for one of them!\n\n'''},
+    'spirit of nature':{'learn':
+"""  A spirit connects with the environment in any place he visits.
+  He tends to the grass and burries the remains of creatures so they can
+  become one with Nature again. He heals the ground wherever he steps and
+  he can possess animals that do not attack him. If you are a strong enough
+  spirit you can make a totem of the animal from a staff when you control
+  it. The totem will accumulate the essence of the animal and allow you to
+  use it as you wish. If your totem is strong enough it will allow you to
+  assume the form of the creature once until you possess it again.
 
-      You can get a totem staff from me if you need one...\n\n%s""",
-    'trade':'''\n  I can only give you food and water, or a staff you can use for a totem.\n\n'''},
-        'dryad':{'learn':
-    """  A dryad must show commitment to Nature. We are the creators, the ones
-      that push the growth of trees and woods so that Nature can claim a place
-      properly. We channel our living energy in saplings and dead trees alike,
-      so that the force of Nature runs strong in them. With enough time we can
-      turn even the most barren desert into a forest, or create pieces of living
-      wooden armour, which the warriors of Nature use to defend themselves from
-      the fury of chaotic beasts and the axes of men. We can also make bows for
-      the elves and totem staffs for the spirits of Nature.\n%s""","trade":
-    """\n  Yes, I can trade some of the things I create with you... But only if
-      you use them to protect Nature!\n\n"""},
-        'water elemental':{'learn':
-    """  To understand a water elemental you have to think like one. We have a
-      phylosophy that water is the most important thing in Nature. Nothing lives
-      without water, and we are the bringers and protectors of water. In return
-      water protects and sustains us. We can melt into water, becoming truly
-      invisible. If you care for water long enough you do not need food anymore,
-      and being surrounded by water is enough to sate your hunger. It's only
-      logical that polluted waters are poisonous to us - our first task is to
-      clean them of the taint of Chaos.
+  You can get a totem staff from me if you need one...\n\n%s""",
+'trade':'''\n  I can only give you food and water, or a staff you can use for a totem.\n\n'''},
+    'dryad':{'learn':
+"""  A dryad must show commitment to Nature. We are the creators, the ones
+  that push the growth of trees and woods so that Nature can claim a place
+  properly. We channel our living energy in saplings and dead trees alike,
+  so that the force of Nature runs strong in them. With enough time we can
+  turn even the most barren desert into a forest, or create pieces of living
+  wooden armour, which the warriors of Nature use to defend themselves from
+  the fury of chaotic beasts and the axes of men. We can also make bows for
+  the elves and totem staffs for the spirits of Nature.\n%s""","trade":
+"""\n  Yes, I can trade some of the things I create with you... But only if
+  you use them to protect Nature!\n\n"""},
+    'water elemental':{'learn':
+"""  To understand a water elemental you have to think like one. We have a
+  phylosophy that water is the most important thing in Nature. Nothing lives
+  without water, and we are the bringers and protectors of water. In return
+  water protects and sustains us. We can melt into water, becoming truly
+  invisible. If you care for water long enough you do not need food anymore,
+  and being surrounded by water is enough to sate your hunger. It's only
+  logical that polluted waters are poisonous to us - our first task is to
+  clean them of the taint of Chaos.
 
-      The ultimate gift of water can make us nearly immortal for a time, and
-      magical springs can help us reform our physical bodies. Thus, we value
-      those magical places above all else.%s""",'trade':""""""}}
+  The ultimate gift of water can make us nearly immortal for a time, and
+  magical springs can help us reform our physical bodies. Thus, we value
+  those magical places above all else.%s""",'trade':""""""}}
         self.c.page()
         try:
             the_name=target.name
             gender=target.gender
             self.c.write('''\n  %s greets you.
-      What do you want to talk about with %s?\n\n  ''' %(the_name,gender[2]))
+  What do you want to talk to %s about?\n\n  ''' %(the_name,gender[2]))
         except AttributeError:
-            the_name=random_name(target.force)
+            the_name=self.random_name(target.force)
             target.name=the_name
             gender=random.choice([['he','his','him'],['she','her','her']])
             target.gender=gender
             self.c.write('''\n  The %s presents %sself as %s.
-      What do you want to talk about with %s?\n\n  ''' %(target.race,gender[2],the_name,gender[2]))
+  What do you want to talk about with %s?\n\n  ''' %(target.race,gender[2],the_name,gender[2]))
         self.c.write('''1) Learning how to be a %s
-      2) Trade
-      3) Rumours\n\n''' %(target.race))
+  2) Trade
+  3) Rumours\n\n''' %(target.race))
         i=msvcrt.getch()
         if i=='1':
             if target.race in race_answers:
@@ -1607,9 +1608,9 @@ class Game:
     def drink(self,xy):
         if T[self.land[xy[1]-1][xy[0]-21]].drink != {}:
             if self.player.thirst == 0:
-                message.use('over_drink',T[self.land[xy[1]-1][xy[0]-21]])            
+                self.message.use('over_drink',T[self.land[xy[1]-1][xy[0]-21]])            
                 return 1
-            message.use('drink',T[self.land[xy[1]-1][xy[0]-21]])
+            self.message.use('drink',T[self.land[xy[1]-1][xy[0]-21]])
             if T[self.land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in self.player.tool_tags:
                 for k,v in {'energy':10,'thirst':5}.items():
                     self.effect(k,v)
@@ -1626,11 +1627,11 @@ class Game:
                     if self.player.xy not in self.player.worked_places[self.player.mode]:
                         for k,v in {'energy':10,'thirst':5,'hunger':5}.items():
                             self.effect(k,v)
-                        message.message('eating_%s' %(self.player.possessed[0].race.replace(' ','_')))
+                        self.message.message('eating_%s' %(self.player.possessed[0].race.replace(' ','_')))
                         if self.player.possessed[0].race!='plant':
                             self.player.worked_places[self.player.mode].append(xy[:])
                     else:
-                        message.message('no_food_%s' %(self.player.possessed[0].race.replace(' ','_')))
+                        self.message.message('no_food_%s' %(self.player.possessed[0].race.replace(' ','_')))
                 elif self.player.possessed[0].race in ['grizzly','wolf','dog','polar wolf','hyena']:
                     found_meat=0
                     for x in self.ground_items:
@@ -1644,16 +1645,16 @@ class Game:
                             x[2].qty-=1
                         else:
                             self.ground_items.remove(x)
-                        message.message('eating_carnivore')
+                        self.message.message('eating_carnivore')
                         self.possession_score(100,self.player)
                     else:
-                        message.message('no_food_carnivore')
+                        self.message.message('no_food_carnivore')
                 else:
-                    message.message('no_food_%s' %(self.player.possessed[0].race.replace(' ','_')))
+                    self.message.message('no_food_%s' %(self.player.possessed[0].race.replace(' ','_')))
             else:
-                message.message('not_hungry')
+                self.message.message('not_hungry')
         else:
-            message.message('no_drink')
+            self.message.message('no_drink')
 
     def possession_score(self,threshold,possessor):
         if possessor.equipment['Right hand'] and possessor.possessed[0].name in possessor.equipment['Right hand'].effect:
@@ -1676,7 +1677,7 @@ class Game:
                 if search == bag[:2] and 'container' in bag[2].type:
                     containers.append(bag)
         if len(doors)+len(containers) == 0:
-            message.message('no_open')
+            self.message.message('no_open')
             return 0
         elif len(doors)+len(containers) == 1:
             if len(doors):
@@ -1689,14 +1690,14 @@ class Game:
                 success = self.open_container(containers[0][2])
                 return success
         else:
-            message.message('which_open')
+            self.message.message('which_open')
             i = msvcrt.getch()
             try:
-                message.message('')
+                self.message.message('')
                 try:
                     i = int(i)
                 except ValueError:
-                    message.message('direction')
+                    self.message.message('direction')
                     return 0
                 target = [xy[0]+md[i][0], xy[1]+md[i][1]]
                 if target in doors:
@@ -1712,13 +1713,13 @@ class Game:
                             nothing = 0
                             break
                     if nothing:
-                        message.message('no_open')
+                        self.message.message('no_open')
                         return 0
                     else:
                         success = self.open_container(cont[2])
                         return success
             except KeyError:
-                message.message('direction')
+                self.message.message('direction')
                 return 0
 
     def open_container(self,chest):
@@ -1732,18 +1733,18 @@ class Game:
                     if learn <= (lock_atts - self.player.skills['lockpicking']/5)/lock_atts*100:
                         self.player.skills['lockpicking'] += 0.1
                     chest.type.remove('locked')
-                    message.message('success_lockpick')
+                    self.message.message('success_lockpick')
                     msvcrt.getch()
                 else:
                     if self.player.skills['lockpicking'] < chest.effect['lock_strength']/10:
                         learn = random.uniform(0,100)
                         if learn <= (lock_atts - self.player.skills['lockpicking']/5)/lock_atts*100:
                             self.player.skills['lockpicking'] += 0.01
-                    message.message('failed_lockpick')
+                    self.message.message('failed_lockpick')
                     msvcrt.getch()
                     return 0
             else:
-                message.use('no_lockpick',chest)
+                self.message.use('no_lockpick',chest)
                 msvcrt.getch()
                 return 0
         self.c.page()
@@ -1768,7 +1769,7 @@ class Game:
             try:
                 item = chest.effect['contains'][ord(take)-97]
                 if item.qty > 1 and self.player.equipment['Backpack'] != []:
-                    message.message('pickup')                    
+                    self.message.message('pickup')                    
                     a = ''
                     i = ' '
                     while ord(i) != 13:
@@ -1776,7 +1777,7 @@ class Game:
                         if ord(i) in range(48,58):
                             self.c.write(i)
                             a += i
-                    message.message('')
+                    self.message.message('')
                     if a =='':
                         self.open_container(chest)
                         return 1
@@ -1800,7 +1801,7 @@ class Game:
                             for tal_add in item.effect['talisman'][tal]:
                                 chest.effect[tal].remove(tal_add)
                 elif self.player.weight+item.weight*a > self.player.max_weight:
-                    message.use('cant_carry', item)
+                    self.message.use('cant_carry', item)
                     msvcrt.getch()
                 elif item.weight*a > self.player.backpack:
                     if self.player.equipment['Backpack'] == []:
@@ -1818,10 +1819,10 @@ class Game:
                                 chest.effect['contains'].remove(item)
                             self.player.backpack = 0
                         else:
-                            message.message('drop_first')
+                            self.message.message('drop_first')
                             msvcrt.getch()
                     else:
-                        message.use('cant_fit_in_backpack', item)
+                        self.message.use('cant_fit_in_backpack', item)
                         msvcrt.getch()
             except IndexError:
                 pass
@@ -1833,7 +1834,7 @@ class Game:
                 for i in chest.effect['contains']:
                     if i.name == item.name and i.id == item.id and item.stackable:
                         i.qty += item.qty
-                        message.message('ch')
+                        self.message.message('ch')
                         dropped = 1
                 if not dropped:
                     chest.effect['contains'].append(item)
@@ -1854,7 +1855,7 @@ class Game:
         self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21] + T[self.land[xy[1]-1][xy[0]-21]].degrade_to['door'] + self.land[xy[1]-1][xy[0]-20:]
         self.c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[self.land[xy[1]-1][xy[0]-21]].colour, T[self.land[xy[1]-1][xy[0]-21]].char)
         if opener.tag=='@':
-            message.message('open_door')
+            self.message.message('open_door')
 
     def close_door(self,xy, door_id):
         blocked = 0
@@ -1865,11 +1866,11 @@ class Game:
             if i[:2] == xy:
                 blocked = 1
         if blocked:
-            message.message('blocked_door')
+            self.message.message('blocked_door')
         else:
             self.land[xy[1]-1] = self.land[xy[1]-1][:xy[0]-21] + T[door_id].degrade_to['door'] + self.land[xy[1]-1][xy[0]-20:]
             self.c.scroll((xy[0],xy[1],xy[0]+1,xy[1]+1), 1, 1, T[self.land[xy[1]-1][xy[0]-21]].colour, T[self.land[xy[1]-1][xy[0]-21]].char)
-            message.message('close_door')
+            self.message.message('close_door')
 
     def cook(self):
         mats=[]
@@ -1886,10 +1887,10 @@ class Game:
             self.c.page()
             self.c.pos(1,1)
             self.c.write('''You have the following ingredients for cooking. Select the ones you want to
-     use and take note of the other things you need for the desired meal on the
-     right. (exit with SPACE, decrease with SHIFT)
+ use and take note of the other things you need for the desired meal on the
+ right. (exit with SPACE, decrease with SHIFT)
 
-     You have:                   Using:     You can make:\n''')
+ You have:                   Using:     You can make:\n''')
             for i in range(len(mats)):
                 print ' %s)   %s x %d' %(chr(i+97),mats[i].name,mats[i].qty)
                 self.c.text(4,i+6,mats[i].tag,mats[i].color)
@@ -1986,9 +1987,9 @@ class Game:
                     if (xy[0] == 20) or (xy[0] == 79) or (xy[1] == 0) or (xy[1] == 24):
                         xy[0] -= md[key][0]
                         xy[1] -= md[key][1]
-                    message.message('')
+                    self.message.message('')
                     self.c.pos(*xy)
-                    message.look(xy, self.all_beings, T, self.player.known_areas)
+                    self.message.look(xy,T)
                     self.c.pos(*xy)
                 except:
                     pass
@@ -2001,16 +2002,16 @@ class Game:
         while t == 0:
             self.c.page()
             self.c.write('''
-                   ___      _   _         _   _    _   ___   ____
-                  |   \    / |  |        / |  |\   |  /   \ |
-                  |___/   /  |  |       /  |  | \  |  |     |___
-                  |   \  /---|  |      /---|  |  \ |  |     |
-                  |___/ /    |  |___| /    |  |   \|  \___/ |____
+               ___      _   _         _   _    _   ___   ____
+              |   \    / |  |        / |  |\   |  /   \ |
+              |___/   /  |  |       /  |  | \  |  |     |___
+              |   \  /---|  |      /---|  |  \ |  |     |
+              |___/ /    |  |___| /    |  |   \|  \___/ |____
 
-                                        ver 0.6 
-                                             
-                                       (n)ew game
-                                 (l)oad a previous game
+                                    ver 0.6 
+                                         
+                                   (n)ew game
+                             (l)oad a previous game
                             ''')
             i = msvcrt.getch()
             if i == 'n':
@@ -2037,29 +2038,29 @@ class Game:
         while i not in races.keys():
             self.c.page()
             self.c.write("""
-     The form your character may take in Balance is completely controlled by his or
-     her actions. If you like to go around and kill things, you are likely to end
-     up with an ork, while a character that spends his time in the mine will slowly
-     become a dwarf. There are various actions both on your environment and other
-     beings that will form your character. They are all connected to the three
-     forces in the world of Balance - Order, Chaos, and Nature. Every action will
-     align you more with one of the forces, and with one or more of the forms
-     governed by it. This is the only way to mold your character in the game - you
-     gain and loose abilities depending on the predominant form you hold. Choosing
-     a form now gives you 34% attunement to it, and 34% alignment to the
-     respective force. Your total form attunement can't be higher than your
-     alignment to the respective force.
+ The form your character may take in Balance is completely controlled by his or
+ her actions. If you like to go around and kill things, you are likely to end
+ up with an ork, while a character that spends his time in the mine will slowly
+ become a dwarf. There are various actions both on your environment and other
+ beings that will form your character. They are all connected to the three
+ forces in the world of Balance - Order, Chaos, and Nature. Every action will
+ align you more with one of the forces, and with one or more of the forms
+ governed by it. This is the only way to mold your character in the game - you
+ gain and loose abilities depending on the predominant form you hold. Choosing
+ a form now gives you 34% attunement to it, and 34% alignment to the
+ respective force. Your total form attunement can't be higher than your
+ alignment to the respective force.
 
-     Choose your character's form:
+ Choose your character's form:
 
-                NATURE                 ORDER                   CHAOS
-                
-                a) Elf               g) Human                 j) Ork
-               b) Gnome              h) Dwarf                k) Troll
-          c) Spirit of Nature    i) Spirit of Order      l) Spirit of Chaos
-               d) Dryad                                      m) Goblin
-         e) Water Elemental                                  n) Kraken
-               f) Fairy                                       o) Imp""")
+            NATURE                 ORDER                   CHAOS
+            
+            a) Elf               g) Human                 j) Ork
+           b) Gnome              h) Dwarf                k) Troll
+      c) Spirit of Nature    i) Spirit of Order      l) Spirit of Chaos
+           d) Dryad                                      m) Goblin
+     e) Water Elemental                                  n) Kraken
+           f) Fairy                                       o) Imp""")
             i = msvcrt.getch()
         race = races[i]
         if i < 'g':
@@ -2068,7 +2069,7 @@ class Game:
             force='Chaos'
         else:
             force='Order'
-        self.player = player.Player([0,0],race,force,34,self)
+        self.player = player.Player([0,0],race,force,34)
         self.take_force_effect()
         self.all_beings = [self.player]
         i = 'z'
@@ -2079,24 +2080,24 @@ class Game:
         while i not in 'abcdefghij' or too_heavy:
             self.c.page()
             self.c.write('''
-      The next step to building your character is to pick the starting inventory
-      set of your choise. The sets are useful to a character of the respective
-      Force as they contain some of the tools needed to deliver impact on the
-      world. They are also restricted by your strength (fairies are the weakest,
-      while orks and trolls are the strongest).
+  The next step to building your character is to pick the starting inventory
+  set of your choise. The sets are useful to a character of the respective
+  Force as they contain some of the tools needed to deliver impact on the
+  world. They are also restricted by your strength (fairies are the weakest,
+  while orks and trolls are the strongest).
 
-      a) Forest healer: light clothes and a healing set.
-      b) Traveler: a robe and a stick to help you on the way.
-      c) Nature warrior: dryad-crafted armour and an elven bow.
-      
-      d) Builder of Order: a miner's pick and clothes.
-      e) Farmer: clothes, a shovel and some seeds.
-      f) Merchant: clothes and some money, a package of goods.
-      g) Soldier: a sword and leather armour.
-      
-      h) Village destroyer: a big club for breaking stuff. Oh, and food...
-      i) Pillager: a couple of weapons and a lot of armour.
-      j) Shaman: a book of magic and a herb set.''')
+  a) Forest healer: light clothes and a healing set.
+  b) Traveler: a robe and a stick to help you on the way.
+  c) Nature warrior: dryad-crafted armour and an elven bow.
+  
+  d) Builder of Order: a miner's pick and clothes.
+  e) Farmer: clothes, a shovel and some seeds.
+  f) Merchant: clothes and some money, a package of goods.
+  g) Soldier: a sword and leather armour.
+  
+  h) Village destroyer: a big club for breaking stuff. Oh, and food...
+  i) Pillager: a couple of weapons and a lot of armour.
+  j) Shaman: a book of magic and a herb set.''')
             i = msvcrt.getch()
             try:
                 if heaviness[i][0] > self.player.attr['Str']:
@@ -2115,7 +2116,7 @@ class Game:
         while True:
             self.c.page()
             self.c.write('''
-      Finally, what is your character's name? ''')
+  Finally, what is your character's name? ''')
             a = ''
             i = ' '
             while ord(i) != 13:
@@ -2150,10 +2151,10 @@ class Game:
                 difficulty = sum(run_away.values()+[hostiles])
                 chance = 50.0*character_run/difficulty
                 if random.randint(1,100) < chance:
-                    message.message('ran_away')
+                    self.message.message('ran_away')
                     msvcrt.getch()
                 else:
-                    message.creature('no_escape',0)
+                    self.message.creature('no_escape',0)
                     return 0
         if area != 'area0':
             old_temp=current_place['Temperature']
@@ -2330,16 +2331,16 @@ class Game:
                                     damage = 0
                                 if attacker.tag=='@':
                                     if add_dmg>=creature.life+5:
-                                        message.creature('elf_kill',creature)
+                                        self.message.creature('elf_kill',creature)
                                     elif add_dmg:
-                                        message.creature('crit',creature,damage)
+                                        self.message.creature('crit',creature,damage)
                                     else:
-                                        message.creature('hit',creature,damage)
+                                        self.message.creature('hit',creature,damage)
                                 else:
                                     if creature.tag=='@':
-                                        message.creature('creature_hit',attacker,damage)
+                                        self.message.creature('creature_hit',attacker,damage)
                                     else:
-                                        message.creature('creature_hits_creature',attacker,damage,creature)
+                                        self.message.creature('creature_hits_creature',attacker,damage,creature)
                                 creature.life -= damage
                                 creature.attr['loot'].append([bullet.id,65,1,1])
                                 if creature.life<=0:
@@ -2347,9 +2348,9 @@ class Game:
                                 return 1
                             else:
                                 if attacker.tag=='@':
-                                    message.creature('dodged',creature)
+                                    self.message.creature('dodged',creature)
                                 elif creature.tag=='@':
-                                    message.creature('creature_dodged',attacker)
+                                    self.message.creature('creature_dodged',attacker)
                     x=spot[0]
                     y=spot[1]
                     self.c.scroll((x, y, x+1, y+1), 1, 1, bullet.color,bullet.tag)
@@ -2395,30 +2396,30 @@ class Game:
                            T[self.land[defender.xy[1]-1][defender.xy[0]-21]].id in "wWt" and \
                            attacker.turn%2400>1200:
                         damage += defender.life+5
-                        message.creature('kraken_death',defender)
+                        self.message.creature('kraken_death',defender)
                     elif add_dmg:
-                        message.creature('crit',defender,damage)
+                        self.message.creature('crit',defender,damage)
                     else:
-                        message.creature('hit',defender,damage)
+                        self.message.creature('hit',defender,damage)
                 elif defender.tag == '@':
-                    message.creature('creature_hit',attacker,damage)
+                    self.message.creature('creature_hit',attacker,damage)
                     if 'fairyland' in defender.effects:
                         fairy_magick=set(['fairyland','summerwalk','winterwalk','midnight fears','sun armour','invisible'])
                         fairy_dmg=1+len(fairy_magick&set(defender.effects.keys()))
                         attacker.life-=fairy_dmg
-                        message.creature('fairyland_hit',attacker,fairy_dmg)
+                        self.message.creature('fairyland_hit',attacker,fairy_dmg)
                         if attacker.life<1:
                             self.defender_dead(attacker,0,defender)
                 else:
-                    message.creatures('good_attack',attacker,defender,damage)
+                    self.message.creatures('good_attack',attacker,defender,damage)
                 defender.life -= damage
             else:
                 if attacker.tag == '@':
-                    message.creature('miss',defender)
+                    self.message.creature('miss',defender)
                 elif defender.tag == '@':
-                    message.creature('creature_miss',attacker)
+                    self.message.creature('creature_miss',attacker)
                 else:
-                    message.creatures('miss_attack',attacker,defender)
+                    self.message.creatures('miss_attack',attacker,defender)
             attacker.energy -= 20
             if defender.life <= 0:
                 if defender.tag =='@':
@@ -2466,7 +2467,7 @@ class Game:
         if attacker.tag == '@':
             if (attacker.equipment['Right hand'] and 'ranged' in attacker.equipment['Right hand'].type) \
                or (attacker.equipment['Left hand'] and 'ranged' in attacker.equipment['Left hand'].type):
-                message.message('cant_hit_with_bow')
+                self.message.message('cant_hit_with_bow')
                 return 0
             attacker.force_attack(defender)
             if attacker.equiped_weaps == 2:
@@ -2513,11 +2514,11 @@ class Game:
                                  T[self.land[defender.xy[1]-1][defender.xy[0]-21]].colour,
                                  T[self.land[defender.xy[1]-1][defender.xy[0]-21]].char)
             if add_dmg:
-                message.creature('crit_kill',defender)
+                self.message.creature('crit_kill',defender)
             else:
-                message.creature('kill',defender)
+                self.message.creature('kill',defender)
         else:
-            message.creatures('kill',attacker,defender)
+            self.message.creatures('kill',attacker,defender)
         found_item=self.put_loot(defender.attr['loot'],defender.xy)
         if found_item:
             self.draw_items()
@@ -2683,7 +2684,7 @@ class Game:
         self.directions = [max([0,area_number-self.map_size]),down_dir,left_dir,right_dir,0,0]
         for x in range(len(self.directions)):
             self.directions[x]=str(self.directions[x])
-        self.land=self.generate_terr(coords)
+        self.generate_terr(coords)
         for x in range(1,24):
             for y in range(21,79):
                 self.c.scroll((y,x,y+1,x+1), 1, 1, T[self.land[x-1][y-21]].colour, T[self.land[x-1][y-21]].char)
@@ -2744,7 +2745,7 @@ class Game:
         self.directions = [max([0,area_number-self.map_size]),down_dir,left_dir,right_dir,0,0]
         for x in range(len(self.directions)):
             self.directions[x]=str(self.directions[x])
-        self.land=self.generate_terr(coords)
+        self.generate_terr(coords)
         for x in range(1,24):
             for y in range(21,79):
                 self.c.scroll((y,x,y+1,x+1), 1, 1, T[self.land[x-1][y-21]].colour, T[self.land[x-1][y-21]].char)
@@ -2933,7 +2934,7 @@ class Game:
                     game_ids.append(game_id)
                     x = random.randint(21,78)
                     y = random.randint(1,23)
-                    while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in player.wood.terr_restr:
+                    while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in self.wood.terr_restr:
                         x = random.randint(21,78)
                         y = random.randint(1,23)
                     creation = self.wood.duplicate(x,y,game_id,c_force,c_race)
@@ -3023,7 +3024,7 @@ class Game:
                         game_ids.append(game_id)
                         x = random.randint(21,78)
                         y = random.randint(1,23)
-                        while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in player.wood.terr_restr:
+                        while [x,y] in creature_coords or not T[lands[y-1][x-21]].pass_through or T[lands[y-1][x-21]].id in self.wood.terr_restr:
                             x = random.randint(21,78)
                             y = random.randint(1,23)
                         creation = self.wood_perm.duplicate(x,y,game_id,c_force,c_race)
@@ -3227,7 +3228,7 @@ class Game:
                             game_ids.append(game_id)
                             x = random.randint(21,78)
                             y = random.randint(1,23)
-                            while [x,y] in creature_coords or not T[self.land[y-1][x-21]].pass_through or T[self.land[y-1][x-21]].id in player.wood.terr_restr:
+                            while [x,y] in creature_coords or not T[self.land[y-1][x-21]].pass_through or T[self.land[y-1][x-21]].id in self.wood.terr_restr:
                                 x = random.randint(21,78)
                                 y = random.randint(1,23)
                             creation = self.wood.duplicate(x,y,game_id,c_force,c_race)
@@ -3458,18 +3459,18 @@ class Game:
                         if T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id in 'wW':
                             self.player.hunger=max([0,self.player.hunger-1])
                             self.player.thirst=max([0,self.player.thirst-1])
-                            message.message('good_water')
+                            self.message.message('good_water')
                         elif T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id=='t':
                             self.player.hunger=min([100,self.player.hunger+10])
                             self.player.thirst=min([100,self.player.thirst+10])
-                            message.message('bad_water')
+                            self.message.message('bad_water')
                 elif T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id=='W' and 'waterform' in self.player.effects:
                     self.player.life=1
                     self.player.hunger=90
                     self.player.thirst=90
                     del(self.player.effects['waterform'])
                     del(self.player.effects['invisible'])
-                    message.message('reform_waterform')
+                    self.message.message('reform_waterform')
                     msvcrt.getch()
             if (self.current_place['Nature']>=33 and self.current_place['Temperature']>=33 and 'elf2' in self.player.tool_tags) \
                or ('goblin1' in self.player.tool_tags and self.player.turn%2400>1200):
@@ -3523,7 +3524,7 @@ class Game:
                 if self.player.land_effects[x][2]==self.current_area:
                     if self.player.land_effects[x][1]=='mass destruction':
                         self.combat_buffer+=' You unleash the power of the chaos rock! The world crumbles around you!'
-                        message.combat_buffer()
+                        self.message.combat_buffer()
                         msvcrt.getch()
                         for i1 in range(8):
                             self.effect('force',{'Chaos':{'terrain':1}})
@@ -3580,20 +3581,20 @@ class Game:
                                 self.combat_buffer+=' You get burnt by the fire!'
                 if self.player.land_effects[x][0]==0:
                     del(self.player.land_effects[x])
-            message.combat_buffer()
-            if chself.player.life <= 0:
+            self.message.combat_buffer()
+            if self.player.life <= 0:
                 if 'water elemental3' in self.player.tool_tags and 'waterform' not in self.player.effects:
                     self.player.effects['waterform']=100+int(100*(self.player.races['Nature']['water elemental']-90))
                     self.player.effects['invisible']=100+int(100*(self.player.races['Nature']['water elemental']-90))
-                    message.emotion('gain_waterform',self.player.effects['waterform'])
+                    self.message.emotion('gain_waterform',self.player.effects['waterform'])
                 elif 'waterform' in self.player.effects:
-                    message.emotion('gain_waterform',self.player.effects['waterform'])
+                    self.message.emotion('gain_waterform',self.player.effects['waterform'])
                 else:
                     msvcrt.getch()
                     over = self.game_over()
                     return over
         else:
-            message.message('?')
+            self.message.message('?')
         ##Can't be 0 - ends the game
         return hostile_in_sight
 
@@ -3857,7 +3858,7 @@ class Game:
             try:
                 self.I[v[self.land[self.player.xy[1]-1][self.player.xy[0]-21]]].create_item()
             except KeyError:
-                message.message('no_fill')
+                self.message.message('no_fill')
                 i = msvcrt.getch()
                 return 0
         elif k == 'gather':
@@ -3868,35 +3869,35 @@ class Game:
                 if found <= choice.effect['chance']*self.player.attr['Int']:
                     choice.create_item()
                 else:
-                    message.message('failed_gather')
+                    self.message.message('failed_gather')
                     i = msvcrt.getch()
             except KeyError:
-                message.message('no_gather')
+                self.message.message('no_gather')
                 i = msvcrt.getch()
                 return 0
         elif k=='transform':
             self.possess(v,'trans')
         elif k=='plant_seed':
             if self.land[self.player.xy[1]-1][self.player.xy[0]-21] in ['.','a','g']:
-                message.message('plant_seed')
+                self.message.message('plant_seed')
                 self.player.land_effects[self.player.turn]=[int(1200*(1-.5*(self.current_place['Nature']/100.))),'plant',self.current_area,random.choice(v),self.player.xy[:]]
             else:
-                message.message('need_dirt')
+                self.message.message('need_dirt')
                 return 0
         elif k=='plant_vegetable':
             if self.land[self.player.xy[1]-1][self.player.xy[0]-21]== 'a':
-                message.message('plant_seed')
+                self.message.message('plant_seed')
                 self.player.land_effects[self.player.turn]=[int(1200*(1-.5*(self.current_place['Nature']/100.))),'plant',self.current_area,random.choice(v),self.player.xy[:]]
             else:
-                message.message('need_farm')
+                self.message.message('need_farm')
                 return 0
         ## For already identified vegetable seeds
         elif k=='plant_specific':
             if self.land[self.player.xy[1]-1][self.player.xy[0]-21]== 'a':
-                message.message('plant_seed')
+                self.message.message('plant_seed')
                 self.player.land_effects[self.player.turn]=[int(1200*(1-.5*(self.current_place['Nature']/100.))),'plant',self.current_area,random.choice(v[0]),self.player.xy[:],v[1]]
             else:
-                message.message('need_farm')
+                self.message.message('need_farm')
                 return 0
         elif k=='break_rock':
             if 'hammer' in self.player.tool_tags:
@@ -3906,12 +3907,12 @@ class Game:
                     while the_turn in self.player.land_effects:
                         the_turn+=1
                     self.player.land_effects[the_turn]=[1,'plant',self.current_area,random.choice(v),self.player.xy[:]]
-                    message.message('found_gem')
+                    self.message.message('found_gem')
                 else:
-                    message.message('break_rock')
+                    self.message.message('break_rock')
                 msvcrt.getch()
             else:
-                message.tool_msg('no_tool',['hammer'])
+                self.message.tool_msg('no_tool',['hammer'])
                 msvcrt.getch()
                 return 0
         elif k=='smelt_ore':
@@ -3929,26 +3930,26 @@ class Game:
                                                           random.choice(['copper ingot','gold ingot','silver ingot'])]
                             else:
                                 self.player.land_effects[the_turn]=[50,'plant',self.current_area,v[0],self.player.xy[:]]
-                            message.message('found_metal')
+                            self.message.message('found_metal')
                             msvcrt.getch()
                         else:
-                            message.message('failed_smelt')
+                            self.message.message('failed_smelt')
                             msvcrt.getch()
                             return 0
                         smelted=1
                         break
                 if not smelted:
-                    message.tool_msg('no_tool',['forge'])
+                    self.message.tool_msg('no_tool',['forge'])
                     msvcrt.getch()
                     return 0
             else:
-                message.tool_msg('no_tool',['hammer'])
+                self.message.tool_msg('no_tool',['hammer'])
                 msvcrt.getch()
                 return 0
         elif k=='gnome_gem':
             if T[self.land[self.player.xy[1]-1][self.player.xy[0]-21]].id in v[0] and 'gnome2' in self.player.tool_tags:
                 if 'ruby' not in v[1] and 'sapphire' not in v[1] and 'amethyst' not in v[1]:
-                    message.message(v[1])
+                    self.message.message(v[1])
                 if 'topaz' in v[1]:
                     self.effect('energy',self.player.max_energy-self.player.energy)
                 elif 'emerald' in v[1]:
@@ -3980,34 +3981,34 @@ class Game:
                     for x in self.all_creatures:
                         if x.mode=='hostile' and self.clear_los(self.direct_path(self.player.xy,x.xy)):
                             x.life-=max([(self.player.races['Nature']['gnome']-60)/4,1])
-                            message.creature('sapphired',x)
+                            self.message.creature('sapphired',x)
                 elif 'ruby' in v[1]:
                     found_fire=0
                     for x in self.player.land_effects.keys():
                         if self.player.land_effects[x][2]==self.current_area and self.player.land_effects[x][1]=='on_fire' \
                            and self.player.land_effects[x][3]==self.player.xy:
-                            message.message(v[1])
+                            self.message.message(v[1])
                             found_fire=1
                             for x in self.all_creatures:
                                 if x.mode=='hostile' and self.clear_los(self.direct_path(self.player.xy,x.xy)):
                                     x.life-=max([(self.player.races['Nature']['gnome']-60)/2,1])
-                                    message.creature('rubied',x)
+                                    self.message.creature('rubied',x)
                             break
                     if not found_fire:
-                        message.message('cant_use_gem')
+                        self.message.message('cant_use_gem')
                         return 0
                 elif 'amethyst' in v[1]:
                     if self.player.marked_stone and self.current_area==self.player.marked_stone[0] and self.player.xy==self.player.marked_stone[1]:
                         self.player.marked_stone=[]
-                        message.message('amethyst0')
+                        self.message.message('amethyst0')
                     else:
                         self.player.marked_stone=[self.current_area,self.player.xy[:]]
-                        message.message('amethyst1')
+                        self.message.message('amethyst1')
                 elif 'lapis' in v[1]:
                     self.change_place('areaB','gnome')
                 self.effect('force',{'Nature':{'force':0.03,'gnome':0.03},'Chaos':{'all':-.03},'Order':{'all':-.03}})
             else:
-                message.message('cant_use_gem')
+                self.message.message('cant_use_gem')
                 return 0
         else:
             return 0
@@ -4249,7 +4250,7 @@ class Game:
             inventory.tinderbox.start_item(1)
             inventory.bread.start_item(2)
             inventory.bottle_water.start_item(2)
-        message.message('')
+        self.message.message('')
 
     def put_loot(self,loot,xy=None):
         found_some=0
@@ -4544,7 +4545,7 @@ if __name__=='__main__':
     riding=0
     while i:
         if msvcrt.kbhit():
-            message.message('')
+            the_game.message.message('')
             i = msvcrt.getch()
             if the_game.player.ride and the_game.player.ride[0].food>24 and i in ['1','2','3','4','5','6','7','8','9']:
                 if riding:
@@ -4557,17 +4558,17 @@ if __name__=='__main__':
             if i == '0':
                 i = '-1'
             if i == 'S':
-                message.message('q')
+                the_game.message.message('q')
                 i = msvcrt.getch()
                 if i == 'y' or i == 'Y':
                     if save():
                         the_game.redraw_screen()
                         i = '0'
                     else:
-                        message.message('')
-                        message.message('save_failed')
+                        the_game.message.message('')
+                        the_game.message.message('save_failed')
                 else:
-                    message.message('')
+                    the_game.message.message('')
                 continue
             if i == 'Q':
                 break
@@ -4576,17 +4577,17 @@ if __name__=='__main__':
                 the_game.redraw_screen()
                 continue
             if i == 'l':
-                message.message('look')
+                the_game.message.message('look')
                 the_game.look()
                 the_game.redraw_screen()
-    ##            message.message('')
+    ##            the_game.message.message('')
                 continue
                 i = '0'
             ## Form-dependent actions
             if 'waterform' not in the_game.player.effects:
                 if i == 's':
                     if the_game.player.ride:
-                        message.message('dismount')
+                        the_game.message.message('dismount')
                         the_game.player.ride[0].mode='follow'
                         the_game.player.ride[0].xy=the_game.player.xy[:]
                         the_game.player.backpack-=the_game.player.ride[0].attr['Str']*2
@@ -4599,16 +4600,16 @@ if __name__=='__main__':
                                     dropped = 1
                             if not dropped:
                                 the_game.ground_items.append([the_game.player.xy[0], the_game.player.xy[1],drop])
-                            message.use('create_drop',drop)
+                            the_game.message.use('create_drop',drop)
                             msvcrt.getch()
                         the_game.player.followers.append(the_game.player.ride[0])
                         the_game.player.ride=[]
                         i='0'
                     elif the_game.player.possessed:
                         if the_game.player.possessed[0].mode=='temp':
-                            message.creature('transform_outof',the_game.player.possessed[0])
+                            the_game.message.creature('transform_outof',the_game.player.possessed[0])
                         else:
-                            message.creature('unpossess',the_game.player.possessed[0])
+                            the_game.message.creature('unpossess',the_game.player.possessed[0])
                             the_game.player.possessed[0].xy=the_game.player.xy[:]
                             the_game.player.possessed[0].mode='wander'
                         the_game.player.life-=the_game.player.possessed[0].life
@@ -4645,12 +4646,12 @@ if __name__=='__main__':
                         i='0'
                     else:
                         if not T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].sittable:
-                            message.message('no_sit')
+                            the_game.message.message('no_sit')
                             i = '0'
                         else:
                             the_game.player.sit = True
                             the_game.player.rest = 25
-                            message.message('sit')
+                            the_game.message.message('sit')
                             i = '0'
                 if i == 'm':
                     if the_game.player.mode == 'Nature':
@@ -4678,13 +4679,13 @@ if __name__=='__main__':
                                     if the_game.player.equipment['Ammunition'].effect['shoot']==the_game.player.equipment[handed].effect['shoot']:
                                         the_game.shoot(the_game.player)
                                     else:
-                                        message.message('wrong_ammo')
+                                        the_game.message.message('wrong_ammo')
                                 else:
-                                    message.message('need_ammo')
+                                    the_game.message.message('need_ammo')
                             else:
-                                message.message('need_ranged_weapon')
+                                the_game.message.message('need_ranged_weapon')
                         else:
-                            message.message('target_first')
+                            the_game.message.message('target_first')
                         i='0'
                     if i == 'i':
                         the_game.draw_inv()
@@ -4702,14 +4703,14 @@ if __name__=='__main__':
                         if 'human1' in the_game.player.tool_tags or 'dwarf1' in the_game.player.tool_tags:
                             the_game.build()
                         else:
-                            message.message('need_human1&dwarf1')
+                            the_game.message.message('need_human1&dwarf1')
                         continue
                         i = '0'
                     if i == 't':
                         if 'dryad3' in the_game.player.tool_tags:
                             the_game.dryad_grow()
                         else:
-                            message.message('need_dryad3')
+                            the_game.message.message('need_dryad3')
                         continue
                         i = '0'
                     if i == 'C' and not the_game.player.ride:
@@ -4726,7 +4727,7 @@ if __name__=='__main__':
                     if i == 'w' and not the_game.player.ride:
                         the_game.player.sit = False
                         the_game.player.rest = 1
-                        message.message('work')
+                        the_game.message.message('work')
                         i = ''
                         while not i:        
                             if msvcrt.kbhit():
@@ -4739,39 +4740,39 @@ if __name__=='__main__':
                             the_game.research()
                             the_game.redraw_screen()
                         else:
-                            message.message('need_human3')
+                            the_game.message.message('need_human3')
                         continue
                 elif i in 'rwp+bkeiCt':
-                    message.message('not_when_possessed')
+                    the_game.message.message('not_when_possessed')
                     msvcrt.getch()
                     i='0'
             elif i in 'rwmp+bkqseiCt':
-                message.message('not_in_waterform')
+                the_game.message.message('not_in_waterform')
                 msvcrt.getch()
                 i='0'
     ##        if i == '<':
     ##            the_game.player.sit = False
     ##            if terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '<':
     ##                the_game.change_place('area'+the_game.directions[5],5)
-    ##                message.message('going_down')
+    ##                the_game.message.message('going_down')
     ##                i = '0'
     ##            elif terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '>':
-    ##                message.message('nowhere_togo')
+    ##                the_game.message.message('nowhere_togo')
     ##                i = '0'
     ##            else:
-    ##                message.message('no_stairs')
+    ##                the_game.message.message('no_stairs')
     ##                i = '0'
     ##        if i == '>':
     ##            the_game.player.sit = False
     ##            if terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '>':
     ##                the_game.change_place('area'+the_game.directions[4],4)
-    ##                message.message('going_up')
+    ##                the_game.message.message('going_up')
     ##                i = '0'
     ##            elif terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '<':
-    ##                message.message('nowhere_togo')
+    ##                the_game.message.message('nowhere_togo')
     ##                i = '0'
     ##            else:
-    ##                message.message('no_stairs')
+    ##                the_game.message.message('no_stairs')
     ##                i = '0'
             if (i != '0') and (i != '5') and (i != '-1'):
                 the_game.player.sit = False

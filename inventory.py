@@ -65,7 +65,7 @@ class Item:
             t.append('iron')
         if 'steel' in name and ('jewel' in self.type or 'coin' in self.type) and 'steel' not in t:
             t.append('steel')
-        return item(self.weight, t, self.tool_tag, self.weapon_type, self.armour, self.dmg, name,
+        return Item(self.weight, t, self.tool_tag, self.weapon_type, self.armour, self.dmg, name,
                        self.id, self.stackable, qty=i, effect=ef, color=col, tag=self.tag)
 
     def random_engraving(self):
@@ -115,9 +115,9 @@ class Item:
             if not found:
                 name+=' (melted)'
                 del(self.effect['winterwalk'])
-                message.use('pickup_melt', self)
+                self.game.message.use('pickup_melt', self)
             else:
-                message.use('pickup', self)
+                self.game.message.use('pickup', self)
         elif name == 'ring of summer' and self.game.current_place['Temperature']<66:
             if self.game.player.equipment['Right ring']:
                 if self.game.player.equipment['Right ring'].name=='ring of winter':
@@ -130,11 +130,11 @@ class Item:
             if not found:
                 name+=' (withered)'
                 del(self.effect['summerwalk'])
-                message.use('pickup_dry', self)
+                self.game.message.use('pickup_dry', self)
             else:
-                message.use('pickup', self)
+                self.game.message.use('pickup', self)
         else:
-            message.use('pickup', self)
+            self.game.message.use('pickup', self)
         has_it = 0
         for x in self.game.player.inventory:
             if self.id == x.id and self.name == x.name:
@@ -174,7 +174,7 @@ class Item:
         else:
             drop = self.duplicate(qty,name)
             dropped = 0
-            message.use('create_drop',drop)
+            self.game.message.use('create_drop',drop)
             wait = msvcrt.getch()
             for item in self.game.ground_items:
                 if item[:2] == self.game.player.xy and item[2].id == drop.id and item[2].name == drop.name and item[2].stackable:
@@ -205,7 +205,7 @@ class Item:
     ## What is s???
     def drop_item(self,forced='',s=None):
         if self.qty >1 and not forced:
-            message.message('how_much')
+            self.game.message.message('how_much')
             a = ''
             i = ' '
             while ord(i) != 13:        
@@ -231,7 +231,7 @@ class Item:
                 for k,v in self.effect.items():
                     self.game.effect(k,v)
             else:
-                message.use('over_eat',self)
+                self.game.message.use('over_eat',self)
                 i = msvcrt.getch()
         if 'drink' in self.type:
             if self.game.player.thirst > 0:
@@ -239,7 +239,7 @@ class Item:
                 for k,v in self.effect.items():
                     self.game.effect(k,v)
             else:
-                message.use('over_drink',self)
+                self.game.message.use('over_drink',self)
                 i = msvcrt.getch()
 
     def use_item(self,ex=''):
