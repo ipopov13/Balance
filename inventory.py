@@ -1,5 +1,3 @@
-# -*- coding: cp1251 -*-
-import player
 import msvcrt
 import message
 import random
@@ -20,7 +18,7 @@ class Item:
         self.color = color
         self.tag = tag
 
-    def duplicate(self,i=1,name=''): ## Mogat da se nastroivat cvetovete i imenata na predmetite v rechnika
+    def duplicate(self,i=1,name=''):
         if name == '':
             name = self.name
         if self.name == 'vegetable' and name=='vegetable':
@@ -33,13 +31,14 @@ class Item:
         t = self.type[:]
         ef = {}
         for key in self.effect.keys():
-            if str(type(self.effect[key])) == "<type 'list'>":
+            if type(self.effect[key]) is list:
                 ef[key]=self.effect[key][:]
             else:
                 ef[key]=self.effect[key]
         if 'ingot' in name:
             if 'craft' not in ef:
                 ef['craft']='%s' %(name.split()[0])
+        ## The dictionary links names and colours
         cols = {'black':112,'gray':7,'embroidered':201,'copper':6,'silver':15,'gold':14,'iron':7,'mouldy':2,'dirty':6}
         for x in name.split():
             if x in cols.keys() and 'enameled' not in t:
@@ -55,7 +54,7 @@ class Item:
         if 'engraved' in name and 'engraving' not in ef:
             engraving = self.random_engraving()
             ef['engraving'] = engraving
-        ## Tipa na bijutata se dobavq za da mogat da se pretopqvat za metala
+        ## Jewelery metal type is added so they can be smelted
         if 'gold' in name and ('ingot' in name or 'jewel' in self.type or 'coin' in self.type) and 'gold' not in t:
             t.append('gold')
         if 'silver' in name and ('ingot' in name or 'jewel' in self.type or 'coin' in self.type) and 'silver' not in t:
@@ -92,24 +91,24 @@ class Item:
 
     def start_item(self,qty=1,name=''):
         item = self.duplicate(qty,name)
-        player.ch.inventory.append(item)
-        if player.ch.equipment['Backpack'] == []:
-            player.ch.free_hands -= 1
+        self.game.player.inventory.append(item)
+        if self.game.player.equipment['Backpack'] == []:
+            self.game.player.free_hands -= 1
         else:
-            player.ch.backpack -= item.weight * qty
-        player.ch.tool_tags += item.tool_tag
-        player.ch.weight += item.weight * qty
+            self.game.player.backpack -= item.weight * qty
+        self.game.player.tool_tags += item.tool_tag
+        self.game.player.weight += item.weight * qty
             
     def get_item(self,qty=1,name=''):
         if name == '':
             name = self.name
         found=0
-        if name == 'ring of winter' and init_screen.current_place['Temperature']>=33:
-            if player.ch.equipment['Left ring']:
-                if player.ch.equipment['Left ring'].name=='ring of summer':
+        if name == 'ring of winter' and self.game.current_place['Temperature']>=33:
+            if self.game.player.equipment['Left ring']:
+                if self.game.player.equipment['Left ring'].name=='ring of summer':
                     found=1
                 else:
-                    for it in player.ch.inventory:
+                    for it in self.game.player.inventory:
                         if it.name=='ring of summer':
                             found=1
                             break
@@ -119,12 +118,12 @@ class Item:
                 message.use('pickup_melt', self)
             else:
                 message.use('pickup', self)
-        elif name == 'ring of summer' and init_screen.current_place['Temperature']<66:
-            if player.ch.equipment['Right ring']:
-                if player.ch.equipment['Right ring'].name=='ring of winter':
+        elif name == 'ring of summer' and self.game.current_place['Temperature']<66:
+            if self.game.player.equipment['Right ring']:
+                if self.game.player.equipment['Right ring'].name=='ring of winter':
                     found=1
                 else:
-                    for it in player.ch.inventory:
+                    for it in self.game.player.inventory:
                         if it.name=='ring of winter':
                             found=1
                             break
@@ -137,51 +136,52 @@ class Item:
         else:
             message.use('pickup', self)
         has_it = 0
-        for x in player.ch.inventory:
+        for x in self.game.player.inventory:
             if self.id == x.id and self.name == x.name:
                 has_it = 1
                 break
         if self.stackable and has_it == 1:
             x.qty += qty
-            player.ch.weight += x.weight * qty
-            player.ch.backpack -= x.weight * qty
+            self.game.player.weight += x.weight * qty
+            self.game.player.backpack -= x.weight * qty
         else:
-            player.ch.inventory.append(self.duplicate(qty,name))
-            player.ch.tool_tags += self.tool_tag
-            player.ch.weight += self.weight * qty
-            player.ch.backpack -= self.weight * qty
+            self.game.player.inventory.append(self.duplicate(qty,name))
+            self.game.player.tool_tags += self.tool_tag
+            self.game.player.weight += self.weight * qty
+            self.game.player.backpack -= self.weight * qty
 
     def create_item(self,qty=1,name=''):
         has_it = 0
         if not name:
             name = self.name
-        for x in player.ch.inventory:
+        for x in self.game.player.inventory:
             if self.id==x.id and name == x.name:
                 has_it = 1
                 break
-        if (player.ch.weight + self.weight*qty <= player.ch.max_weight and self.weight*qty <= player.ch.backpack) or player.ch.equipment['Backpack'] == []:
+        if (self.game.player.weight + self.weight*qty <= self.game.player.max_weight and self.weight*qty <= self.game.player.backpack) or \
+           self.game.player.equipment['Backpack'] == []:
             if self.stackable and has_it == 1:
                 x.qty += qty
             else:
-                player.ch.inventory.append(self.duplicate(qty,name))
+                self.game.player.inventory.append(self.duplicate(qty,name))
                 for tt in self.tool_tag:
-                    player.ch.tool_tags.append(tt)
-            player.ch.weight += self.weight * qty
-            if player.ch.equipment['Backpack'] != []:
-                player.ch.backpack -= self.weight * qty
+                    self.game.player.tool_tags.append(tt)
+            self.game.player.weight += self.weight * qty
+            if self.game.player.equipment['Backpack'] != []:
+                self.game.player.backpack -= self.weight * qty
             else:
-                player.ch.free_hands -= 1
+                self.game.player.free_hands -= 1
         else:
             drop = self.duplicate(qty,name)
             dropped = 0
             message.use('create_drop',drop)
             wait = msvcrt.getch()
-            for item in init_screen.ground_items:
-                if item[:2] == player.ch.xy and item[2].id == drop.id and item[2].name == drop.name and item[2].stackable:
+            for item in self.game.ground_items:
+                if item[:2] == self.game.player.xy and item[2].id == drop.id and item[2].name == drop.name and item[2].stackable:
                     item[2].qty += drop.qty
                     dropped = 1
             if not dropped:
-                init_screen.ground_items.append([player.ch.xy[0], player.ch.xy[1],drop])
+                self.game.ground_items.append([self.game.player.xy[0], self.game.player.xy[1],drop])
 
     def lose_item(self,i=1):
         if (i < self.qty):
@@ -189,19 +189,20 @@ class Item:
         else:
             if (i > self.qty):
                 i = self.qty
-            player.ch.inventory.remove(self)
+            self.game.player.inventory.remove(self)
             if self.tool_tag:
                 for tag in self.tool_tag:
-                    player.ch.tool_tags.remove(tag)
-        player.ch.weight -= self.weight * i
-        if player.ch.equipment['Backpack'] != []:
-            player.ch.backpack += self.weight * i
+                    self.game.player.tool_tags.remove(tag)
+        self.game.player.weight -= self.weight * i
+        if self.game.player.equipment['Backpack'] != []:
+            self.game.player.backpack += self.weight * i
         else:
-            player.ch.free_hands += i
+            self.game.player.free_hands += i
             if 'two_handed' in self.type:
-                player.ch.free_hands += 1
+                self.game.player.free_hands += 1
         return i
 
+    ## What is s???
     def drop_item(self,forced='',s=None):
         if self.qty >1 and not forced:
             message.message('how_much')
@@ -210,7 +211,7 @@ class Item:
             while ord(i) != 13:        
                 i = msvcrt.getch()
                 if ord(i) in range(48,58):
-                    init_screen.c.write(i)
+                    self.game.c.write(i)
                     a += i
             if self.weight*min([self.qty,int(a)]) > s:
                 return None
@@ -224,33 +225,33 @@ class Item:
             return self
 
     def eat(self):      
-        if 'food' in self.type or ('raw meat' in self.type and 'ork2' in player.ch.tool_tags):
-            if (player.ch.hunger > 0):
+        if 'food' in self.type or ('raw meat' in self.type and 'ork2' in self.game.player.tool_tags):
+            if self.game.player.hunger > 0:
                 self.lose_item()
                 for k,v in self.effect.items():
-                    player.effect(k,v)
+                    self.game.effect(k,v)
             else:
                 message.use('over_eat',self)
                 i = msvcrt.getch()
-        if ('drink' in self.type):
-            if player.ch.thirst > 0:
+        if 'drink' in self.type:
+            if self.game.player.thirst > 0:
                 self.lose_item()
                 for k,v in self.effect.items():
-                    player.effect(k,v)
+                    self.game.effect(k,v)
             else:
                 message.use('over_drink',self)
                 i = msvcrt.getch()
 
     def use_item(self,ex=''):
-        if ('food' in self.type) or ('drink' in self.type) or ('raw meat' in self.type and 'ork2' in player.ch.tool_tags):
+        if 'food' in self.type or 'drink' in self.type or ('raw meat' in self.type and 'ork2' in self.game.player.tool_tags):
             self.eat()
-        elif (ex=='expend' and 'expendable' in self.type):
+        elif ex=='expend' and 'expendable' in self.type:
             self.lose_item()
-        elif (ex=='' and 'expendable' not in self.type):
+        elif ex=='' and 'expendable' not in self.type:
             used=0
             for k,v in self.effect.items():
                 if k!='temp_attr':
-                    used1 = player.effect(k,v)
+                    used1 = self.game.effect(k,v)
                     if k=='transform':
                         del(self.effect['transform'])
                     if used1==None:
@@ -259,306 +260,16 @@ class Item:
 ##                        used=0
             if used == 0:
                 return 0
-            if ('herb_set' not in self.tool_tag) and ('magic_book' not in self.tool_tag)\
-                and ('totem' not in self.type) and (self.name!='lapis lazuli'):
+            if 'herb_set' not in self.tool_tag and 'magic_book' not in self.tool_tag\
+                and 'totem' not in self.type and self.name!='lapis lazuli':
                 self.lose_item()
             if 'herb_set' in self.tool_tag:
-                if 'herbalism' not in player.ch.skills:
-                    player.ch.skills['herbalism'] = float(player.ch.attr['Int'])
+                if 'herbalism' not in self.game.player.skills:
+                    self.game.player.skills['herbalism'] = float(self.game.player.attr['Int'])
                 else:
                     learn = random.uniform(0,100)
-                    if learn <= (player.ch.attr['Int'] - player.ch.skills['herbalism']/5)/player.ch.attr['Int']*100:
-                        player.ch.skills['herbalism'] += 0.05
-
-def put_item(loot,xy=None):
-    found_some=0
-    for l in loot:
-        chance = random.randint(0,10000)
-        chance = chance/100.
-        if l[0] == 'treasure':
-            if init_screen.treasure_modifier:
-                chance = chance/init_screen.treasure_modifier
-            else:
-                chance=100.
-        elif l[0]== 'ntreasure' or l[0] == 'wtreasure':
-            if player.ch.forces['Chaos']==0 and int(player.ch.forces['Nature']/10)+init_screen.treasure_modifier>0:
-                chance=chance/((player.ch.forces['Nature']/10.)+init_screen.treasure_modifier)
-            else:
-                chance=100.
-        if chance <= l[1]:
-            if l[0] == 'treasure':
-                creation = random_treasure(l[2],l[3])
-                if l[3]==True:
-                    init_screen.current_place['Treasure']-=1
-                    init_screen.treasure_modifier -=1
-            elif l[0] == 'ntreasure':
-                if player.ch.forces['Nature']<40:
-                    treasure_type=False
-                    treasure_size=random.choice(['small','medium'])
-                elif player.ch.forces['Nature']<75:
-                    treasure_type=False
-                    treasure_size=random.choice(['small','medium','large'])
-                elif player.ch.forces['Nature']>75:
-                    treasure_type=random.choice([False,True])
-                    treasure_size=random.choice(['small','medium','large'])
-                if treasure_type==True:
-                    init_screen.current_place['Treasure']=max(-int(player.ch.forces['Nature']/10.),
-                                                              init_screen.current_place['Treasure']-1)
-                    init_screen.treasure_modifier = max(-int(player.ch.forces['Nature']/10.),
-                                                        init_screen.treasure_modifier-1)
-                init_screen.land[xy[1]-1] = init_screen.land[xy[1]-1][:xy[0]-21]+'.'+init_screen.land[xy[1]-1][xy[0]-20:]
-                creation = random_treasure(treasure_size,treasure_type)
-            elif l[0] == 'wtreasure':
-                if player.ch.forces['Nature']<40:
-                    treasure_type=False
-                    treasure_size=random.choice(['small','medium'])
-                elif player.ch.forces['Nature']<75:
-                    treasure_type=False
-                    treasure_size=random.choice(['small','medium','large'])
-                elif player.ch.forces['Nature']>75:
-                    treasure_type=random.choice([False,True])
-                    treasure_size=random.choice(['small','medium','large'])
-                if treasure_type==True:
-                    init_screen.current_place['Treasure']=max(-int(player.ch.forces['Nature']/10.),
-                                                              init_screen.current_place['Treasure']-1)
-                    init_screen.treasure_modifier = max(-int(player.ch.forces['Nature']/10.),
-                                                        init_screen.treasure_modifier-1)
-                init_screen.land[xy[1]-1] = init_screen.land[xy[1]-1][:xy[0]-21]+'W'+init_screen.land[xy[1]-1][xy[0]-20:]
-                creation = random_treasure(treasure_size,treasure_type)
-            elif l[0] in self.game.player.race_attrs.keys():
-                ## Can have main loot and additional items, added separately in the ground_items here
-                ## Roll for quality for the main loot
-                if l[0]=='ork':
-                    quality=random.randint(0,100)<init_screen.current_place['Chaos']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(medium_weapons+heavy_weapons).duplicate(1)
-                    if quality:
-                        creation.name='orkish '+creation.name
-                        creation.dmg=creation.dmg+1
-                    if chance<=l[1]/4:
-                        bonus = random.choice(plate_armour).duplicate(1)
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                    elif chance<=l[1]/2:
-                        bonus = random.choice(chain_armour).duplicate(1)
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='troll':
-                    quality=random.randint(0,100)<init_screen.current_place['Chaos']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(heavy_weapons).duplicate(1)
-                    if chance<=l[1]/2:
-                        if quality:
-                            bonus = random.choice(gems).duplicate(1)
-                            init_screen.ground_items.append([xy[0], xy[1], bonus])
-                        else:
-                            bonus = random.choice(treasure_money).duplicate(1)
-                            init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='spirit of chaos':
-                    quality=random.randint(0,100)<init_screen.current_place['Chaos']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(cloth_armour).duplicate(1)
-                    if quality:
-                        creation.name='chaos '+creation.name
-                        creation.armour=creation.armour+10
-                        creation.color=12
-                    if chance<=l[1]/4:
-                        bonus = random.choice(misc_equipment).duplicate(1)
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='goblin':
-                    quality=random.randint(0,100)<init_screen.current_place['Chaos']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(light_weapons).duplicate(1)
-                    if quality:
-                        creation.name='wicked '+creation.name
-                        creation.dmg=creation.dmg+1
-                    if chance<=l[1]/4:
-                        bonus = random_treasure('medium')
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                    elif chance<=l[1]/2:
-                        bonus = random_treasure()
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='kraken':
-                    quality=random.randint(0,100)<init_screen.current_place['Chaos']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(leather_armour).duplicate(1)
-                    if quality:
-                        creation.name='sealskin '+creation.name.split()[-1]
-                        creation.armour=creation.armour+10
-                        creation.color=7
-                elif l[0]=='imp':
-                    quality=random.randint(0,100)<init_screen.current_place['Chaos']/5+init_screen.current_place['Treasure']
-                    if chance<=l[1]/1:
-                        creation = light_staff.duplicate(1)
-                        if quality:
-                            creation.name='staff of fire'
-                            creation.tool_tag.append('fire')
-                    else:
-                        continue
-                elif l[0]=='human':
-                    quality=random.randint(0,100)<init_screen.current_place['Order']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(human_tools).duplicate(1)
-                    if chance<=l[1]/2:
-                        if quality:
-                            bonus = random.choice([medium_backpack,large_backpack]).duplicate(1)
-                            init_screen.ground_items.append([xy[0], xy[1], bonus])
-                        else:
-                            bonus = random.choice(small_containers).duplicate(1)
-                            init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='dwarf':
-                    quality=random.randint(0,100)<init_screen.current_place['Order']/5+init_screen.current_place['Treasure']
-                    creation = random.choice([pick,shovel,pickaxe]).duplicate(1)
-                    if quality:
-                        creation.name='dwarven '+creation.name
-                        creation.tool_tag=['shovel','pick','pickaxe']
-                        if 'weapon' not in creation.type:
-                            creation.type.append('weapon')
-                        creation.dmg=2
-                        creation.color=6
-                elif l[0]=='spirit of order':
-                    quality=random.randint(0,100)<init_screen.current_place['Order']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(cloth_armour).duplicate(1)
-                    if quality:
-                        creation.name='order '+creation.name
-                        creation.armour=creation.armour+10
-                        creation.color=9
-                    if chance<=l[1]/4:
-                        bonus = random.choice(misc_equipment).duplicate(1)
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='elf':
-                    quality=random.randint(0,100)<init_screen.current_place['Nature']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(leather_armour).duplicate(1)
-                    if quality:
-                        creation.name='elven '+creation.name
-                        creation.armour=creation.armour+15
-                        creation.color=15
-                    if chance<=l[1]/2:
-                        bonus = random.choice(flowers+(flower_seed,)).duplicate(1)
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='gnome':
-                    quality=random.randint(0,100)<init_screen.current_place['Nature']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(gems).duplicate(1)
-                    if quality:
-                        bonus = color_clay.duplicate(5)
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='spirit of nature':
-                    quality=random.randint(0,100)<init_screen.current_place['Nature']/5+init_screen.current_place['Treasure']
-                    creation = flower_seed.duplicate(1)
-                    if quality:
-                        bonus = random.choice(gems).duplicate(1)
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='dryad':
-                    quality=random.randint(0,100)<init_screen.current_place['Nature']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(wood_armour).duplicate(1)
-                    if quality:
-                        creation.name='masterwork '+creation.name
-                        creation.armour=creation.armour+15
-                        creation.color=2
-                    if chance<=l[1]/3:
-                        bonus = random.choice(light_weapons).duplicate(1)
-                        init_screen.ground_items.append([xy[0], xy[1], bonus])
-                elif l[0]=='water elemental':
-                    quality=random.randint(0,100)<init_screen.current_place['Nature']/5+init_screen.current_place['Treasure']
-                    creation = bottle_water.duplicate(1)
-                    if quality:
-                        creation.name='bottle of pure water'
-                        creation.effect={'cook':'water','thirst':60,'energy':60,'container':7}
-                elif l[0]=='fairy':
-                    quality=random.randint(0,100)<init_screen.current_place['Nature']/5+init_screen.current_place['Treasure']
-                    creation = random.choice(flowers+herbs).duplicate(1)
-                    if chance<=l[1]/3:
-                        if quality:
-                            bonus = random_treasure('medium')
-                            init_screen.ground_items.append([xy[0], xy[1], bonus])
-                        else:
-                            bonus = random_treasure()
-                            init_screen.ground_items.append([xy[0], xy[1], bonus])
-            elif l[0] == 'forage':
-                qty = random.randint(l[2],l[3])
-                creation = random.choice(foraged).duplicate(qty)
-            elif l[0] == 'gnome_touch':
-                creation = random.choice(gems).duplicate(1)
-            elif l[0] == 'fairy_flowers':
-                creation = rare_flower.duplicate(1)
-                if 'fairy2' in player.ch.tool_tags:
-                    if 550<player.ch.turn%2400<650:
-                        creation.name='noon flower'
-                        creation.color=190#224
-                    elif 1750<player.ch.turn%2400<1850:
-                        creation.name='midnight flower'
-                        creation.color=30#208
-                    elif init_screen.current_place['Temperature']<33 and random.random()>init_screen.current_place['Temperature']/33.:
-                        creation.name='frost flower'
-                        creation.color=155#144
-                    elif init_screen.current_place['Temperature']>=66 and random.random()<init_screen.current_place['Temperature']-65/35.:
-                        creation.name='desert flower'
-                        creation.color=206
-            elif 'skin' in str(l[0]):
-                qty = random.randint(l[2],l[3])
-                creation = skin.duplicate(qty)
-                creation.name=l[0]
-            else:
-                qty = random.randint(l[2],l[3])
-                creation = init_screen.I[l[0]].duplicate(qty)
-            if xy:
-                found_it=0
-                for existing in init_screen.ground_items:
-                    if existing[:2]==xy and existing[2].id==creation.id and existing[2].name==creation.name:
-                        existing[2].qty+=creation.qty
-                        found_it=1
-                        break
-                if not found_it:
-                    init_screen.ground_items.append([xy[0], xy[1], creation])
-            else:
-                return creation
-            found_some += 1
-    if found_some:
-        return 1
-    else:
-        return 0
-
-def random_treasure_chest(grade):
-    a_bag = random.choice(eval('%s_containers' %grade))
-    description = ['old ','mouldy ','ancient ','dirty ','worn ']
-    bag_name = random.choice(description)+a_bag.name.split()[-1]
-    the_bag = a_bag.duplicate(1,bag_name)
-    return the_bag
-
-def random_treasure(grade='small',trove=False):
-    trove_grades={'small':[1,15],'medium':[2,15,30],'large':[3,15,30,45]}
-    if trove:
-        if grade == 'small':
-            treasure_pile = ['small']
-        elif grade == 'medium':
-            treasure_pile = ['small','medium']
-        elif grade == 'large':
-            treasure_pile = ['small','medium','large']
-        the_bag = random_treasure_chest(grade)
-        for a in range(trove_grades[grade][0]):
-            a_treasure = random_treasure(random.choice(treasure_pile))
-            the_bag.effect['contains'].append(a_treasure)
-            the_bag.weight += a_treasure.weight*a_treasure.qty
-        these_money = list(treasure_money)
-        for a in trove_grades[grade][1:]:
-            some_money = random.choice(these_money)
-            these_money.remove(some_money)
-            quantity = random.randint(1,a)
-            the_money = some_money.duplicate(quantity)
-            the_bag.effect['contains'].append(the_money)
-            the_bag.weight += the_money.weight*the_money.qty
-        return the_bag
-    else:
-        metal = random.choice(['iron ','copper ','silver ','gold ','steel '])
-        ancient = random.random()
-        if ancient < 0.05:
-            ancient = 1
-            metal = 'ancient '+metal
-        else:
-            ancient = 0
-        if random.random()<0.2:
-            adding = random.choice(['enameled ','engraved ','notched ',
-                                    '%s encrusted ' %random.choice(['diamond','emerald','sapphire','ruby','pearl','amethyst',
-                                                                    'topaz','tourmaline','garnet','aquamarine','opal',
-                                                                    'turquoise','lapis lazuli'])])
-            metal = adding+metal
-        selected = random.choice(eval('%s_treasure' %grade))
-        new_treasure = selected.duplicate(1,metal+selected.name)
-        if ancient:
-            new_treasure.type.append('ancient')
-        return new_treasure
+                    if learn <= (self.game.player.attr['Int'] - self.game.player.skills['herbalism']/5)/self.game.player.attr['Int']*100:
+                        self.game.player.skills['herbalism'] += 0.05
 
 ## weight,[type],[tool_tag],'weap_type',armour,dmg,name, id, stackable=False, qty=1, effect={}, color=7, tag='?'
 ## Za napitki butilkata(id) e vuv efektite( 'container':id_na_praznata_butilka; 'fill':{'teren':id_na_pulnata_butilka} )!
