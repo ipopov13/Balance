@@ -1,5 +1,4 @@
 import msvcrt
-import message
 import random
 
 class Item:

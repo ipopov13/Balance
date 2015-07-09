@@ -142,7 +142,7 @@ class Game:
         else:
             self.c.text(0,12,'Bag --/--',7)
         if 'dwarf1' in self.player.tool_tags:
-            self.c.text(0,13,'Treasure feeling ' + str(current_place['Treasure']),13)
+            self.c.text(0,13,'Treasure feeling ' + str(self.current_place['Treasure']),13)
         daytime=self.player.turn%2400
         day_tag=''
         day_color=7
@@ -549,7 +549,6 @@ class Game:
         mat_keys=mats.keys()
         selected_recipes={}
         tools_needed={}
-        the_build=''
         for recipe_group in inventory.CrR:
             for r in inventory.CrR[recipe_group][self.player.attr['Cre']]:
                 if recipe_group not in selected_recipes:
@@ -569,7 +568,7 @@ class Game:
                 if mats:
                     for t in mats:
                         if t in needed_mats and mats[t]>=needed_mats[t]:
-                            out=needed_mats.pop(t)
+                            del(needed_mats[t])
                         elif t in needed_mats:
                             needed_mats[t]-=mats[t]
                 if needed_mats:
@@ -922,7 +921,7 @@ class Game:
             try:
                 ty = self.player.inventory[ord(use)-97].type
                 if 'container' in self.player.inventory[ord(use)-97].type:
-                    open_container(self.player.inventory[ord(use)-97])
+                    self.open_container(self.player.inventory[ord(use)-97])
                 elif self.player.inventory[ord(use)-97].effect != {} and ('armour' not in ty and 'weapon' not in ty and 'tool' not in ty):
                     self.player.inventory[ord(use)-97].use_item()
                 if self.player.turn in self.player.land_effects:
@@ -937,14 +936,8 @@ class Game:
         self.c.write('\n You check your equipment:\n (a-p)take off/equip item (1)view inventory\n\n')
         for i in range(len(self.player.equipment)):
             if self.player.equipment[self.player.equip_tags[i]] != []:
-                item_effs = ''
                 try:
-                    item_effs = []
-                    done = [item_effs.extend(x) for x in self.player.equipment[self.player.equip_tags[i]].effect['temp_attr']]
-                    if item_effs:
-                        item_effs = '['+' '.join([str(x) for x in item_effs])+']'
-                    else:
-                        item_effs = ''
+                    item_effs = '[%s]' %(' '.join(self.player.equipment[self.player.equip_tags[i]].effect['temp_attr']))
                 except KeyError:
                     item_effs = ''
                 engrav = ''
@@ -1684,7 +1677,7 @@ class Game:
                 if T[self.land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_c'):
                     self.open_door(doors[0],self.player)
                 elif T[self.land[doors[0][1]-1][doors[0][0]-21]].world_name.endswith('_o'):
-                    self.close_door(doors[0], land[doors[0][1]-1][doors[0][0]-21])
+                    self.close_door(doors[0], self.land[doors[0][1]-1][doors[0][0]-21])
                 return 0
             else:
                 success = self.open_container(containers[0][2])
