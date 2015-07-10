@@ -863,7 +863,7 @@ class Game:
         try:
             if put_in and self.player.inventory[ord(i1)-97] != container:
                 space = self.I[container.id].weight*7 - container.weight
-                drop = self.player.inventory[ord(i1)-97].drop_item('',space)
+                drop = self.player.inventory[ord(i1)-97].drop_item(space)
                 if not drop:
                     self.message.message('cant_fit_in_container')
                     msvcrt.getch()
@@ -889,16 +889,14 @@ class Game:
                 pass
             self.draw_inv()
         if i1 == 'd':
-            self.c.rectangle((0,0,79,1))
-            self.c.pos(0,0)
-            self.c.write(' Which item do you want to drop?')
+            self.message.message('what_to_drop')
             while 1:
                 if msvcrt.kbhit():
                     dr = msvcrt.getch()
                     break
             self.c.rectangle((0,0,79,1))
-            try:
-                drop = self.player.inventory[ord(dr)-97].drop_item('',10000)
+            drop = self.player.inventory[ord(dr)-97].drop_item()
+            if drop!=None:
                 dropped = 0
                 for item in self.ground_items:
                     if item[:2] == self.player.xy and item[2].id == drop.id and item[2].stackable and item[2].name == drop.name:
@@ -906,8 +904,6 @@ class Game:
                         dropped = 1
                 if not dropped:
                     self.ground_items.append([self.player.xy[0], self.player.xy[1],drop])
-            except:
-                pass
             self.draw_inv()
         if i1 == 'e':
             self.draw_equip()
@@ -4582,7 +4578,7 @@ if __name__=='__main__':
                         the_game.player.ride[0].xy=the_game.player.xy[:]
                         the_game.player.backpack-=the_game.player.ride[0].attr['Str']*2
                         while the_game.player.backpack<0:
-                            drop = the_game.player.inventory[-1].drop_item('yes',10000)
+                            drop = the_game.player.inventory[-1].drop_item(forced=True)
                             dropped = 0
                             for item in the_game.ground_items:
                                 if item[:2] == the_game.player.xy and item[2].id == drop.id and item[2].stackable and item[2].name == drop.name:

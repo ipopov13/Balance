@@ -165,6 +165,8 @@ BUGS:
 - dodging an arrow prevents the @ from being redrawn!
 
 TO DO:
+Separate interface (inv/equipment) and real time (combat,ambient) messages
+Ambient messages!
 Make T a property of Game.
 Remove print statements from message funcs
 Get a separate console for the combat buffer so there is no pausing?

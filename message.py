@@ -8,11 +8,11 @@ class Message_system:
         md = {'wall':'You hit a wall!', '?':'What?', 'wait':'You wait.', 'tree':'You walk under a tree.',
               'rock':'You can\'t go through rocks!', 'break_rock':'You smash the rock to pieces!', 'q':'Save the game? (y/n)',
               'ch':'  CHECK!', 'break_wall':'You break down the wall!', 'cut_tree':'You cut the tree down.',
-              'log':'A tree log lays here.', 
+              'log':'A tree log lays here.', 'what_to_drop':' Which item do you want to drop?',
               'water':'You splash into the water.', 'magic_water':'You step into the sparkling water.',
               'no_drink':'There\'s nothing here to drink!','no_pickup':'There\'s nothing here to pick up!',
               'work':'What do you want to interact with?(direction)','direction':'That is not a direction!',
-              'how_much':'How much do you want to drop?','pickup':' How much do you want to take?',
+              'how_much':' How much do you want to drop?','pickup':' How much do you want to take?',
               'sit':'You sit down.','look':"You look around. (press 't' to target)",'unequipable':'That can not be equipped!',
               'takeoff_first':'You have to unequip something first!','cant_work':"You can't work on that.",
               'no_fill':'There is nothing to fill the container with.','nowhere_togo':'You have nowhere to go in that direction.',
@@ -120,7 +120,8 @@ class Message_system:
         try:
             if x not in ['work','no_fill','which_open','how_much','q','pickup','look','ran_away','need_human1&dwarf1','need_dryad3',
                          'no_riding_fighting','save_failed','break_rock','found_gem','found_metal','failed_smelt','clear_build_site',
-                         'cant_fit_container','?','dryad_song','need_human3','not_when_possessed','no_gather','failed_gather']:
+                         'cant_fit_container','?','dryad_song','need_human3','not_when_possessed','no_gather','failed_gather',
+                         'what_to_drop']:
                 self.game.combat_buffer+=' '+md[x]
             else:
                 self.game.c.write(md[x])

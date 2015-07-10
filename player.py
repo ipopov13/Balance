@@ -610,7 +610,7 @@ class Player(Living_thing):
             ## Tegloto koeto se pobira v ranicata e ravno na neinoto teglo po 6.
             self.backpack += item.weight * 6
             while self.backpack < 0:
-                drop = self.inventory[0].drop_item('forced')
+                drop = self.inventory[0].drop_item(forced=True)
                 dropped = 0
                 print ' There\'s no place in your backpack for the %s so you drop it to the ground!\n' %drop.name
                 msvcrt.getch()

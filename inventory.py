@@ -201,8 +201,7 @@ class Item:
                 self.game.player.free_hands += 1
         return i
 
-    ## What is s???
-    def drop_item(self,forced='',s=None):
+    def drop_item(self,forced=False,space_needed=100000):
         if self.qty >1 and not forced:
             self.game.message.message('how_much')
             a = ''
@@ -212,14 +211,12 @@ class Item:
                 if ord(i) in range(48,58):
                     self.game.c.write(i)
                     a += i
-            if self.weight*min([self.qty,int(a)]) > s:
+            if self.weight*min([self.qty,int(a)]) > space_needed or int(a)==0:
                 return None
             i = self.lose_item(int(a))
             duplica = self.duplicate(i)
             return duplica
         else:
-            if self.weight*self.qty > s:
-                return None
             i = self.lose_item(self.qty)
             return self
 
