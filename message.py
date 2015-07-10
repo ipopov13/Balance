@@ -235,7 +235,7 @@ class Message_system:
                 if len(items) > 1:
                     print 'You see several items on the ground.'
                 else:
-                    message('')
+                    self.message('')
                     if qty == 1 and a.name[0].lower() in 'aieo':
                         print md[x] %('an ' + a.name)
                     elif qty == 1 and a.name[0].lower() not in 'aieo':
@@ -243,7 +243,7 @@ class Message_system:
                     else:
                         print md[x] %(a.name+'('+str(qty)+')')
             elif x == 'craft_item':
-                combat_buffer += md[x] %(a.name)
+                self.game.combat_buffer += md[x] %(a.name)
             else:
                 print md[x] %a.name
         except:
@@ -313,5 +313,5 @@ class Message_system:
                 self.game.c.text(0,0,self.game.combat_buffer[:79],7)
                 self.game.combat_buffer = self.game.combat_buffer[79:]
                 if pause:
-                    press = msvcrt.getch()
+                    msvcrt.getch()
                     self.game.c.rectangle((0,0,80,1))

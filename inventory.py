@@ -174,7 +174,7 @@ class Item:
             drop = self.duplicate(qty,name)
             dropped = 0
             self.game.message.use('create_drop',drop)
-            wait = msvcrt.getch()
+            msvcrt.getch()
             for item in self.game.ground_items:
                 if item[:2] == self.game.player.xy and item[2].id == drop.id and item[2].name == drop.name and item[2].stackable:
                     item[2].qty += drop.qty
@@ -231,7 +231,7 @@ class Item:
                     self.game.effect(k,v)
             else:
                 self.game.message.use('over_eat',self)
-                i = msvcrt.getch()
+                msvcrt.getch()
         if 'drink' in self.type:
             if self.game.player.thirst > 0:
                 self.lose_item()
@@ -239,7 +239,7 @@ class Item:
                     self.game.effect(k,v)
             else:
                 self.game.message.use('over_drink',self)
-                i = msvcrt.getch()
+                msvcrt.getch()
 
     def use_item(self,ex=''):
         if 'food' in self.type or 'drink' in self.type or ('raw meat' in self.type and 'ork2' in self.game.player.tool_tags):

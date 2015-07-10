@@ -1,0 +1,450 @@
+Vselena
+
+Vselenata se sustoi ot mnogo svetove, vseki ot koito se generira sluchaino purviq put kogato e poseten. Geroqt
+moje da preskacha ot svqt na svqt s izvurshvaneto na opredelen ritual, ili kogato nameri duha pokrovitel na
+sveta, v koito se namira. Pri prehoda se zapazvat kachestvata na geroq, kakto i vsichkata mu ekipirovka.
+
+Vseki svqt ima harakterni resursi, i predmeti doneseni ot geroq ot drugi svetove mogat da predizvikat uchudvane
+ili strah u jitelite - toi e prishulec tam. Sukrovishta namereni ot geroq na daden sviat nosqt negovoto ime.
+Suotvetno toi moje da zabogatee rqzko, no moje i da go gonqt ot vsqko naseleno mqsto. Tova se opredelq ot nov
+parametur:
+
+Sueverie
+
+To e edno i sushto za celiq svqt i se suhranqva v area0 na matricata - (0,0). Vseki svqt ima i harakterni cherti
+i zapochva s razlichno nivo na vlaga i populaciq, kato tova dava vuzmojnost za pustinni i bezliudni svetove,
+kakto i za svetove-tresavishta s ezera na vseki ekran i gradove po cqlata povurhnost. Razlichen e i razmerut na
+svetovete - ot malkite 10x10 ili 20x20, do 150x150 (koeto znachi 22500-1=22499 ekrana). Za vseki poseten svqt se
+pravi statistika sled kato igrachut go napusne, i se zapazva v direktoriqta sus suhranenite zoni. Zonite na stariq
+svqt se iztrivat.
+
+Svqt
+
+Bez tochno opredeleni granici - generira se sluchaino spored promenqshti se usloviq na sredata - temperatura, vlaga
+i trite sili na balansa - red (horata), priroda i haos. Kogato igrachut suzdade neshto koeto trqbva da se zapazi v
+igralniq svqt, ili iska da se vurne otnovo kum dadeno mqsto, tova mqsto se zapazva s koordinatite si i moje da bude
+dostignato otnovo ako igrachut go potursi (aktivno iska da se vurne tam - ima spisuk na zapomnenite mesta). Za celta
+e nujno da se dobliji po koordinati do mqstoto i da ima malko kusmet (moje da ima umenie za orientirane). Ako nqma
+kusmet moje da se naloji da obikalq malko dokato go nameri.
+
+ILI
+
+Se generira reshetka s opredelena golemina (20x20 ili po-golqma) sus stoinostite za sredata po-dolu i se generira
+sluchaen teren spored tqh, kato vednuj poseteniq teren se zapazva(po-dobre!) ili se generira vinagi sluchaino.
+Promqnata v parametrite e postepenna ot mqsto kum mqsto, kakto i kogato igrachut privnasq promqna!
+
+Moje da ima golemi gradove ot po nqkolko ekrana - v oblasti s visoko nivo na naselenost. Te obache sushto se generirat
+sluchaino vseki put, no igrachut moje da gi zapazi i tursi otnovo.
+
+
+SREDA SPORED USLOVIQTA (TABLICA)
+T - temperatura
+V - vlaga
+N - naselenost
+H - haos
+R - red
+P - priroda
+
+T,V,H,R,P - opredelqt kakuv e terena kato sustav
+N - opredelq dali se sreshtat razumni sushtestva ili samo jivotni i kolko
+
+T\V	niska			umerena			visoka
+niska	Zamruznala pustosh	Snejna ravnina		Ledena pustinq
+umerena	Suha ravnina (step)	Umeren klimat		Blato,reka
+visoka	Pqsuchna pustinq	Savana			Djungla
+
+TERENI
+Spored T se vzemat tereni ot razlichni redove, i se vzemat tolkova kolkoto e silata na mqstoto: ako e pod 33% se
+vzimat purvite dva, ako e mejdu 33 i 66% - purvite tri, i ako e nad 66% - vsichki bez purviq. Tereni sus *
+sa ogranichen broi za vsqka mestnost i se postavqt sled pulnoto generirane na ostanaliq teren.
+
+T\Priroda(low,mid,high-33-66->66)
+snow,	dirt,	grass,	lichen mound,
+grass,	bush,	tree,	mossy rock,
+sand,	grass,	tree,	jungle(no_pass, samo za elfi),
+
+T\Haos
+ice,	dirt,	ice block(no_pass),	frozen tree
+dirt,	d.grass,rock,			mine rock,	d. tree,
+sand,	dirt,	lava			bones
+
+T\Red
+snow,	dirt,	grass,	farmland(2x2 do 4x4)*,	well(1 do 2)*
+dirt,	grass,	log,	farmland(3x3 do 6x6)*,	well(1 do 2)*
+sand,	grass,	log,	well(1 do 3)*
+
+
+H\R		nisuk			sreden			visok
+nisuk
+ P niska	kamunak/planina		malko kushti/hora	mnogo kushti/hora(raznoobrazni profesii)
+ P sredna	trevi/hrasti		ima jivotni/gradini	ima treva/durveta tuk-tam
+ P visoka	gora/djungla		selo v gorata		gorski grad(elfi)
+sreden
+ P niska	duhove&goblini,peshteri	hora&goblini,kal	grad s prestupnost(kradci)
+		kosti po zemqta
+ P sredna	kolibi v stepta		v stepta		s treva&durveta
+ P visoka	gorsko selishte		v gorata		v gorata
+visok
+ P niska	+troli,orki,planini	+ruini			grad na bezzakonie(+ubiici,banditi...)
+ P sredna	v stepta		+ruini			treva i hrasti
+ P visoka	v gorata		+ruini			grad na banditi/orki v gorata
+
+Sistema na Balansa
+
+V sveta se borqt postoqnno tri sili - reda, prirodata i haosa. Vsqka ot tqh pridava opredelen vid na sushtestvata,
+koito i prinadlejat. Tq ne gi pritejava, prosto te se prichislqvat kum nqkoq ot silite spored deistviqta si, kato
+tova promenq i oblika im. Taka igrachut moje da se prevurne ot elf vuv trol, a ot trola v duh na reda, spored tova
+kakvi deistviq izvurshva i kak te povliqvat balansa na silite. Tova e prisushto ne samo na igracha, no i na vsichki
+sushtestva koito toi sreshta v igrata, kato vida na sushtestvata, koito se sreshtat na dadeno mqsto zavisi ot balansa
+na silite tam. Samo igrachut moje da promenq tozi balans - tova e negovata harakterna i unikalna osobenost.
+
+Vsqko deistvie na igracha vliqe polojitelno ili otricatelno vurhu trite sili, kato e vuzmojno da se vliqe i na trite
+ednovremenno. Tova promenq balansa na silite na mqstoto, kudeto se namira geroq, i sushtevremenno balansa v samiq
+duh na geroq, kato taka toi moje da se prevurne v neshto razlichno, po podhodqshto na deistviqta mu.
+
+Deistviqta na geroq vse oshte promenqt kachestvata mu, no granicite im se zadavat ot balansa na silite v nego. Taka
+edin trol moje da ima sila ot 15 do 25, spored tova kolko haos e natrupal v sebe si.
+
+
+Vzaimodeistvie mejdu igracha i sveta
+
+Geroqt ima tri osnovni nachina na deistvie, otgovarqshti na trite sili. Tova znachi che igrachut nastroiva
+deistviqta na geroq spored jelanieto si v momenta, sled koeto izpolzva universalna komanda za vzaimodeistvie.
+Spored balansa na silite v geroq i v predmeta, s koito toi vzaimodeistva (tozi balans e
+momentniq balans na mqstoto), se poluchava razlichen rezultat. Vsqko vzaimodeistvie vodi do promqna v balansa na
+silite v igracha i v mqstoto, kakto i pridvijva igracha kum opredelen oblik. Kogato oblikut stane preobladavasht,
+geroq se transformira postepenno v takova sushtestvo. Nqkoi oblici sa protivopolojni, i ne mogat da prisustvat
+ednovremenno v geroq, dokato drugi sa neutralni, ili daje simbiotichni (koeto znachi che efektut im se uvelichava,
+kogato prisustvat ednovremenno v geroq). Igrachut moje po vsqko vreme da proveri balansa na silite i oblicite v
+geroq - tova e osnovnata stranica na geroq. Vtorostepennata stranica s kachestvata i umeniqta e tazi, v koqto
+igrachut moje da proveri dokolko geroqt mu izpolzva vuzmojnostite na momentniq si oblik.
+
+Kogato igrachut vzaimodeistva sus sushtestvo se vzima predvid dali vzaimodeistvieto e agresivno ili ne i kakva
+e preobladavashtata sila v geroq, a ne nastroikata na igracha. Vuzmojno e igrachut da iska da napadne/udari
+drugoto sushtestvo, no prirodata na geroq (stava igra na dumi) da ne go pozvoli, i vmesto tova da se poluchi
+verbalna obida ili opit za krajba (koeto pak moje da dovede do bitka).
+
+VZAIMODEISTVIQ (tablica)
+Agresivni: Kogato e otbelqzan oblik toi pecheli, a vsichki oblici na silata koqto se gubi sushto gubqt sus
+sushtite modifikatori! Dopulnitelno se pechelqt tochki spored vida na pobedenoto sushtestvo ako to e sred
+slednite rasi:
+
+protivnik -	tochki za oblika:
+Djudje -	Trol
+Trol -		Djudje
+duh na reda -	duh na haosa
+duh na haosa -	duh na reda
+priroden duh -	goblin
+driada -	goblin
+feq -		goblin
+kraken -	voden elemental
+voden elemental-kraken
+
+Efekti:							Oblici:
+kogato igrachut e P:
+	i sushtestvoto e P:
+		Ako e nujno (gladen e i protivnikut e jivotno) - +P,-0.25RH, 	+P1
+		Ako ne e nujno - +H, -2P, -R, 		+H1
+	i sushtestvoto e R:
+		Ako e RH - +P, -R, -0.25H		+0.5P1
+		Ako e RP/R - -P, -R, +H			+0.5H1
+	i sushtestvoto e H:
+		+P,-H,+0.25R				+P1
+kogato igrachut e R:
+	i sushtestvoto e P:
+		Ako e PH - +R, -P, -0.25H		+0.5R1
+		Ako e PR/P - -R,-P,+H			+0.5H1
+	i sushtestvoto e R:
+		-2R, +H, -0.5P				+2H1
+	i sushtestvoto e H:
+		+R,-H,+0.25P				+R1
+kogato igrachut e H:
+	i sushtestvoto e P:
+		+H,-P,-0.25R				+H1
+	i sushtestvoto e R:
+		+H,-R,-0.25P				+H1
+	i sushtestvoto e H:
+		nishto					+0.25H1
+
+Mirni:
+Nqmq tochkov efekt ot mirnite deistviq - govorene, priemane na zadachi. Ima ot turguvaneto (+R) i izpulnenieto
+na zadachi (spored sushtestvoto i zadachata)
+
+VZAIMODEISTVIQ SUS SREDATA
+Vsqko vzaimodeistvie e vpisano v samiq teren - efektite varirat.
+
+Igrach\sreda	P	R	H
+	P	+P,-H	+P,-H	+P,-H
+	R	+R,-H	+R,-H	+R,-H
+	H	+H,-PR	+H,-PR	+H,-PR
+
+
+OBILICI & SILI (tablica)
+
+Obshitiqt procent na oblicite na dadena sila ne moje da nadhvurlq procenta na silata. Kogato se izvurshva deistvie s
+predpochitan oblik se pecheli toi, a drugite namalqvat ako nqma izlishni procenti. Ako se dostigne nivo 100% sila i
+100% na edin oblik v neq moje da se trupat tochki na drugi oblici, kato procenta na silata dostiga 200%, a pokachvaneto
+e dva puti po-bavno. Ako se dostigne 200% i po 100% na dva oblika procesut moje da se povtori, kato pokachvaneto e
+oshte po-bavno(3 puti, 4 puti...).
+Igrach v takova polojenie gubi cqloto natrupano kolichestvo sila i dopulnitelni oblici i se vrushta na 99% sila i 99%
+na purviq si oblik ako napravi greshno deistvie i zagubi sila.
+
+Naklonnost	Red		Haos		Priroda
+nad zemqta	Chovek		Ork		Elf
+pod zemqta	Djudje		Trol		Gnom
+duhovna		Duh na reda	Duh na haosa	Priroden duh
+prirodna			Goblin		Driada
+vodna				Kraken		voden elemental
+vuzdushna			Imp		Feq
+
+Kachestvata koito pridavat razlichnite oblici sa raznoobrazni i se opredelqt po procenta na oblika v geroq. Ako ima
+50% ork i 20% trol, silata na geroq shte e: 50%*18+20%*20=9+4=13. Kachestvata na igracha priemat nai-visokite
+stoinosti na prinadlejashtite mu oblici, kogato ima oblik na 100%, toest 100% trol sus 50% duh na haosa shte ima
+Str 20, a ne 27(+50%*15), no Int 9(50%*18), a ne 8(100%*8).
+
+kachestva	Str	Dex	End	Int	Cre	Mnd
+
+Chovek	14	16	14	14	20	13
+Djudje	18	12	16	14	20	12
+Duh na R	12	14	10	18	18	20
+
+Ork		18	13	18	10	5	12
+Trol		20	4	20	8	5	8
+Duh na H	15	12	13	18	7	20
+Goblin	11	17	15	11	10	13
+Kraken	19	14	17	15	5	13
+Imp		10	16	15	15	15	15
+
+Elf		15	20	16	17	5	15
+Gnom		12	14	14	20	5	15
+Duh na P	12	18	10	18	8	20
+Driada	10	20	10	17	10	15
+Voden El	16	17	18	14	5	13
+Feq		8	19	9	17	8	18
+
+
+TERENI I DEISTVIQ VURHU TQH
+* - iziskva predmeti/instrumenti
+otdolu sa oblicite pecheleshti ot deistvieto, v '' e glavniq oblik,koito pecheli ako nqma izlishni tochki za oblik.
+Nqkoi deistviq moje da vajat za poveche ot edin teren - vpisvat se v terena i nosqt suotvetniq oblik
+
+		priroda		red		haos
+dirt		zasqvane*	prekopavane*	kopaene*
+		P'1'34-H	R1-0.5P		H123'4'-P
+grass		pochistvane	kopaene*	kopaene*
+		P1'3'4-H	R1-0.5P		H123'4'6-0.5R-P
+bones		zatrupvane*	kopaene*	rovene
+		P3-H		R1		H4
+farmland	zasqvane*	zasqvane*	razravqne
+		P3-H		R1-H		H3-PR
+diseased grass	lekuvane*	izgarqne*	stupkvane
+		P1-H		R'1'2-0.25P-H	H4-P-0.25R
+tree		grija		otsichane*	podpalvane*
+		P13'4'6-H	R1-0.5H-P	H14'6'-R-P
+diseased tree	lekuvane*	izgarqne*	izgarqne*
+		P13'4'-H	R'1'2-H-0.5P	H6-P-R
+frozen tree	razmrazqvane*	razmrazqvane*	subarqne*
+		P4-0.5H		R3-0.5H	H2-PR	H1'2'34-P-R
+jungle	forage	otsichane*	podpalvane*
+		P1-H-0.5R	R1-P-0.5H	H6-PR
+bush		foraging	iztrugvane	podpalvane*
+		P1-HR		R1-P		H6-PR
+lichen		call the seed	razkopavane*	razrushavane
+		P2-H0.5R	R2-P		H3-P
+well		pochistvane	pochistvane	razrushavane
+		P6-H		R3-H		H2-PR
+mossy rock/rock	dokosvane	miniorstvo*	natroshavane*
+		P'2'36-H	R2-0.5P-H	H1'2'-R-P
+mine rock	dokosvane	miniorstvo*	natroshavane*
+		P'2'36-H	R2-0.5P-H	H1'2'-R-P
+wall		ukrasqvane*	podsilvane*	subarqne*
+		P134'6'-H	R2-H		H'2'34-R-P
+wooden fence	ukrasa*		podsilvane*	subarqne
+		P6-H		R3-H0.5P	H1-RP
+swamp		otvodnqvane*	otvodnqvane*	razkopavane*
+		P5-H		R1-H		H5-PR
+snow		razchistvane*	razchistvane*	razravqne
+		P3-H		R3-H		H4-0.25R0.25P
+ice		razmrazqvane*	razbivane*	razchupvane*
+		P5-H		R2-H		H5-0.5P0.5R
+ice block	raztapqne*	razbivane*	razbivane*
+		P5		R2		H5
+pavement	mahane na	popravka*	razrivane*
+		kamuka*
+		P'2'34-R-0.5H	R2-H-0.5P	H2'3'4-P-R
+sand		polaga pochva*	razkopavane*	razravqne*
+		P23'4'-H	R2-H-0.25P	H'3'45-0.5P-0.5R
+log		grija za novi	narqzvane*	podpalvane*
+		izrastuci
+		P13'4'6-H	R1-P		H14'6'-P-R
+water		pochistvane	preravqne na	zamursqvane
+				dunoto
+		P13'5'-H	R2-0.5P		H134'5'-P-0.5R
+dirty water	pochistvane	preravqne	zamursqvane
+		P13'5'-H	R2-0.5P		H134'5'-P-0.5R
+magic water	ritualno piene	preravqne	zamursqvane
+		P5-H		R2-0.5P		H134'5'-P-0.5R
+waterfall	pochistvane	pregrajdane*	razrushavane*
+		P13'5'-H	R2-P		H5-P-R
+lava		ritual za	ritual za	ritual za vuzdigane
+		uspokoqvane	podtiskane	na ogunq
+		P3-H		R3-H-0.5P	H6-P-R
+door		ukrasqvane*	podsilvane*	razbivane*/povrejdane
+		P1'6'-H		R3-H-0.25P	H1'2'45/3-P-R
+stairs		ukrasqvane*	popravka*	razrushavane*
+		P1'6'-H		R12'3'-H	H12'3'45-P-R
+
+Priroda	111112223333344444555555566666
+Red		111111111111222222222233333333
+Haos		122222223333344444555555566666
+
+
+
+KACHESTVA I UMENIQ, PRIDAVANI OT OBLICITE I SILITE (tablica)
+
+Umeniqta se pridobivat na 30, 60 i 90% prinadlejnost s oblika. Ako se dostignat 100% ima bonus za geroq. Moje da ima
+elitni oblici, koito se postigat s postoqnstvo v deistviqta i vsqko greshno deistvie moje da gi razvali. Oblici s
+maksimalni tochki mogat da sreshtat silni oponenti ot drugi sili v sledstvie na tehni deistviq (trupat se tochki ot
+tqh i v random moment izbiva v napadenie/zasada)
+
+Standartniq maksimum na vsichki kachestva na geroq e 5, bez ogled na oblika, tova e i nachalnoto mu sustoqnie. Minimuma
+e 1, maksimuma e spored tochkite na oblicite.
+
+VSICHKI AVTOMATICHNI UMENIQ SA S OPREDELEN SHANS, RAVEN NA (% NA OBLIKA)/2! Toest 25% goblin razbolqva s 12.5% shans
+durvetata pod koito minava i trevata po koqto stupva. Avtomatichnite umeniq rabotqt ako geroq e v suotvetniq rejim
+na deistvie!
+
+Red			30%				60%						90%
+Chovek		*stroej s kamuk		*moje da opitomqva jivotni i da	*moje da zapisva nabliudeniqta si
+							gi izpolzva za qzdene,vprqgane,	za neshta ot sveta v knigi, kato
+							ohrana i hrana(mlqko,...)		taka trupa znaniq za suotvetnata
+							(sled talk&attack)			sila/rasa. Za vsqka sila i rasa
+													trqbva otdelna kniga,i ako ostavi
+													knigata gubi znaniqta(te sa v neq).
+													taka moje da ima biblioteka s rasi i
+													da si izbira,kato knigite nosqt
+													umeniqta na rasite (dobavq race mod)
+													Dali bonusa na knigata se vdiga
+													zavisi ot negovite sobstveni tochki
+													(po-dobro razbirane ako gi ima)
+													Kogato obache gubi tochki moje da
+													stane otricatelen! Sushtestva s
+													tezi rasi/sili atakuvat avtomatichno
+													s ogled samo na stealth
+													knigata ima max 100%
+Djudje		*stroej s kamuk,moje da useshta	*izpolzva skupocenni ka-*po-golqm shans za namirane
+			treasure modifiera			muni za da suzdava po-	na skupocenni metali i
+									dobri predmeti		kamuni pri miniorstvo, moje da zamestva
+													jelqzoto s drugi metali
+													-moje da prokopae prohod pod zemqta
+													do peshterata na duhovete
+Duh na reda		*minavane prez steni i vrati	moje da postavi totem za	*haotichnite bqgat ot nego s shans
+								progonvane na haotichni		random(1,30)>creature.Mind
+								sushtestva(+duh,+R-H-P,+R na
+								mqstoto)(posle pochiva dulgo)
+
+Haos
+Ork			*moje da plashi protivnika	*moje da se hrani sus vsqkakvoima 25%*%ork*(H-max(P,R))
+			si s shans=(H na orka)/		surovo meso(+ork,+H-RP)		shans da ne ponese shteti, kogato
+			(2*(max(P,R)protivnik + Hork))					go udrqt
+Trol			*subarqne na steni,		*poema -2 dmg prez noshtta	moje da subori vsichki sgradi,
+			vrati i durveta s			no se dviji dva puti po-bavno	sushtestva i durveta okolo sebe si
+			goli ruce				prez denq				s edin zamah s orujie (giant hammer)
+													kato za vseki 2 suboreni obekta
+													pecheli +edna krachka za sledvashtiq
+													hod(+trol,+H-RP)
+Duh na haosa	*minavane prez steni i vrati	*nosi zaraza na trevata i	moje da pokvarqva drugi sushtestva
+								durvetata pod koito minava	kato efekta vurhu haosa na mqstoto e
+								(+duh,+H-P-R)			po-golqm ot malkite shteti(+H-RP,
+													+duh na haosa)(dulga pochivka)
+Goblin		*moje da se promukva prez	*avtomatichno			moje da izvurshi ritual, koito
+			noshtta i da krade ot drugi	zamursqvane na voda, prez	privlicha oshte (%goblin+(H-(P+R))
+			sushtestva (+goblin,+H-PR)	koqto minava (tochki se broqt)/20 goblina, koito
+			(sled talk&attack)		(+goblin,+H-P-R) i		atakuvat vsichko jivo(+H na mqstoto,
+								moje da pie mrusna voda		+goblin,+H-RP) (dulga pochivka)
+Kraken		*neogranicheno pluvane		*moje da zavlicha sushtestva	moje da predizvika prolivni dujdove
+								pod vodata				i zablatqvane na terena,kudeto se
+								prez noshtta(+kraken,+H-RP)	namira(+kraken,+H-RP,+vlaga)
+Imp			*moje da podpalva s magiq	moje da vliza v mislite na	moje da izmagiosa kula v koqto da
+								predrazpolojeni sushtestva	privleche chovek i da mu predlaga
+								dokato spqt i da im vliqe	sila i vlast,suzdavaiki despotichen
+								(razlichni komandi)		magiosnik,nakraq vodeiki go do
+													unishtojenie(golqmo vlianie,dulgo
+													i kompleksno deistvie)
+
+Priroda
+Elf			*ne go napadat jivotni (i ne	*moje da se promukva do vraga	*ima % shans da porazi protivnik sus
+			bqgat ot nego)			ako e v gorata (+elf) i vijda	edna strela (ako e v gorata+25%)
+								vsichki sushtestva v gorata	=HnaVraga/4 kato tova ne pravi
+													drugite vrajdebni kum nego
+Gnom			*moje da minava prez kamuni v	moje da izvlicha sk.kamuni	moje da dostigne peshterata na
+			prirodata i te stavat mossy	ot skalite s shans 5% i gi	duhovete direktno s lapis lazuli
+			(broqt se tochki)		izpolzva za razlichni efekti	ot vseki kamuk v sveta
+Priroden duh	*avtomatichno lekuva bolna	*moje da se vselqva v jivotni,*Moje da priema obraza na jivotni v
+			treva (pecheli tochki)		da napada s tqh haotichni	koito se e vselqval (nauchava gi
+								sushtestva(ako napadne takova	postepenno) i da igrae domashno
+								pri koeto haosa ne e nai-	pitomno jivotno okolo horata
+								izrazen gubi oblik i P) ili	(silno povishava N na mqstoto)
+								da gi izpolzva za maskirovka	
+Driada		*moje da lekuva durveta		*moje da sujivqva otsecheni	*moje da suzdade durvo/jungla na
+			s tochki		durveta (log) kato standartno	izbrano mqsto i da 'izraste'
+		za driada avtomatichno		deistvie			predmet ot durvo
+										(+driada,+P-H0.5R) Stava s peene kato
+										efektut zavisi ot energiqta i. Ako stoi
+										pod durvo puk pravi predmet ot durvo
+voden elemental	*nevidim vuv vodata	*moje da se za-			*ako bude svalen do 0 jivot ne umira
+					sishta kato stoi vuv vodata	a se razpada i popiva v pochvata,
+					vmesto da qde, no zamursenata	kato trqbva da nameri M.voda, v koqto
+					voda e otrovna za nego(trqbva	da se steche i oformi otnovo.
+					da q pochisti predi da vleze)
+Feq			*avtomatichno pokulvane			*+magicheski venci (den&nosht)	*moje da napravi
+			na treva po zemqta (dirt,farm),	+magicheski prusteni(win&sum)		roklq ot redki cvetq i ako
+			po koqto minava										q udarqt shtetata se vrushta
+			Venec nevidimka										+drugite efekti sa vechni
+
+
+MAGIQ
+
+Magicheskite sposobnosti na geroq se opredelqt ot dve kachestva - Inteligence i Mind. Inteligence opredelq vuzmojnostta
+na geroq da izuchava teoriqta na magiqta (s kniga), Mind dava surovata sila na uma nujna za izvurshvaneto na magiqta.
+
+QUESTOVE
+
+Geroqt moje da poluchava zadachi ot vsqko NPC s koeto ima vuzmojnostta da govori (toest ne e hostile). Zadachite vinagi
+sa svurzani s vida na sushtestvoto - driadata shte pomoli da se pogrijish za durvetata naokolo, ili da otidesh nqkude i
+da izlekuvash zarazenata gora, dokato edin ork moje da iska da ubiesh i izqdesh nqkoe sushtestvo. Questovete shte sa dva
+vida:
+
+- Neogranicheni: Zadachata e da okajesh vliqnie vurhu opredelen vid teren na opredeleno mqsto. Osven ako vuprosniq teren
+ne izchezne (svurshat kamunite ili prochistish/izlekuvash vsichko) deistvieto moje da produljava bezkrai.
+- Ogranicheni: Obvurzani sus specifichna cel - da donesesh 10 domata, da otsechesh opredeleno durvo i t.n.
+
+Vuznagrajdenieto za izpulnena zadacha zavisi ot NPC-to koeto q dava.
+
+Po edin quest za vsqka stepen na attunement kum suotvetnata rasa:
+
+1) ot 0% do 59.99% - igrachut e chirak na NPCto, pecheli troino poveche oblik kogato izvurshva deistviqta taka che
+maistora da gi vijda, dvoino ako gi izvurshva v sushtata mestnost, no ne go vijda. NPCto stava non-random. Za vseki
+1200 hoda izvurshena rabota (v koqto i da e mestnost) maistora otiva do igracha i mu dava nagrada ili zaplashtane
+za usiliqta. Ako igrachut e otishul drugade toi trqbva da se vurne do mestnostta kudeto e sreshtnal maistora. Nagradata
+za Order obiknoveno e pari, za Nature - hrana ili dreha, za Chaos - orujie/bronq.
+
+2) ot 60% do 89.99% - igrachut poluchava zadachi ot NPCto, svurzani s vida i umeniqta mu:
+
+Chovek	da opitomi jivotno
+Djudje	da stroi/pravi predmeti
+Duh na R	da povishi reda na dadeno mqsto s 5 tochki (s totem?)
+
+Ork		da ubie sushtestvo; nadqjdane sus surovo meso
+Trol		da subarq durveta/steni
+Duh na H	da zarazi vsichki durveta na dadeno mqsto
+Goblin	da otkradne tri predmeta, da zamursi voda
+Kraken	da udavi nqkolko sushtestva
+Imp		da nakara nqkoe sushtestvo da ubie drugo
+
+Elf		da lovuva s respect kum jivotnite
+Gnom		da subere skupocenni kamuni
+Duh na P	da se vseli v jivotno i da izsledva mqsto na haosa/reda
+Driada	da sujivqva durveta
+Voden El	da prekara v meditaciq edna nosht vuv vodata
+Feq		???

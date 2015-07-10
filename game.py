@@ -1157,7 +1157,7 @@ class Game:
     def tame(self,animal):
         diff=animal.attr['tame'][1]
         if animal.attr['tame'][2] not in [i.id for i in self.player.inventory]:
-            self.message.use('taming_item',I[animal.attr['tame'][2]])
+            self.message.use('taming_item',self.I[animal.attr['tame'][2]])
             return 0
         chance=random.randint(1,100)
         if chance+self.player.forces['Nature']>=diff:
@@ -1201,7 +1201,7 @@ class Game:
             elif ch_mode.lower()=='b':
                 self.message.message('')
                 animal.mode='standing'
-                animal.attr['area']=current_area
+                animal.attr['area']=self.current_area
                 self.message.creature('command_stay',animal)
             elif ch_mode.lower()=='c':
                 self.message.message('')
@@ -1230,7 +1230,7 @@ class Game:
                 elif chosen_food and animal.food==100:
                     self.message.message('full_animal')
                 else:
-                    self.message.use('feed_item',I[animal.attr['tame'][2]])
+                    self.message.use('feed_item',self.I[animal.attr['tame'][2]])
             elif ch_action.lower()=='b':
                 self.message.message('')
                 if animal.attr['tame'][0]=='farm':
@@ -1487,12 +1487,12 @@ class Game:
                     self.c.write('  You can offer:                   Chosen:  You can get:\n\n')
                     for x in offering:
                         self.c.text(1,6+offering.index(x),'%s)%-15s %d at %.2f cp'
-                               %(chr(97+offering.index(x)),x.name.capitalize()[:15],x.qty,get_price(x,target,1)))
+                               %(chr(97+offering.index(x)),x.name.capitalize()[:15],x.qty,self.get_price(x,target,1)))
                         if x in chosen:
                             self.c.text(36,6+offering.index(x),str(chosen[x]))
                     for x in getting:
                         self.c.text(43,6+getting.index(x),'%s)%-15s %d at %.2f cp'
-                               %(chr(65+getting.index(x)),x.name.capitalize()[:15],x.qty,get_price(x,target,0)))
+                               %(chr(65+getting.index(x)),x.name.capitalize()[:15],x.qty,self.get_price(x,target,0)))
                         if x in chosen:
                             self.c.text(39,6+getting.index(x),str(chosen[x]))
                     self.c.text(2,22,'a..z/A..Z - select items; trade with SPACE; exit with !; reset with 0.')
@@ -1503,12 +1503,12 @@ class Game:
                         old=chosen.get(getting[ord(i)-65],0)
                         chosen[getting[ord(i)-65]]=min([chosen.get(getting[ord(i)-65],0)+1,getting[ord(i)-65].qty])
                         if old!=chosen[getting[ord(i)-65]]:
-                            balance-=get_price(getting[ord(i)-65],target,0)
+                            balance-=self.get_price(getting[ord(i)-65],target,0)
                     elif 'a'<=i<chr(97+len(offering)):
                         old=chosen.get(offering[ord(i)-97],0)
                         chosen[offering[ord(i)-97]]=min([chosen.get(offering[ord(i)-97],0)+1,offering[ord(i)-97].qty])
                         if old!=chosen[offering[ord(i)-97]]:
-                            balance+=get_price(offering[ord(i)-97],target,1)
+                            balance+=self.get_price(offering[ord(i)-97],target,1)
                     elif i=='!':
                         break
                     elif i=='0':
@@ -1697,7 +1697,7 @@ class Game:
                     if T[self.land[target[1]-1][target[0]-21]].world_name.endswith('_c'):
                         self.open_door(target,self.player)
                     elif T[self.land[target[1]-1][target[0]-21]].world_name.endswith('_o'):
-                        self.close_door(target, land[target[1]-1][target[0]-21])
+                        self.close_door(target, self.land[target[1]-1][target[0]-21])
                     return 0
                 else:
                     nothing = 1
@@ -1991,7 +1991,6 @@ class Game:
         fl=glob('*')
         t = 0
         i = ''
-        f = ''
         while t == 0:
             self.c.page()
             self.c.write('''
@@ -2017,7 +2016,7 @@ class Game:
                 while ord(i) != 13:
                     i = msvcrt.getch()
                     if ord(i) in range(65,91) or ord(i) in range(97,123) or ord(i) == 46:
-                        c.write(i)
+                        self.c.write(i)
                         a += i
                 self.load_terr(a)
         self.redraw_screen()
@@ -2121,7 +2120,7 @@ class Game:
             self.player.name = a
             if self.player.name in fl:
                 print '\n  Character savefile already exists!'
-                i1=msvcrt.getch()
+                msvcrt.getch()
             else:
                 break
         os.mkdir(os.curdir+'//%s_dir' %(a))
@@ -2148,10 +2147,9 @@ class Game:
                     msvcrt.getch()
                 else:
                     self.message.creature('no_escape',0)
-                    return 0
-        if area != 'area0':
-            old_temp=current_place['Temperature']
-            places = open('%s//%s_dir//new_%s.dat'%(os.curdir,self.player.name,current_area), 'w')
+        elif area != 'area0':
+            old_temp=self.current_place['Temperature']
+            places = open('%s//%s_dir//new_%s.dat'%(os.curdir,self.player.name,self.current_area), 'w')
             pickle.dump(self.ground_items, places)
             pickle.dump(self.current_place, places)
             pickle.dump(self.terrain_type, places)
@@ -2165,7 +2163,7 @@ class Game:
                     creatures_left.append(creature)
             pickle.dump(creatures_left, places)
             if self.current_area not in self.player.known_areas:
-                self.player.known_areas.append(current_area)
+                self.player.known_areas.append(self.current_area)
             places.close()
             self.new_terr(area,direction)
             self.draw_hud()
@@ -2318,7 +2316,7 @@ class Game:
                                         for each_other in self.all_creatures:
                                             if each_other.force==creature.force and (creature.t=='sentient' and each_other.t=='sentient') and not (creature.force=='Chaos' and attacker.mode=='Chaos'):
                                                 each_other.mode='hostile'
-                                resisted=get_resisted_damage(creature)
+                                resisted=self.get_resisted_damage(creature)
                                 damage = random.randint(0,max([1,attacker.attr['Dex']/5]))+attacker.weapon_dmg+add_dmg+bullet.dmg-resisted
                                 if damage < 1:
                                     damage = 0
@@ -2530,7 +2528,6 @@ class Game:
             terr = msvcrt.getch()
             return 0,0
         self.c.page()
-        land = []
         for i in range(23):
             self.land.append(terr.read(58))
             terr.read(1)
@@ -2555,17 +2552,6 @@ class Game:
         for c in self.all_creatures:
             max_id=max([max_id,c.game_id])
             creature_coords.append(c.xy)
-        for fol in self.player.followers+self.player.ride+self.player.possessed:
-            if fol.mode!='standing':
-                self.all_beings.append(fol)
-                self.all_creatures.append(fol)
-                fol.game_id=max_id+1
-                max_id+=1
-            if fol.mode=='standing' and fol.attr['area']==area:
-                self.all_beings.append(fol)
-                self.all_creatures.append(fol)
-                fol.game_id=max_id+1
-                max_id+=1
         self.hidden = pickle.load(terr)
         for one in self.hidden:
             for two in self.all_creatures:
@@ -2584,6 +2570,17 @@ class Game:
         self.current_place = pickle.load(terr)
         self.treasure_modifier = pickle.load(terr)
         self.T_matrix = pickle.load(terr)
+        for fol in self.player.followers+self.player.ride+self.player.possessed:
+            if fol.mode!='standing':
+                self.all_beings.append(fol)
+                self.all_creatures.append(fol)
+                fol.game_id=max_id+1
+                max_id+=1
+            if fol.mode=='standing' and fol.attr['area']==self.current_area:
+                self.all_beings.append(fol)
+                self.all_creatures.append(fol)
+                fol.game_id=max_id+1
+                max_id+=1
         terr.close()
 
     ## Load-va nachalnata mestnost
@@ -2661,7 +2658,7 @@ class Game:
         self.c.page()
         area_number=coords[0]*self.map_size+coords[1]
         self.current_area = 'area%s' %(area_number)
-        treasure_modifier = self.T_matrix[coords[0]][coords[1]]['Treasure']
+        self.treasure_modifier = self.T_matrix[coords[0]][coords[1]]['Treasure']
         if area_number+self.map_size>(self.map_size*self.map_size-1):
             down_dir=0
         else:
@@ -2813,7 +2810,7 @@ class Game:
         game_ids=[]
         creature_coords=[self.player.xy[:]]
         if random.random()<tp['Water']/100.:
-            terrain_type='w'
+            self.terrain_type='w'
             size=random.randint(7,min([15,max([7,tp['Water']/5])]))
             spot=[random.randint(3,19-size),random.randint(3,53-size)]
             land_features[tuple(spot)]=size
@@ -2859,7 +2856,7 @@ class Game:
                     self.all_creatures.append(creation)
                     game_ids.append(game_id)
         else:
-            terrain_type=''
+            self.terrain_type=''
         if tp['Population']>19:
             if land_features=={}:
                 wells=random.randint(0,max([tp['Temperature']/30,1]))
@@ -3105,12 +3102,12 @@ class Game:
                     return 0
             self.ground_items = pickle.load(terr)
             self.current_place = pickle.load(terr)
-            tp=current_place
+            tp=self.current_place
             self.c.page()
             self.terrain_type = pickle.load(terr)
             self.current_area = pickle.load(terr)
             self.directions = pickle.load(terr)
-            if terrain_type=='w':
+            if self.terrain_type=='w':
                 waters=36
             else:
                 waters=0
@@ -3120,7 +3117,7 @@ class Game:
             for x in range(1,24):
                 for y in range(21,79):
                     self.c.scroll((y,x,y+1,x+1), 1, 1, T[self.land[x-1][y-21]].colour, T[self.land[x-1][y-21]].char)
-            new_coords = map_coords.split(';')
+            new_coords = self.map_coords.split(';')
             for i in range(6):
                 new_coords[i] = new_coords[i].split(' ')
             spot=[int(new_coords[direction][0]),int(new_coords[direction][1])]
@@ -3243,7 +3240,7 @@ class Game:
                             game_ids.append(game_id)
                             x = random.randint(21,78)
                             y = random.randint(1,23)
-                            while [x,y] in creature_coords or not T[land[y-1][x-21]].pass_through or T[land[y-1][x-21]].id in thing.terr_restr:
+                            while [x,y] in creature_coords or not T[self.land[y-1][x-21]].pass_through or T[self.land[y-1][x-21]].id in thing.terr_restr:
                                 x = random.randint(21,78)
                                 y = random.randint(1,23)
                             creation = thing.duplicate(x,y,game_id,thing.force,thing.race)
@@ -3262,20 +3259,20 @@ class Game:
                 self.ground_items = []
                 self.all_beings = [self.player]
                 self.unknown_Bterrain(coords,direction)
-                predominant_f={current_place['Nature']:'Nature',current_place['Order']:'Order',
-                               current_place['Chaos']:'Chaos'}
+                predominant_f={self.current_place['Nature']:'Nature',self.current_place['Order']:'Order',
+                               self.current_place['Chaos']:'Chaos'}
                 self.place_descriptions['area%s' %(an)] = 'A place of %s.' %(predominant_f[max(predominant_f.keys())])
             else:
                 an=int(an)
-                coords=[an/map_size,an%map_size]
+                coords=[an/self.map_size,an%self.map_size]
                 self.current_place=self.T_matrix[coords[0]][coords[1]]
                 self.all_creatures = []
                 self.hidden = []
                 self.ground_items = []
                 self.all_beings = [self.player]
                 self.unknown_terrain(coords,direction)
-                predominant_f={T_matrix[coords[0]][coords[1]]['Nature']:'Nature',T_matrix[coords[0]][coords[1]]['Order']:'Order',
-                               T_matrix[coords[0]][coords[1]]['Chaos']:'Chaos'}
+                predominant_f={self.T_matrix[coords[0]][coords[1]]['Nature']:'Nature',self.T_matrix[coords[0]][coords[1]]['Order']:'Order',
+                               self.T_matrix[coords[0]][coords[1]]['Chaos']:'Chaos'}
                 self.place_descriptions['area%s' %(an)] = 'A place of %s.' %(predominant_f[max(predominant_f.keys())])
         max_id=0
         creature_coords=[]
@@ -3294,7 +3291,7 @@ class Game:
                 else:
                     x = random.randint(max([self.player.xy[0]-3,21]),min([78,self.player.xy[0]+3]))
                     y = random.randint(max([self.player.xy[1]-3,1]),min([23,self.player.xy[1]+3]))
-                    while [x,y] in creature_coords or not T[land[y-1][x-21]].pass_through or T[land[y-1][x-21]].id in fol.terr_restr:
+                    while [x,y] in creature_coords or not T[self.land[y-1][x-21]].pass_through or T[self.land[y-1][x-21]].id in fol.terr_restr:
                         x = random.randint(max([self.player.xy[0]-3,21]),min([78,self.player.xy[0]+3]))
                         y = random.randint(max([self.player.xy[1]-3,1]),min([23,self.player.xy[1]+3]))
                 fol.xy=[x,y]
@@ -3951,7 +3948,7 @@ class Game:
                     self.current_place['Treasure']+=1
                     self.treasure_modifier -=1
                 elif 'garnet' in v[1]:
-                    for x in all_creatures:
+                    for x in self.all_creatures:
                         if x.mode != 'not_appeared' and x.t=='animal':
                             x.mode='fearfull'
                 elif 'opal' in v[1]:
@@ -4312,7 +4309,7 @@ class Game:
                         if quality:
                             creation.name='orkish '+creation.name
                             creation.dmg=creation.dmg+1
-                            creations.color=12
+                            creation.color=12
                         if chance<=l[1]/4:
                             bonus = random.choice(inventory.plate_armour).duplicate(1)
                             self.ground_items.append([xy[0], xy[1], bonus])
@@ -4554,7 +4551,7 @@ if __name__=='__main__':
                 the_game.message.message('q')
                 i = msvcrt.getch()
                 if i == 'y' or i == 'Y':
-                    if save():
+                    if the_game.save():
                         the_game.redraw_screen()
                         i = '0'
                     else:
@@ -4613,7 +4610,7 @@ if __name__=='__main__':
                         for at in the_game.player.attr:
                             the_game.player.attr[at]=the_game.player.max_attr[at]
                         the_game.player.possessed=[]
-                        for cr in self.all_creatures:
+                        for cr in the_game.all_creatures:
                             if cr not in the_game.player.followers+the_game.player.ride+the_game.player.possessed:
                                 if cr.force=='Nature':
                                     if the_game.player.forces['Chaos']:

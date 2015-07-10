@@ -147,7 +147,7 @@ class Player(Living_thing):
             else:
                 xy[0] = x
                 xy[1] = y
-                travel = self.game.change_place('area%s' %(self.game.directions[direction]),direction)
+                self.game.change_place('area%s' %(self.game.directions[direction]),direction)
             return 1
         elif (T[self.game.land[xy[1]-1][xy[0]-21]].pass_through or \
              ('spirit of order1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in '#o+`sS') or \
@@ -182,7 +182,7 @@ class Player(Living_thing):
                                     self.game.message.creature('steal',a)
                                     answer=msvcrt.getch()
                                     if answer.lower()=='y':
-                                        effect('force',{'Chaos':{'force':0.02,'goblin':0.02},'Nature':{'all':-.01},'Order':{'all':-.01}})
+                                        self.game.effect('force',{'Chaos':{'force':0.02,'goblin':0.02},'Nature':{'all':-.01},'Order':{'all':-.01}})
                                         xy[0] = x
                                         xy[1] = y
                                         self.game.pickpocket(a)
@@ -194,7 +194,7 @@ class Player(Living_thing):
                             self.game.message.creature('tame',a)
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
-                                effect('force',{'Order':{'force':0.02,'human':0.02}})
+                                self.game.effect('force',{'Order':{'force':0.02,'human':0.02}})
                                 self.game.tame(a)
                                 xy[0] = x
                                 xy[1] = y
@@ -206,7 +206,7 @@ class Player(Living_thing):
                             self.game.message.creature('tamed_use',a)
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
-                                effect('force',{'Order':{'force':0.01,'human':0.01}})
+                                self.game.effect('force',{'Order':{'force':0.01,'human':0.01}})
                                 self.game.command_tamed(a)
                                 xy[0] = x
                                 xy[1] = y
@@ -217,7 +217,7 @@ class Player(Living_thing):
                             self.game.message.creature('possess',a)
                             answer=msvcrt.getch()
                             if answer.lower()=='y':
-                                effect('force',{'Nature':{'force':0.03,'spirit of nature':0.03}})
+                                self.game.effect('force',{'Nature':{'force':0.03,'spirit of nature':0.03}})
                                 self.game.possess(a)
                                 xy[0] = x
                                 xy[1] = y
@@ -261,27 +261,27 @@ class Player(Living_thing):
                     self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
                     if T[self.game.land[xy[1]-1][xy[0]-21]].id != 'n':
                         self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'n'+self.game.land[xy[1]-1][xy[0]-20:]
-                        effect('force',{'Nature':{'force':0.01,'gnome':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
+                        self.game.effect('force',{'Nature':{'force':0.01,'gnome':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                     self.game.message.message('gnome_move')
                 elif ('spirit of nature1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'd'):
                     self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
                     self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'g'+self.game.land[xy[1]-1][xy[0]-20:]
-                    effect('force',{'Nature':{'force':0.01,'spirit of nature':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
+                    self.game.effect('force',{'Nature':{'force':0.01,'spirit of nature':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                     self.game.message.message('nature_spirit_move')
                 elif ('fairy1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in '.a'):
                     self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
                     self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'g'+self.game.land[xy[1]-1][xy[0]-20:]
-                    effect('force',{'Nature':{'force':0.01,'fairy':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
+                    self.game.effect('force',{'Nature':{'force':0.01,'fairy':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                     self.game.message.message('fairy_move')
                 elif ('dryad1' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'D'):
                     self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
                     self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'T'+self.game.land[xy[1]-1][xy[0]-20:]
-                    effect('force',{'Nature':{'force':0.01,'dryad':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
+                    self.game.effect('force',{'Nature':{'force':0.01,'dryad':0.01,'terrain':0.4},'Chaos':{'all':-.01},'Order':{'all':-.01}})
                     self.game.message.message('dryad_move')
                 elif ('goblin2' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'wW'):
                     self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
                     self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'t'+self.game.land[xy[1]-1][xy[0]-20:]
-                    effect('force',{'Chaos':{'force':0.01,'goblin':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
+                    self.game.effect('force',{'Chaos':{'force':0.01,'goblin':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
                     self.game.message.message('goblin_move')
                 elif ('spirit of chaos2' in self.tool_tags and T[self.game.land[xy[1]-1][xy[0]-21]].id in 'gT'):
                     self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
@@ -289,7 +289,7 @@ class Player(Living_thing):
                         self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'d'+self.game.land[xy[1]-1][xy[0]-20:]
                     elif T[self.game.land[xy[1]-1][xy[0]-21]].id=='T':
                         self.game.land[xy[1]-1]=self.game.land[xy[1]-1][:xy[0]-21]+'D'+self.game.land[xy[1]-1][xy[0]-20:]
-                    effect('force',{'Chaos':{'force':0.01,'spirit of chaos':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
+                    self.game.effect('force',{'Chaos':{'force':0.01,'spirit of chaos':0.01,'terrain':0.4},'Nature':{'all':-.01},'Order':{'all':-.01}})
                     self.game.message.message('chaos_spirit_move')
                 else:
                     self.energy -= T[self.game.land[xy[1]-1][xy[0]-21]].tire_move
@@ -410,7 +410,7 @@ class Player(Living_thing):
         else:
             drop = self.equipment[self.equip_tags[item]].duplicate(self.equipment[self.equip_tags[item]].qty)
             print ' There\'s no place in your backpack so you drop\n the %s to the ground!' %drop.name
-            wait = msvcrt.getch()
+            msvcrt.getch()
             for i in self.game.ground_items:
                 if i[:2] == self.xy and i[2].id == drop.id and i[2].name == drop.name and i[2].stackable:
                     i[2].qty += drop.qty
@@ -438,7 +438,7 @@ class Player(Living_thing):
         if self.equip_tags[item] in self.equipment[self.equip_tags[item]].type:
             if 'temp_attr' in self.equipment[self.equip_tags[item]].effect:
                 for v in self.equipment[self.equip_tags[item]].effect['temp_attr']:
-                    used = effect('temp_attr_reverse',v)
+                    self.game.effect('temp_attr_reverse',v)
             if 'invisibility' in self.equipment[self.equip_tags[item]].effect:
                 self.equipment[self.equip_tags[item]].effect['invisibility']-=1
                 if self.equipment[self.equip_tags[item]].effect['invisibility']<=0:
@@ -485,7 +485,7 @@ class Player(Living_thing):
                         self.armour-=self.sun_armour
                         self.sun_armour=0
         if 'totem' in self.equipment[self.equip_tags[item]].type:
-            for cr in game_creatures:
+            for cr in self.game.game_creatures:
                 if cr.name==self.equipment[self.equip_tags[item]].name[:-6]:
                     break
             temps=[]
@@ -570,7 +570,7 @@ class Player(Living_thing):
             self.armour_mod = min([float(self.max_weight)/self.armour_weight, 2]) - 1
         if 'temp_attr' in item.effect and self.equip_tags[slot] in item.type:
             for v in item.effect['temp_attr']:
-                used = effect('temp_attr',v)
+                self.game.effect('temp_attr',v)
         if 'invisibility' in item.effect and self.equip_tags[slot] in item.type:
             self.effects['invisible']=10
         if 'winterwalk' in item.effect and self.equip_tags[slot] in item.type:
@@ -613,7 +613,7 @@ class Player(Living_thing):
                 drop = self.inventory[0].drop_item('forced')
                 dropped = 0
                 print ' There\'s no place in your backpack for the %s so you drop it to the ground!\n' %drop.name
-                wait = msvcrt.getch()
+                msvcrt.getch()
                 for i in self.game.ground_items:
                     if i[:2] == self.xy and i[2].id == drop.id and i[2].name == drop.name and i[2].stackable:
                         i[2].qty += drop.qty
@@ -656,42 +656,42 @@ class Player(Living_thing):
         if self.mode=='Nature':
             if defender.force=='Nature':
                 if self.hunger>60 and defender.t=='animal':
-                    effect('force',{'Nature':{'force':0.01,'elf':0.01},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
+                    self.game.effect('force',{'Nature':{'force':0.01,'elf':0.01},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
                 else:
-                    effect('force',{'Nature':{'all':-0.02},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+                    self.game.effect('force',{'Nature':{'all':-0.02},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
             elif defender.force=='Order':
                 if self.game.current_place['Chaos']>=self.game.current_place['Nature']:
-                    effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
+                    self.game.effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'all':-0.01}})
                 else:
-                    effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+                    self.game.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
             elif defender.force=='Chaos':
-                effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'force':0.01}})
+                self.game.effect('force',{'Nature':{'force':0.01,'elf':0.01,'terrain':0.05},'Chaos':{'all':-0.01},'Order':{'force':0.01}})
         elif self.mode=='Chaos':
             if defender.force=='Nature':
-                effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+                self.game.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
             elif defender.force=='Order':
-                effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+                self.game.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
             elif defender.force=='Chaos':
-                effect('force',{'Chaos':{'ork':0.01}})
+                self.game.effect('force',{'Chaos':{'ork':0.01}})
         elif self.mode=='Order':
             if defender.force=='Nature':
                 if defender.t=='animal':
-                    effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
+                    self.game.effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
                 else:
                     if self.game.current_place['Chaos']>=self.game.current_place['Order']:
-                        effect('force',{'Nature':{'all':-0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
+                        self.game.effect('force',{'Nature':{'all':-0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
                     else:
-                        effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
+                        self.game.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.05},'Order':{'all':-0.01}})
             elif defender.force=='Order':
                 if defender.t=='animal':
-                    effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
+                    self.game.effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
                 else:
-                    effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.1},'Order':{'all':-0.02}})
+                    self.game.effect('force',{'Nature':{'all':-0.01},'Chaos':{'force':0.01,'ork':0.01,'terrain':0.1},'Order':{'all':-0.02}})
             elif defender.force=='Chaos':
                 if defender.t=='animal':
-                    effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
+                    self.game.effect('force',{'Nature':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05},'Chaos':{'all':-0.01}})
                 else:
-                    effect('force',{'Nature':{'force':0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
+                    self.game.effect('force',{'Nature':{'force':0.01},'Chaos':{'all':-0.01},'Order':{'force':0.01,'human':0.01,'terrain':0.05}})
 
 class NPC(Living_thing):
     __refs__ = []
@@ -715,7 +715,6 @@ class NPC(Living_thing):
                     '0':['0']}
         x = self.xy[0]
         y = self.xy[1]
-        a = 0
         key = '0'
         mode = self.mode
         creature_sight=self.game.direct_path(self.xy, self.game.player.xy)

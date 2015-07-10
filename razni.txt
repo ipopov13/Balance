@@ -1,0 +1,40 @@
+0 = black (#000000)
+1 = tumno(mrachno) sinio (#0000a8)
+2 = dark green (#00a800)
+3 = bledo sinio/sivo (#00a8a8)
+4 = red (#a80000)
+5 = lilavo (#a800a8)
+6 = light brown (#a8a800)
+7 = light grey (#a8a8a8)
+8 = dark grey (#545454)
+9 = qrko sinio (#5454fc)
+10 = light green (#54fc54)
+11 = mnogo svetlo sinio (#54fcfc)
+12 = ogneno cherveno (#fc5454)
+13 = rozovo (#fc54fc)
+14 = yellow (#fcfc54)
+15 = white (#fcfcfc)
+
+style = foreground + background*16
+
+Edin den e 2400 hoda.
+
+
+da ima nqkolko stoinosti opisvashti sustoqnieto na geroq:
+
+kak e oble4en
+dali e chist/mrusen (moje za buzik - pokrit s drakonovi...)
+dali e umoren/otpochinal
+
+Da ima ka4estvo: Creativity, koeto opredelq za kolko ot upotrebite na edin
+material shte se seti geroq. Tova otnovo nqma da sa vsi4ki upotrebi - samo
+tezi koito vlizat v proizhoda mu. Taka edin selqnin nqma da se seti za
+magi4eskite predmeti/instrumenti, koito mogat da se napravqt. Tezi
+proizhodi trqbva da sa uravnoveseni.
+
+Razli4ni rejimi na igra:
+1. Crafterski---------------------------Crafting mode
+2. Quest (istoriqta)--------------------Story mode
+   Sled questa realno se vliza
+   v craftinga - igrata produljava!
+3. Po edin rejim za vseki klas?
