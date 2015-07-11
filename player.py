@@ -135,15 +135,15 @@ class Player(Living_thing):
                 direction = 0
             elif (xy[1] == 24):
                 direction = 1
-            if not int(self.game.directions[direction]) and self.game.current_area != 'world':
-                self.game.message.message('leave_world')
-                xy[0] = x
-                xy[1] = y
-                return 1
-            elif not int(self.game.directions[direction]) and self.game.current_area == 'world':
-                xy[0] = x
-                xy[1] = y
-                self.game.message.message('nowhere_togo')
+            if not int(self.game.directions[direction]):
+                if self.game.current_area != 'world':
+                    self.game.message.message('leave_world')
+                    xy[0] = x
+                    xy[1] = y
+                else:
+                    xy[0] = x
+                    xy[1] = y
+                    self.game.message.message('nowhere_togo')
             else:
                 xy[0] = x
                 xy[1] = y

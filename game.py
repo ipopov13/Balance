@@ -164,10 +164,8 @@ class Game:
         self.c.text(0,16,'Nature %6.2f' %(self.player.forces['Nature'])+'%',10)
         self.c.text(0,17,'Order  %6.2f' %(self.player.forces['Order'])+'%',9)
         self.c.text(0,18,'Chaos  %6.2f' %(self.player.forces['Chaos'])+'%',12)
-    ##    try:
-    ##        self.c.text(0,23,'%d' %(self.player.hunger),7)
-    ##    except:
-    ##        pass
+        
+        self.c.text(0,23,'%s' %(str(self.directions)),7)
         self.draw_mode()
         
         self.c.rectangle((20,24,79,25))
@@ -2014,7 +2012,7 @@ class Game:
                     if ord(i) in range(65,91) or ord(i) in range(97,123) or ord(i) == 46:
                         self.c.write(i)
                         a += i
-                self.load_terr(a)
+                t=self.load_terr(a)
         self.redraw_screen()
         self.c.pos(*self.player.xy)
         
@@ -2143,7 +2141,8 @@ class Game:
                     msvcrt.getch()
                 else:
                     self.message.creature('no_escape',0)
-        elif area != 'area0':
+        if area != 'area0':
+            print 'bla'
             old_temp=self.current_place['Temperature']
             places = open('%s//%s_dir//new_%s.dat'%(os.curdir,self.player.name,self.current_area), 'w')
             pickle.dump(self.ground_items, places)
@@ -2161,6 +2160,7 @@ class Game:
             if self.current_area not in self.player.known_areas:
                 self.player.known_areas.append(self.current_area)
             places.close()
+            print 'bla1'
             self.new_terr(area,direction)
             self.draw_hud()
             self.player.worked_places={'Nature':[],'Chaos':[],'Order':[]}
@@ -2515,14 +2515,14 @@ class Game:
             self.player.followers.remove(defender)
         del(defender)
 
-    ## Load-va savenat fail
+    ## Loads a saved game
     def load_terr(self,f):
         try:
             terr = open(f, 'r')
         except:
             print 'No such file!'
             terr = msvcrt.getch()
-            return 0,0
+            return 0
         self.c.page()
         for i in range(23):
             self.land.append(terr.read(58))
@@ -2578,6 +2578,7 @@ class Game:
                 fol.game_id=max_id+1
                 max_id+=1
         terr.close()
+        return 1
 
     ## Load-va nachalnata mestnost
     def draw_terr(self,start_force):
@@ -4524,258 +4525,262 @@ class Game:
 
 
 if __name__=='__main__':
-    the_game=Game()
-    the_game.start_game()
-    i = ' '
-    clock = 1
-    riding=0
-    while i:
-        if msvcrt.kbhit():
-            the_game.message.message('')
-            i = msvcrt.getch()
-            if the_game.player.ride and the_game.player.ride[0].food>24 and i in ['1','2','3','4','5','6','7','8','9']:
-                if riding:
-                    the_game.player.move(i)
-                    the_game.player.ride[0].food-=1
-                    riding=0
-                    continue
-                else:
-                    riding=1
-            if i == '0':
-                i = '-1'
-            if i == 'S':
-                the_game.message.message('q')
+    try:
+        the_game=Game()
+        the_game.start_game()
+        i = ' '
+        clock = 1
+        riding=0
+        while i:
+            if msvcrt.kbhit():
+                the_game.message.message('')
                 i = msvcrt.getch()
-                if i == 'y' or i == 'Y':
-                    if the_game.save():
-                        the_game.redraw_screen()
-                        i = '0'
+                if the_game.player.ride and the_game.player.ride[0].food>24 and i in ['1','2','3','4','5','6','7','8','9']:
+                    if riding:
+                        the_game.player.move(i)
+                        the_game.player.ride[0].food-=1
+                        riding=0
+                        continue
+                    else:
+                        riding=1
+                if i == '0':
+                    i = '-1'
+                if i == 'S':
+                    the_game.message.message('q')
+                    i = msvcrt.getch()
+                    if i == 'y' or i == 'Y':
+                        if the_game.save():
+                            the_game.redraw_screen()
+                            i = '0'
+                        else:
+                            the_game.message.message('')
+                            the_game.message.message('save_failed')
                     else:
                         the_game.message.message('')
-                        the_game.message.message('save_failed')
-                else:
-                    the_game.message.message('')
-                continue
-            if i == 'Q':
-                break
-            if i == 'c':
-                the_game.character()
-                the_game.redraw_screen()
-                continue
-            if i == 'l':
-                the_game.message.message('look')
-                the_game.look()
-                the_game.redraw_screen()
-    ##            the_game.message.message('')
-                continue
-                i = '0'
-            ## Form-dependent actions
-            if 'waterform' not in the_game.player.effects:
-                if i == 's':
-                    if the_game.player.ride:
-                        the_game.message.message('dismount')
-                        the_game.player.ride[0].mode='follow'
-                        the_game.player.ride[0].xy=the_game.player.xy[:]
-                        the_game.player.backpack-=the_game.player.ride[0].attr['Str']*2
-                        while the_game.player.backpack<0:
-                            drop = the_game.player.inventory[-1].drop_item(forced=True)
-                            dropped = 0
-                            for item in the_game.ground_items:
-                                if item[:2] == the_game.player.xy and item[2].id == drop.id and item[2].stackable and item[2].name == drop.name:
-                                    item[2].qty += drop.qty
-                                    dropped = 1
-                            if not dropped:
-                                the_game.ground_items.append([the_game.player.xy[0], the_game.player.xy[1],drop])
-                            the_game.message.use('create_drop',drop)
-                            msvcrt.getch()
-                        the_game.player.followers.append(the_game.player.ride[0])
-                        the_game.player.ride=[]
-                        i='0'
-                    elif the_game.player.possessed:
-                        if the_game.player.possessed[0].mode=='temp':
-                            the_game.message.creature('transform_outof',the_game.player.possessed[0])
-                        else:
-                            the_game.message.creature('unpossess',the_game.player.possessed[0])
-                            the_game.player.possessed[0].xy=the_game.player.xy[:]
-                            the_game.player.possessed[0].mode='wander'
-                        the_game.player.life-=the_game.player.possessed[0].life
-                        the_game.player.max_life-=the_game.player.possessed[0].life
-                        if the_game.player.life<=0:
-                            the_game.player.possessed[0].life+=the_game.player.life
-                            the_game.player.life=1
-                        for at in the_game.player.attr:
-                            the_game.player.attr[at]=the_game.player.max_attr[at]
-                        the_game.player.possessed=[]
-                        for cr in the_game.all_creatures:
-                            if cr not in the_game.player.followers+the_game.player.ride+the_game.player.possessed:
-                                if cr.force=='Nature':
-                                    if the_game.player.forces['Chaos']:
-                                        if the_game.player.forces['Nature']-the_game.player.forces['Chaos']<\
-                                           the_game.current_place['Nature']-the_game.current_place['Chaos']:
-                                            cr.mode='hostile'
-                                elif cr.force=='Order':
-                                    if the_game.player.forces['Chaos']:
-                                        if the_game.player.forces['Order']-the_game.player.forces['Chaos']<\
-                                           the_game.current_place['Order']-the_game.current_place['Chaos']:
-                                            cr.mode='hostile'
-                                elif cr.force=='Chaos':
-                                    if the_game.player.forces['Order']:
-                                        if the_game.player.forces['Chaos']-the_game.player.forces['Order']<\
-                                           the_game.current_place['Chaos']-the_game.current_place['Order']:
-                                            cr.mode='hostile'
-                                    if the_game.player.forces['Nature']:
-                                        if the_game.player.forces['Chaos']-the_game.player.forces['Nature']<\
-                                           the_game.current_place['Chaos']-the_game.current_place['Nature']:
-                                            cr.mode='hostile'
-                                    if 'spirit of order3' in the_game.player.tool_tags and random.randint(1,30)>cr.attr['Mnd']:
-                                        cr.mode='fearfull'
-                        i='0'
-                    else:
-                        if not T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].sittable:
-                            the_game.message.message('no_sit')
-                            i = '0'
-                        else:
-                            the_game.player.sit = True
-                            the_game.player.rest = 25
-                            the_game.message.message('sit')
-                            i = '0'
-                if i == 'm':
-                    if the_game.player.mode == 'Nature':
-                        the_game.player.mode = 'Order'
-                    elif the_game.player.mode == 'Order':
-                        the_game.player.mode = 'Chaos'
-                    elif the_game.player.mode == 'Chaos':
-                        the_game.player.mode = 'Nature'
-                    the_game.draw_mode()
-                    the_game.c.pos(*the_game.player.xy)
+                    continue
+                if i == 'Q':
+                    break
+                if i == 'c':
+                    the_game.character()
+                    the_game.redraw_screen()
+                    continue
+                if i == 'l':
+                    the_game.message.message('look')
+                    the_game.look()
+                    the_game.redraw_screen()
+        ##            the_game.message.message('')
                     continue
                     i = '0'
-                if i == 'q':
-                    the_game.drink(the_game.player.xy)
-                    i = '0'
-                if not the_game.player.possessed:
-                    if i=='h':
-                        if the_game.player.target:
-                            if (the_game.player.equipment['Right hand'] and 'ranged' in the_game.player.equipment['Right hand'].type) or (the_game.player.equipment['Left hand'] and 'ranged' in the_game.player.equipment['Left hand'].type):
-                                if the_game.player.equipment['Right hand']:
-                                    handed='Right hand'
-                                else:
-                                    handed='Left hand'
-                                if the_game.player.equipment['Ammunition']:
-                                    if the_game.player.equipment['Ammunition'].effect['shoot']==the_game.player.equipment[handed].effect['shoot']:
-                                        the_game.shoot(the_game.player)
-                                    else:
-                                        the_game.message.message('wrong_ammo')
-                                else:
-                                    the_game.message.message('need_ammo')
+                ## Form-dependent actions
+                if 'waterform' not in the_game.player.effects:
+                    if i == 's':
+                        if the_game.player.ride:
+                            the_game.message.message('dismount')
+                            the_game.player.ride[0].mode='follow'
+                            the_game.player.ride[0].xy=the_game.player.xy[:]
+                            the_game.player.backpack-=the_game.player.ride[0].attr['Str']*2
+                            while the_game.player.backpack<0:
+                                drop = the_game.player.inventory[-1].drop_item(forced=True)
+                                dropped = 0
+                                for item in the_game.ground_items:
+                                    if item[:2] == the_game.player.xy and item[2].id == drop.id and item[2].stackable and item[2].name == drop.name:
+                                        item[2].qty += drop.qty
+                                        dropped = 1
+                                if not dropped:
+                                    the_game.ground_items.append([the_game.player.xy[0], the_game.player.xy[1],drop])
+                                the_game.message.use('create_drop',drop)
+                                msvcrt.getch()
+                            the_game.player.followers.append(the_game.player.ride[0])
+                            the_game.player.ride=[]
+                            i='0'
+                        elif the_game.player.possessed:
+                            if the_game.player.possessed[0].mode=='temp':
+                                the_game.message.creature('transform_outof',the_game.player.possessed[0])
                             else:
-                                the_game.message.message('need_ranged_weapon')
+                                the_game.message.creature('unpossess',the_game.player.possessed[0])
+                                the_game.player.possessed[0].xy=the_game.player.xy[:]
+                                the_game.player.possessed[0].mode='wander'
+                            the_game.player.life-=the_game.player.possessed[0].life
+                            the_game.player.max_life-=the_game.player.possessed[0].life
+                            if the_game.player.life<=0:
+                                the_game.player.possessed[0].life+=the_game.player.life
+                                the_game.player.life=1
+                            for at in the_game.player.attr:
+                                the_game.player.attr[at]=the_game.player.max_attr[at]
+                            the_game.player.possessed=[]
+                            for cr in the_game.all_creatures:
+                                if cr not in the_game.player.followers+the_game.player.ride+the_game.player.possessed:
+                                    if cr.force=='Nature':
+                                        if the_game.player.forces['Chaos']:
+                                            if the_game.player.forces['Nature']-the_game.player.forces['Chaos']<\
+                                               the_game.current_place['Nature']-the_game.current_place['Chaos']:
+                                                cr.mode='hostile'
+                                    elif cr.force=='Order':
+                                        if the_game.player.forces['Chaos']:
+                                            if the_game.player.forces['Order']-the_game.player.forces['Chaos']<\
+                                               the_game.current_place['Order']-the_game.current_place['Chaos']:
+                                                cr.mode='hostile'
+                                    elif cr.force=='Chaos':
+                                        if the_game.player.forces['Order']:
+                                            if the_game.player.forces['Chaos']-the_game.player.forces['Order']<\
+                                               the_game.current_place['Chaos']-the_game.current_place['Order']:
+                                                cr.mode='hostile'
+                                        if the_game.player.forces['Nature']:
+                                            if the_game.player.forces['Chaos']-the_game.player.forces['Nature']<\
+                                               the_game.current_place['Chaos']-the_game.current_place['Nature']:
+                                                cr.mode='hostile'
+                                        if 'spirit of order3' in the_game.player.tool_tags and random.randint(1,30)>cr.attr['Mnd']:
+                                            cr.mode='fearfull'
+                            i='0'
                         else:
-                            the_game.message.message('target_first')
+                            if not T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].sittable:
+                                the_game.message.message('no_sit')
+                                i = '0'
+                            else:
+                                the_game.player.sit = True
+                                the_game.player.rest = 25
+                                the_game.message.message('sit')
+                                i = '0'
+                    if i == 'm':
+                        if the_game.player.mode == 'Nature':
+                            the_game.player.mode = 'Order'
+                        elif the_game.player.mode == 'Order':
+                            the_game.player.mode = 'Chaos'
+                        elif the_game.player.mode == 'Chaos':
+                            the_game.player.mode = 'Nature'
+                        the_game.draw_mode()
+                        the_game.c.pos(*the_game.player.xy)
+                        continue
+                        i = '0'
+                    if i == 'q':
+                        the_game.drink(the_game.player.xy)
+                        i = '0'
+                    if not the_game.player.possessed:
+                        if i=='h':
+                            if the_game.player.target:
+                                if (the_game.player.equipment['Right hand'] and 'ranged' in the_game.player.equipment['Right hand'].type) or (the_game.player.equipment['Left hand'] and 'ranged' in the_game.player.equipment['Left hand'].type):
+                                    if the_game.player.equipment['Right hand']:
+                                        handed='Right hand'
+                                    else:
+                                        handed='Left hand'
+                                    if the_game.player.equipment['Ammunition']:
+                                        if the_game.player.equipment['Ammunition'].effect['shoot']==the_game.player.equipment[handed].effect['shoot']:
+                                            the_game.shoot(the_game.player)
+                                        else:
+                                            the_game.message.message('wrong_ammo')
+                                    else:
+                                        the_game.message.message('need_ammo')
+                                else:
+                                    the_game.message.message('need_ranged_weapon')
+                            else:
+                                the_game.message.message('target_first')
+                            i='0'
+                        if i == 'i':
+                            the_game.draw_inv()
+                            the_game.redraw_screen()
+                            i = '0'
+                        if i == 'e':
+                            the_game.draw_equip()
+                            the_game.redraw_screen()
+                            i = '0'
+                        if i == 'k':
+                            the_game.cook()
+                            the_game.redraw_screen()
+                            i = '0'
+                        if i == 'b' and not the_game.player.ride:
+                            if 'human1' in the_game.player.tool_tags or 'dwarf1' in the_game.player.tool_tags:
+                                the_game.build()
+                            else:
+                                the_game.message.message('need_human1&dwarf1')
+                            continue
+                            i = '0'
+                        if i == 't':
+                            if 'dryad3' in the_game.player.tool_tags:
+                                the_game.dryad_grow()
+                            else:
+                                the_game.message.message('need_dryad3')
+                            continue
+                            i = '0'
+                        if i == 'C' and not the_game.player.ride:
+                            the_game.create()
+                            i = '0'
+                        if i == '+':
+                            opened = the_game.find_to_open(the_game.player.xy)
+                            if opened:
+                                the_game.redraw_screen()
+                            i = '0'
+                        if i == 'p':
+                            the_game.player.pick_up(the_game.ground_items)
+                            i = '0'
+                        if i == 'w' and not the_game.player.ride:
+                            the_game.player.sit = False
+                            the_game.player.rest = 1
+                            the_game.message.message('work')
+                            i = ''
+                            while not i:        
+                                if msvcrt.kbhit():
+                                    i = msvcrt.getch()
+                            the_game.work(i)
+                            continue
+                            i = '0'
+                        if i == 'r':
+                            if 'human3' in the_game.player.tool_tags:
+                                the_game.research()
+                                the_game.redraw_screen()
+                            else:
+                                the_game.message.message('need_human3')
+                            continue
+                    elif i in 'rwp+bkeiCt':
+                        the_game.message.message('not_when_possessed')
+                        msvcrt.getch()
                         i='0'
-                    if i == 'i':
-                        the_game.draw_inv()
-                        the_game.redraw_screen()
-                        i = '0'
-                    if i == 'e':
-                        the_game.draw_equip()
-                        the_game.redraw_screen()
-                        i = '0'
-                    if i == 'k':
-                        the_game.cook()
-                        the_game.redraw_screen()
-                        i = '0'
-                    if i == 'b' and not the_game.player.ride:
-                        if 'human1' in the_game.player.tool_tags or 'dwarf1' in the_game.player.tool_tags:
-                            the_game.build()
-                        else:
-                            the_game.message.message('need_human1&dwarf1')
-                        continue
-                        i = '0'
-                    if i == 't':
-                        if 'dryad3' in the_game.player.tool_tags:
-                            the_game.dryad_grow()
-                        else:
-                            the_game.message.message('need_dryad3')
-                        continue
-                        i = '0'
-                    if i == 'C' and not the_game.player.ride:
-                        the_game.create()
-                        i = '0'
-                    if i == '+':
-                        opened = the_game.find_to_open(the_game.player.xy)
-                        if opened:
-                            the_game.redraw_screen()
-                        i = '0'
-                    if i == 'p':
-                        the_game.player.pick_up(the_game.ground_items)
-                        i = '0'
-                    if i == 'w' and not the_game.player.ride:
-                        the_game.player.sit = False
-                        the_game.player.rest = 1
-                        the_game.message.message('work')
-                        i = ''
-                        while not i:        
-                            if msvcrt.kbhit():
-                                i = msvcrt.getch()
-                        the_game.work(i)
-                        continue
-                        i = '0'
-                    if i == 'r':
-                        if 'human3' in the_game.player.tool_tags:
-                            the_game.research()
-                            the_game.redraw_screen()
-                        else:
-                            the_game.message.message('need_human3')
-                        continue
-                elif i in 'rwp+bkeiCt':
-                    the_game.message.message('not_when_possessed')
+                elif i in 'rwmp+bkqseiCt':
+                    the_game.message.message('not_in_waterform')
                     msvcrt.getch()
                     i='0'
-            elif i in 'rwmp+bkqseiCt':
-                the_game.message.message('not_in_waterform')
-                msvcrt.getch()
-                i='0'
-    ##        if i == '<':
-    ##            the_game.player.sit = False
-    ##            if terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '<':
-    ##                the_game.change_place('area'+the_game.directions[5],5)
-    ##                the_game.message.message('going_down')
-    ##                i = '0'
-    ##            elif terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '>':
-    ##                the_game.message.message('nowhere_togo')
-    ##                i = '0'
-    ##            else:
-    ##                the_game.message.message('no_stairs')
-    ##                i = '0'
-    ##        if i == '>':
-    ##            the_game.player.sit = False
-    ##            if terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '>':
-    ##                the_game.change_place('area'+the_game.directions[4],4)
-    ##                the_game.message.message('going_up')
-    ##                i = '0'
-    ##            elif terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '<':
-    ##                the_game.message.message('nowhere_togo')
-    ##                i = '0'
-    ##            else:
-    ##                the_game.message.message('no_stairs')
-    ##                i = '0'
-            if (i != '0') and (i != '5') and (i != '-1'):
-                the_game.player.sit = False
-                the_game.player.rest = 1
-            clock = the_game.game_time(i)
-            if clock == 0:
-                break
-            the_game.c.pos(*the_game.player.xy)
-    ## area files clean-up
-    new_files=glob(r'%s_dir\new_area*.dat' %(the_game.player.name))
-    all_files=glob(r'%s_dir\*' %(the_game.player.name))
-    local_files=glob('*')
-    for f in new_files:
-        os.system('del %s' %(f))
-    if '%s' %(the_game.player.name) not in local_files:
-        for f in all_files:
+        ##        if i == '<':
+        ##            the_game.player.sit = False
+        ##            if terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '<':
+        ##                the_game.change_place('area'+the_game.directions[5],5)
+        ##                the_game.message.message('going_down')
+        ##                i = '0'
+        ##            elif terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '>':
+        ##                the_game.message.message('nowhere_togo')
+        ##                i = '0'
+        ##            else:
+        ##                the_game.message.message('no_stairs')
+        ##                i = '0'
+        ##        if i == '>':
+        ##            the_game.player.sit = False
+        ##            if terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '>':
+        ##                the_game.change_place('area'+the_game.directions[4],4)
+        ##                the_game.message.message('going_up')
+        ##                i = '0'
+        ##            elif terrain.T[the_game.land[the_game.player.xy[1]-1][the_game.player.xy[0]-21]].id == '<':
+        ##                the_game.message.message('nowhere_togo')
+        ##                i = '0'
+        ##            else:
+        ##                the_game.message.message('no_stairs')
+        ##                i = '0'
+                if (i != '0') and (i != '5') and (i != '-1'):
+                    the_game.player.sit = False
+                    the_game.player.rest = 1
+                clock = the_game.game_time(i)
+                if clock == 0:
+                    break
+                the_game.c.pos(*the_game.player.xy)
+        ## area files clean-up
+        new_files=glob(r'%s_dir\new_area*.dat' %(the_game.player.name))
+        all_files=glob(r'%s_dir\*' %(the_game.player.name))
+        local_files=glob('*')
+        for f in new_files:
             os.system('del %s' %(f))
-        os.system('rd %s_dir' %(the_game.player.name))
-    raw_input("\nIf you got an error, please send it to the creator!\nOtherwise press ENTER to exit (no pun intended).")
-    os._exit(0)
+        if '%s' %(the_game.player.name) not in local_files:
+            for f in all_files:
+                os.system('del %s' %(f))
+            os.system('rd %s_dir' %(the_game.player.name))
+        raw_input("\nIf you got an error, please send it to the creator!\nOtherwise press ENTER to exit (no pun intended).")
+        os._exit(0)
+    except Exception as e:
+        print e.message
+        raw_input()
