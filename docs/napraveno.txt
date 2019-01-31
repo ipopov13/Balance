@@ -1,0 +1,11 @@
+-teren
+-vuzmojnost za vuzdeistvie vurhu terena
+-pri vuzdeistvie vurhu teren koito ne se unishtojava poluchenite predmeti se puskat v krakata na igracha
+-umorqvane
+-glad i jajda
+-inventar - vzimane i puskane na predmeti, qdene i piene,teglo
+-produljitelnost na deistviqta vurhu terena
+-VREME
+-NPC, 'wander' mode
+-save
+-nachenki na informaciq za geroq

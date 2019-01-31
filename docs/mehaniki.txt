@@ -1,0 +1,43 @@
+
+LEVELING NA PREDMETITE:
+Nqkoi predmeti (vsichki?) mogat da preminat na po-visoko nivo kato budat izpolzvani mnogo dulgo vreme ili budat popraveni
+mnogo puti. Za orujiqta vij bitki.
+PRIMER:
+Shirt of patches - prosta riza, razdirana i popravqna mnogokratno sled bitkite, sled 100 (?) zakurpvaniq stava takava
+i pochva da se popravq sama. Moje da dava nqkakuv bonus.
+
+EPITETI ZA PREDMETITE:
+Predmetite nqmat izdurjlivost (durability), a rezistentnost na vuzdeistviq - shansut statusa im da se promeni. Statusa
+se opredelq ot etiketite kum predmeta - OLD, RUSTED, BLOODIED, BROKEN, NEW, QUALITY i t.n. Vseki takuv etiket
+nosi promeni v svoistvata na predmeta. Nqkoi etiketi sa vzaimnoizkliuchvashti se, drugi se natrupvat edin vurhu
+drug.
+
+TEGLO KOETO SE POBIRA V RANICA
+e ravno na neinoto teglo po 6!
+
+
+SUZDAVANE NA GEROI
+
+Izbrani boini umeniq (za orujiq) zapochvat na nivoto na Dexterity na igracha.
+
+
+PRI PUTUVANE (NAPRAVENO)
+Shansa za poqva na dadeno jivotno v dadena mestnost se proverqva vednuj - kogato igracha vleze v mestnostta. Kogato
+izliza gadinite se zapisvat zaedno s nomera na hoda v koito sa generirani (nomera e v tqh, ne otdelno!). Kogato igrachut
+se vurne v mestnostta shansut sushtestvoto da e oshte tam e:
+100 - min(razlika v hodovete; 90) = ot 99 do 10%
+
+STEALTH
+Podobno na sqdaneto, samo che e priklqkane ili neshto takova i ne otnema hod kato sqdaneto. Kogato e vkliucheno ima
+shans vragut da ne zabeleji igracha. Ako igrachut se pribliji do vraga nezabelqzano poluchava bonus kum shansa i
+shtetite za purvata si ataka. Pri tova avtomatichno se izliza ot rejima. Ako vraga go
+zabeleji i go atakuva ima bonus kum shansa za udar i se izliza ot rejima.
+Tova e i rejimut v koito geroq aktivno tursi kapani i taini vrati. Rezultatut zavisi ot umenieto.
+
+
+OTKLONQVANE NA REKA
+kopaqt se trapove, imat svoistvo da se zapulvat s vodq ako ima do tqh. Rekite mogat obratno da budat otkloneni i ostavqt
+trapove (dunoto na rekata) ili moje bi nov vid teren.
+
+PREDMETI
+koito mogat da se izpolzvat samo ot opredelen klas geroi.

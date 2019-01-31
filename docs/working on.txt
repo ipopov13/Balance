@@ -1,0 +1,231 @@
+IMPLEMENTED:
+character selection
+races and forces
+attribute system
+modes
+terrain transition
+saving
+tiring
+hunger and thirst
+
+terrain types (adding modes)
+terrain modal interaction (force,form,terrain alignment)
+
+random terrain generation
+zarejda se matricata s ravnomeren pulnej ot 33% NOC i posle se izbirat sluchaini mesta
+s razlichna sila koqto ses dobavq kum izbranoto mqsto i susednite s gradient spored 
+razstoqnieto. Primer: Izbira se mqstoto [10,10] sus sila +40%N, gradienta e 10%.
+ Tova mqsto stava (73% N, 13%C, 13%O), direktno prilejashite mu mesta (na razstoqnie 1 -
+[9,10],[10,9],[10,11] i [11,10]) stavat +30%N (63%N,18%OC),tezi na razstoqnie 2
+(vkliuchitelno prilejashtite po diagonala kato [9,9]-razstoqnieto po dvete osi se subira)
+stavat +20% (53%N,23%CO) i tezi na 3 +10% (43%N, 28%CO). Po-golemi razmeri na kartata
+pozvolqvat po-plavni gradienti (nujni li sa?). Namalenieto na drugite dve sili e ednakvo
+ako ima kakvo da se namalqva. Tova znachi che e vuzmojno da se padne ognishte na 30% haos v
+sledvashtata stupka vurhu tova na prirodata, i (73% N, 13%C, 13%O) da stane (56%N,43%C,0%O),
+toest e vuzmojno da se poluchi koncentraciq na dve sili.
+
+Za temperaturata se izbira sluchaino na sever li da se uvelichava ili na iug i se razpredelq
+gradient v tazi posoka ot 0-30% do 70-100% (sluchaino se izbirat granicite). Otdelno ima shans
+za postavqne na ezero ili reka vuv vsqko mqsto.
+
+Za da se opredeli kude ima selishta se postavqt i tochki na po-visoka naselenost (zaedno
+s temperaturata) i se pravi sushtiq gradient. Ako naselenostta e nad 50 se slagat kushti,
+po edna na vseki 5% nad 50. Ostanalata chast se ostavq na 0.Pri naselenost pod 20 se poqvqva
+vuzmojnost za jivotni ili chudovishta, spored tova dali prirodata ili haosa sa po-silni.
+Pri naselenost nad 20 mogat da se sreshtnat sushtestva ot preobladavashtite sili, kato
+ako ima kushti se postavqt i postoqnno jiveeshti sushtestva.
+
+race locking
+battle effects (force,form,terrain alignment)
+battle loot(items by race,skins,meat for food)
+starting inventories
+items in generated houses
+enemy path algorithm
+race skill tags
+bows
+stealth
+turns as a clock with daytime - day and night
+(2400 turns=1 day,1200 turns day and 1200 turns night)
+Early morning	200	topaz
+Morning		200	emerald
+Midday		150	opal
+High noon	100	ruby
+Afternoon	150	amethyst
+Early evening	200	lapis lazuli
+Evening		200	aquamarine
+After dark	250	tourmaline
+Deep night	300	garnet
+Midnight	100	sapphire
+After midnight	300	diamond
+Before dawn	250	turquoise
+
+creatures shooting bows
+animal taming
+animal commands - stay,guard,follow(+changing places)
+animal manipulations - feeding(feeding effect on behaviour),farming
+animal manipulations - riding
+-increases backpack space but not total max, adds the weight allowance of the creature (STRx2) to the backpack.
+-can't fight while riding
+-dismounts by sitting
+-When dismounted removes all excess weight starting from the bottom of the inventory;
+-adds speed at the rate of one step until the ride is hungry;
+
+crafting (all races)
+make modifications to items while crafting by adding materials
+other creation skills - building(changes population), smithing,
+			growing(dryad,growing trees/bushes/grass)
+fairy1:
+-fairy invisibility flower crown
+fairy2:
+-midnight crown (natrupva strah u sushtestvata koito sa naokolo i ne q vijdat; nosi se samo prez noshtta i trae edna nosht)
+-day crown (dava defense kato bonusa e max po obqd i ako ne nosi nishto drugo osven edno orujie;
+nosi se samo prez denq i trae edin den)
+-Ring of Winter/Summer (does not drain energy on snow/sand)
+fairy3:
+-Dress of the Fae (vrushta shteti na vraga i pravi drugite efekti vechni)
+
+resetting trade items the creatures have
+item value for trading (+haggling prices based on Int&Cre)
+
+spirit of nature2:
+-possessing animals - can walk around in them, then attack things with them
+-unpossess by sitting ('s')
+spirit of nature3:
+-nature impact from assuming a form
+- then learn to assume their form without the animal (has bonuses), then act as
+  a wild animal to be tamed by a human (+N for the place). Animal forms are contained in a totem
+  made from a staff, carrying the additional effects of the form. Using the totem from the inventory
+  imparts the form to the player (generating a temporary possessed creature?)
+-animal form feeding (herbivore/carnivore) (gives form when possessing) +messages for each animal
+
+
+***TOTEMS ACCUMULATE ANIMAL FORMS AND HAVE TEMP ATTRIBUTES ACCORDING TO THEM.
+WHEN A TOTEM IS EQUIPPED THE ATTR ARE ADDED/SUBSTRACTED. IF AN ANIMAL IS POSSESSED THE
+ATTR ARE STRIPPED FROM THE TOTEM. WHEN THE ANIMAL IS UNPOSSESSED THE ATTR OF THE PLAYER ARE RESTORED
+TO THE MAX AND THOSE OF THE TOTEM ARE RECALCULATED ON TAKE OFF! A TOTEM CAN BE USED TO TRANSFORM
+ONLY ONCE, THEN IT NEEDS TO BE CHARGED BY POSESSING THE CREATURE WHILE THE TOTEM IS EQUIPPED.
+Each action accumulates form up to a maximum- 33% for moving, 66% for combat, 100% for animal feeding?***
+
+DOING:
+gnome use of gemstones:
+- stones are "returned to nature" in the propper manner and bestow the respective effect:
+*diamond - dropped in water or a well, increases the treasure modifier of the place by 1
+*emerald - dropped in the grass imbues the gnome with the force of Nature and maxes out his life
+*sapphire - dropped on ice/snow does ice damage to hostiles in sight based on gnome force
+*ruby - dropped in fire does fire damage to all hostiles in sight based on gnome force
+pearl - dropped in magic water turns into a different gemstone depending on the time of day (see chart)
+*amethyst - used inside a stone marks/unmarks the spot so that the gnome can return there with a lapis.
+*topaz - when used restores the gnome's energy to max
+*tourmaline - makes a slab of stone rise from the ground, encapsulating the gnome as it comes up
+*garnet - makes a flash and sound that scares away any animals that may be around (hostile -> fearful)
+*aquamarine - dropped on the ground makes a small spring come up and form a water pond
+*opal - used inside a mossy rock formation teleports the gnome to another mossy rock formation in the area at random
+*turquoise - dropped in water makes the spot magical
+lapis lazuli - 1) If used in a rock that is not marked with an amethyst it transports the gnome to the
+	marked rock immediately and is destroyed.
+	2) If it is used in the rock marked with an amethyst it
+	drops the gnome into the ground.
+	This is a *mossy* rock filled area underground, accessible from every rock in the universe. During
+	this time the gnome rests better, so he can spend a long time there and walk around. There are
+	other gnomes in the area, living in houses hollowed out in the stone. Leaving is done by using the
+	lapis again. This is the only stone that is not consumed. The greater the gnomes power, the more
+	chaotic rocks he can use to "go under" (based on area chaos).
+	3) Finally if used without a marked stone a gnome3 can enter an underground chamber
+	of the spirits, where a battle decides the balance of the world.
+
+
+talking with creatures(news,trade(gain Order),quest) (init_screen.talk)
+- merchant NPCs:sell a certain item cheaper, do not buy it, buy something else for more but don't sell it back
+add cloth as material - can be bought from NPCs?
+
+race skills (including creature skills)
+
+	  done:		Skill levels:	Trade&Learn:
+	human 		1 2 3
+	dwarf 		1 2 3
+	spirit of order	1   3
+
+	ork 			1 2
+	troll 		1 2
+	spirit of chaos 1 2
+	goblin		1 2
+	kraken 		1 2
+	imp 			1
+
+	elf 			1 2 3		T&L
+	gnome 		1'2'		T&L
+	spirit of nature1 2 3		T&L
+	dryad			1 2 3		T&L
+	water elemental 1 2 3		L
+	fairy			1 2 3		T&L
+
+
+BUGS:
+- sometimes shooting a bow on the same path that just killed a creature tries to kill the non-existent creature again
+- dodging an arrow prevents the @ from being redrawn!
+
+TO DO:
+Separate interface (inv/equipment) and real time (combat,ambient) messages
+Ambient messages!
+Make T a property of Game.
+Remove print statements from message funcs
+Get a separate console for the combat buffer so there is no pausing?
+unknownB_terrain() is unfinished! (Balance battleground underground gnome lapis)
+Terrain seems to be drawn twice at the start!
+Item subclasses (of Item) for the item lists so that the manual listing is not necessary!
+More flowers in the item duplication func
+More engraved items in loot generations
+Smarter player inventory (adding/removing functions to replace redundant code)
+IO function to replace all letter-by-letter writing parts
+Better message prioritization system (combat buffer vs messages)
+Some messages that require a y/n answer are in other categories and the y/n code repeats all over the place! There's a message.choise!
+Not all NPC races should fire ranged weapons!
+Creatures should be able to fire at other creatures!
+Cooperative mode with pinging the computers of players and scaling dangers accordingly
+Real line of sight - graying out, no object can be "looked at" beyond LOS
+Game end: The character enters a hidden chamber underground, where a battle of the spirits is fought.
+	The spirits' strength is according to the condition of the world up top.
+	The chamber can be reached only through the final stages of race development,
+	different for each race!
+	Spirit strength and force population are calculated based on the world and govern the number
+	of creatures of each force, and it's spiritual manifestation in the form of bolts of lightning, friendly
+	healing or deadly chaos vortex things, to name a few. The strength of both the creatures and the
+	spiritual manifestation is determined by the highest available force level in the world for the
+	respective force.
+	The area is reset every time the player leaves it, so the best way to impact it is through fighting
+	the enemy forces up in the world, so the battle is not so hard when the player goes in there.
+digging underground - Order/Chaos restricted activity to search for long lost tombs and cities/weapons and powers
+NPCs sleep at night
+declutter items on ground after time has passed
+automatic interaction mode - while walking every spot the character steps on is treated automatically with
+ his current mode. Doesnt work when no movement is done, or when there are hostiles nearby. Sitting pauses it for
+ resting. Turns off automatically when tired and doesnt fire if the spot has already been worked on
+more animal spawns?
+foraging in jungle tiles spawns animals
+magic
+every item should be accessible
+different properties of items made with different materials
+other skills(lockpick za treasure chests,herbalism,magic)
+character screen(powers,weapon skill,skills,vid na geroq spored rasite koito pritejava i totemite koito polzva)
+inventory/chest/pickup/creation scrolling or item number restriction
+game logo (startup screen, the three forces in balance)
+
+EXTRAS:
+killing builds fear in those who witness it and some in general(crits and specials add extra)
+rumours
+paths between house doors in villages
+fairy flower clothing may give additional bonuses for being made out of specific flowers (and not just wild ones)
+riding certain animals as a racial trait/skill
+cooking-recipes
+themed NPCs with altered stats (goblin shaman, elf warrior,...)
+non-hostile NPCs may work on the terrain too (plowing,removing bushes,digging through bones...)
+locked doors
+locked chests in houses
+Readme - how to get materials
+Meeting the worlds spirits - Nature,Order,Chaos, and making one of them the strongest. Then jumping to another world. When
+on the spot where the spirit resides there are random environment messages to make it look alive.
+various animals
+various items(herb/flower/vegetable names)
+various recipes for cooking
+special item effects (seed of life(mass_creation-trees+flowers+grass+spirit of Nature skill 3=total chaos removal,terrain allignment=N100),
+                      earth ore)

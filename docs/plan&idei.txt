@@ -1,0 +1,68 @@
+Paradigma za obedinenie
+
+Init_screen se prevrushta v Game class, zaedno s vsichki svobodni promenlivi. balance.py se vliva v nego. Pri startirane na igrata
+nujnite dopulnitelni obekti (Player,Creature,Animal) se inicializirat s argument - instansa na igrata, taka che da imat dostup do
+nujnata infrastruktura (land, tereni, predmeti, etc.). Cqlata komunikacia se vodi prez Game, zashtoto vsichki drugi obekti sa
+negovi atributi.
+
+Podobreniq
+ 
+Mestnostite se naimenovat po vida na terena v tqh (gori, pustini, oazisi, planini)
+Vidovete teren sa ogranicheni v opredeleni mestnosti (palmi ima v oazisite, v gorite sa drugi durveta - moje s prosto preimenovane)
+Efekta ot deistviqta (force,race) shte se opredelq ot izbranata forma (rasa) a ne ot izbran Mode
+Mode shte opredelq kak se durji geroq - agressive, stealthy, spiritual, creative - kato tova shte opredelq i deistviqta mu
+ vurhu sredata (durvo - otsichane/zapalvane(bradva/ognivo&fakla),pokatervane,izvlichane na sila,
+ otchupvane na klon za toqga/izdqlkvane na cqloto durvo)
+Realnoto deistvie v/u sredata se opredelq ot izbranata v momenta rasa, mode-a i predmeta v rucete na geroq
+
+MODE SYSTEMS - nov pogled kum igrata
+
+Tui kato igrata shte premine kato osnova vurhu chetirite rejima na deistvie, tezi rejimi trqbva da imat sobstveni sistemi za opredelqne na rezultatite ot deistviqta na geroq.
+Magic system: Magiite se pravqt s izpisvane na string, koito opredelq iztochnika na magicheska sila, nachinite za neinoto oformqne, nasochvane i kontrol i vida na jelaniq efekt.
+Iztochnici - trite osnovni sili sa iztochnici na magiq, no takiva mogat da budat i elementite (fire,water,earth,air), kakto i tehni formi (ice,sand,stone,bone). Kato cqlo elementnite iztochnici se sreshtat vuv vidovete teren v igrata. Iztochnikut e purvata bukva ot magiqta i moje da e edin ili poveche, spored umenieto na geroq. Vseki vid teren dava opredeleno kolichestvo ot suotvetnata sila, i ot umenieto na geroq zavisi kolko ot silata moje da izvleche.
+Vid na efekta - moje da e polojitelen ili otricatelen, suotvetno + ili -.
+Kontrolirane na silata - Stava po nqkolko razlichni nachina - s dumi, jestove, predmeti i s volqta na geroq. Vseki ot nachinite se otbelqzva s opredelena bukva i podrejdaneto na bukvite opredelq kak igracha postroqva zaklinanieto i suotvetno kak shte se proqvi negoviq efekt. Ako te se reduvat magiqta e balansirana i efektut e postepenen, moje da ne e direktno vidim i kato cqlo se proqvqva plavno v sveta, moje da se rasprostranqva ot edna tochka i da pokriva plosht spored silata. Ako te sa grupirani v blokove magiqta e agresivna, rqzka i razkusva sveta tam kudeto go dokosne, silno fokusirana e v tochkata izbrana ot magiosnika. Ot druga strana broqt na znacite za kontrol opredelq kolichestvoto na silata, koeto geroqt se opitva da kontrolira. Vseki znak za kontrol struva kolichestvo energiq pri izvurshvaneto na magiqta, opredeleno ot atributite na geroq. Vidut na izpolzvanite znaci opredelq efekta:
+Gesture - fizichesko vliqnie
+Vocal - vliqnie vurhu po-malko materialnata sushtnost na neshtata (moje da e duhovno)
+Somatic - promqna na sveta razminavashta se s negovite zakoni
+Will - direktna promqna na sveta, osnovana na chistata volq na magiosnika
+PRIMERI:
+Int -> (v)ocalization
+Dex -> (g)esture
+Cre -> (s)omatic
+Mnd -> (w)ill
+Control cost=(5-attr/5)*20=4*(25-attr)
+PRIMERNI ATRIBUTI:
+INT 15 -> v=(5-3)*20=40 energy
+DEX 10 -> g=(5-2)*20=60 energy
+CRE 8  -> s=4*(25-8)=68 energy
+MND 12 -> w=4*(25-12)=52 energy
+Spells:
+Fggg- : Fire streams from the hand of the mage and burns the target and everything in the path of the flame. (cost=3*60=180)
+Fwww- : The blood of the target boils under the will of the mage. (cost=3*52=156)
+Fvvv- : The mage chants and the words cause feverish visions and disorientation to the target. (cost=3*40=120)
+Fsss- : The target bursts in fire as the magician points his staff at it. (cost=3*68=204)
+
+
+Vizualizaciq - opisanieto na deistviqta na geroq pri izvurshvane na zaklinanieto zavisi ot nivoto na suotvetnite atributi i kolichestvoto i podredbata na znacite ot suotvetniq vid.
+Energiq - Magiite iztoshtavat energiqta na geroq i ne mogat da se pravqt kogato toi e izmoren. Ako zaklinanieto izrazhodi poveche energiq otkolkoto ima geroq, to mu nanasq fizicheski shteti, kato za vseki 100 tochki nujna energiq se izpolzva 1 tochka jivot. Pri tova se proqvqva suotveten efekt kato opisanie (spored iztochnika na silata).
+
+----------------------------------------------------------------
+Glaven modul GAME koito vika vsichki ostanali i izvurshva vsichki deistvia kato im podava nujnata informacia:
+- promeni po terena;
+- poqvqvane i premahvane na predmeti;
+- dvijenie na sushtestvata;
+- promeni po sushtestvata;
+- otvarqne na inventari i equipmenti i dr. ekrani za igracha;
+
+podchineni moduli:
+- Interface (vizualizaciq na vsichko - kato init_screen-a sega, no neshta kato otvarqne na vrati i tn. shte sa integrirani v suotvetnite obekti)
+	- world generation
+	- message buffer system
+
+- terain
+- item
+- creature
+- player
+- interactions system? (metodi koito opredelqt dali edno sushtestvo bi otishlo nqkude bi trqbvalo da sa metodi na sushtestvoto,
+   movement modula e nenujen)
