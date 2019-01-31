@@ -1,32 +1,15 @@
-#### Smart class with reference dictionary for terrain/items/creatures?
-##from collections import defaultdict
-##
-##class KeepRefs(object):
-##    __refs__ = defaultdict(dict)
-##    def __init__(self,name):
-##        self.__refs__[self.__class__][name]=self
-##
-##    @classmethod
-##    def get_instances(cls,name):
-##        return cls.__refs__[cls][name]
-##
-##class X(KeepRefs):
-##    def __init__(self, name):
-##        super(X, self).__init__(name)
-##        self.name = name
-##        self.bool= name=='x'
-##
-##x = X("x")
-##y = X("y")
+"""
+Created on Thu Jan 31 2018
 
-import glob
+Unit tests for the Balance game
 
-files=glob.glob('*.py')
-for f in files:
-    with open(f,'r') as infile:
-        i=1
-        for l in infile:
-            if 'from inventory' in l:
-                print f,i
-                break
-            i+=1
+@author: IvanPopov
+"""
+
+import unittest
+from game import Game
+
+class GameTest(unittest.TestCase):
+    def test_game_loads(self):
+        g=Game()
+        self.assertEqual(g.c.title, "Balance")
