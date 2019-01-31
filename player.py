@@ -14,11 +14,11 @@ class Living_thing(object):
             'dryad':            {'Str':10,'End':10,'Dex':20,'Int':17,'Cre':13,'Mnd':15},
             'water elemental':  {'Str':16,'End':18,'Dex':17,'Int':14,'Cre':5, 'Mnd':13},
             'fairy':            {'Str':8, 'End':9, 'Dex':19,'Int':17,'Cre':8, 'Mnd':18},
-            
+
             'human':            {'Str':14,'End':14,'Dex':16,'Int':16,'Cre':20,'Mnd':16},
             'dwarf':            {'Str':18,'End':16,'Dex':12,'Int':14,'Cre':20,'Mnd':12},
             'spirit of order':  {'Str':12,'End':10,'Dex':14,'Int':18,'Cre':18,'Mnd':20},
-            
+
             'ork':              {'Str':18,'End':18,'Dex':13,'Int':10,'Cre':2, 'Mnd':12},
             'troll':            {'Str':20,'End':20,'Dex':4, 'Int':8, 'Cre':1, 'Mnd':8},
             'spirit of chaos':  {'Str':15,'End':13,'Dex':12,'Int':18,'Cre':3, 'Mnd':20},
@@ -319,10 +319,10 @@ class Player(Living_thing):
             self.game.c.page()
             self.game.c.write(' You search through the items on the ground.\n What do you want to pick up?\n\n')
             for i in range(len(pile)):
-                print ' '+chr(i+97)+')  ', pile[i][2].name+', %d x %s stones' %(pile[i][2].qty,str(pile[i][2].weight))
+                print(' '+chr(i+97)+')  ', pile[i][2].name+', %d x %s stones' %(pile[i][2].qty,str(pile[i][2].weight)))
                 self.game.c.text(4,i+3,pile[i][2].tag,pile[i][2].color)
-            print '\n You can carry %s more stones.\n Your backpack can take %s more stones.' %(str(self.max_weight - self.weight),
-                                                                                                str(self.backpack))
+            print('\n You can carry %s more stones.\n Your backpack can take %s more stones.' %(str(self.max_weight - self.weight),
+                                                                                                str(self.backpack)))
             i1 = ' '
             while 1:
                 if msvcrt.kbhit():
@@ -335,7 +335,7 @@ class Player(Living_thing):
         if len(pile) > 0:
             try:
                 if pile[ord(i1)-97][2].qty > 1 and self.equipment['Backpack'] != []:
-                    self.game.message.message('pickup')                    
+                    self.game.message.message('pickup')
                     a = ''
                     i = ' '
                     while ord(i) != 13:
@@ -391,7 +391,7 @@ class Player(Living_thing):
                     if len(pile) > 1:
                         self.game.redraw_screen()
                     self.game.message.use('cant_fit_in_backpack', pile[ord(i1)-97][2])
-            
+
         if it == 0:
             self.game.message.message('no_pickup')
 
@@ -409,7 +409,7 @@ class Player(Living_thing):
                 self.inventory.append(self.equipment[self.equip_tags[item]])
         else:
             drop = self.equipment[self.equip_tags[item]].duplicate(self.equipment[self.equip_tags[item]].qty)
-            print ' There\'s no place in your backpack so you drop\n the %s to the ground!' %drop.name
+            print(' There\'s no place in your backpack so you drop\n the %s to the ground!' %drop.name)
             msvcrt.getch()
             for i in self.game.ground_items:
                 if i[:2] == self.xy and i[2].id == drop.id and i[2].name == drop.name and i[2].stackable:
@@ -518,13 +518,13 @@ class Player(Living_thing):
         else:
             if self.equipment['Backpack'] == [] and not dropped:
                 self.free_hands -= 1
-                    
+
         self.equipment[self.equip_tags[item]] = []
-            
+
     def equip(self,item,slot):
         if 'weapon' in item.type:
             if self.equiped_weaps==1 and item.weight>self.max_weaps:
-                print ' You are not strong enough to wield this weapon with your current one!'
+                print(' You are not strong enough to wield this weapon with your current one!')
                 msvcrt.getch()
                 return 0
             else:
@@ -612,7 +612,7 @@ class Player(Living_thing):
             while self.backpack < 0:
                 drop = self.inventory[0].drop_item(forced=True)
                 dropped = 0
-                print ' There\'s no place in your backpack for the %s so you drop it to the ground!\n' %drop.name
+                print(' There\'s no place in your backpack for the %s so you drop it to the ground!\n' %drop.name)
                 msvcrt.getch()
                 for i in self.game.ground_items:
                     if i[:2] == self.xy and i[2].id == drop.id and i[2].name == drop.name and i[2].stackable:
@@ -632,20 +632,20 @@ class Player(Living_thing):
         items = ''
         for i in self.inventory:
             if self.equip_tags[slot] in ['Right hand','Left hand']:
-                print ' '+chr(self.inventory.index(i)+97)+')', i.name.capitalize()+', %d x %s stones' %(i.qty,str(i.weight))
+                print(' '+chr(self.inventory.index(i)+97)+')', i.name.capitalize()+', %d x %s stones' %(i.qty,str(i.weight)))
                 found += 1
                 items += chr(self.inventory.index(i)+97)
             elif self.equip_tags[slot] in i.type:
-                print ' '+chr(self.inventory.index(i)+97)+')', i.name.capitalize()+', %d x %s stones' %(i.qty,str(i.weight))
+                print(' '+chr(self.inventory.index(i)+97)+')', i.name.capitalize()+', %d x %s stones' %(i.qty,str(i.weight)))
                 found += 1
                 items += chr(self.inventory.index(i)+97)
         if not found:
-            print ' You have nothing usefull to equip.'
+            print(' You have nothing usefull to equip.')
             i1 = msvcrt.getch()
             return 0
         else:
             self.game.c.pos(0,1)
-            print ' What do you want to equip?'
+            print(' What do you want to equip?')
             i1 = msvcrt.getch()
             if i1 in items:
                 self.equip(self.inventory[ord(i1)-97],slot)
@@ -768,7 +768,7 @@ class NPC(Living_thing):
                     self.path=[]
                 key = '5'
             else:
-                if self.race=='troll' and self.game.current_place['Chaos']>=60 and self.game.player.turn%2 and self.game.player.turn%2400<1200: 
+                if self.race=='troll' and self.game.current_place['Chaos']>=60 and self.game.player.turn%2 and self.game.player.turn%2400<1200:
                     key='5'
                 else:
                     key = str(random.randint(1,9))
@@ -825,7 +825,7 @@ class NPC(Living_thing):
                 self.game.hidden.remove(self)
         if mode == 'standing':
             key='5'
-        for a in range(2):            
+        for a in range(2):
             self.xy[a] = self.xy[a] + md[key][a]
         self.creature_passage(x, y)
         if self in self.game.hidden:
@@ -890,7 +890,7 @@ class NPC(Living_thing):
               self.xy[0] = x
               self.xy[1] = y
 
-    
+
 class Human(NPC):
     def __init__(self,xy,area,path,terr_restr,emotion,fear,tag,name,mode,id,attr,WD,armour,f,r,game_id=0):
         super(Human,self).__init__()

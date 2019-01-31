@@ -145,9 +145,9 @@ class Message_system:
         self.game.c.pos(0,0)
         try:
             if x=='gain_waterform':
-                print md[x] %(t)
+                print(md[x] %(t))
             else:
-                print md[x]
+                print(md[x])
         except:
             self.game.c.rectangle((0,0,80,1))
 
@@ -186,7 +186,7 @@ class Message_system:
             elif x == 'creature_hits_creature':
                 self.game.combat_buffer += md[x] %(a.race,d.name,dmg)
             elif x in ['talk','attack','tame','tamed_use','command_follow','command_stay','command_guard','steal','possess']:
-                print md[x] %(a.race)
+                print(md[x] %(a.race))
             elif x == 'sapphired':
                 if a.life<1:
                     self.game.combat_buffer += 'The %s falls frozen to the ground!' %(a.race)+' '
@@ -234,19 +234,19 @@ class Message_system:
                     if item[:2] == xy:
                         items.append(item[2:])
                 if len(items) > 1:
-                    print 'You see several items on the ground.'
+                    print('You see several items on the ground.')
                 else:
                     self.message('')
                     if qty == 1 and a.name[0].lower() in 'aieo':
-                        print md[x] %('an ' + a.name)
+                        print(md[x] %('an ' + a.name))
                     elif qty == 1 and a.name[0].lower() not in 'aieo':
-                        print md[x] %('a ' + a.name)
+                        print(md[x] %('a ' + a.name))
                     else:
-                        print md[x] %(a.name+'('+str(qty)+')')
+                        print(md[x] %(a.name+'('+str(qty)+')'))
             elif x == 'craft_item':
                 self.game.combat_buffer += md[x] %(a.name)
             else:
-                print md[x] %a.name
+                print(md[x] %a.name)
         except:
             self.game.c.rectangle((0,0,80,1))
 
@@ -283,7 +283,7 @@ class Message_system:
                     if piece[:2] == xy:
                         things += ' There are items here.'
                         break
-                    
+
             self.game.c.text(0,0,things,7)
         except:
             self.game.c.rectangle((0,0,80,1))
@@ -292,7 +292,7 @@ class Message_system:
         md = {'leave_area':'Do you wish to leave this area? (y/n)'}
         self.game.c.pos(0,0)
         try:
-            print md[x]
+            print(md[x])
             answer = msvcrt.getch()
             if answer == 'y' or answer == 'Y':
                 return 1

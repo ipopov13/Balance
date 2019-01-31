@@ -164,10 +164,10 @@ class Game:
         self.c.text(0,16,'Nature %6.2f' %(self.player.forces['Nature'])+'%',10)
         self.c.text(0,17,'Order  %6.2f' %(self.player.forces['Order'])+'%',9)
         self.c.text(0,18,'Chaos  %6.2f' %(self.player.forces['Chaos'])+'%',12)
-        
+
         self.c.text(0,23,'%s' %(str(self.directions)),7)
         self.draw_mode()
-        
+
         self.c.rectangle((20,24,79,25))
         if self.current_place['Temperature']<16:
             climate=" It's very cold here!"
@@ -214,7 +214,7 @@ class Game:
                     colour = 12
                 sign = 'DYING OF THIRST!'
             self.c.text(0,22,sign,colour)
-        
+
     def redraw_screen(self):
         self.c.page()
         for x in range(1,24):
@@ -239,10 +239,7 @@ class Game:
         self.c.pos(*self.player.xy)
 
     def draw_move(self,mover, x, y):
-    ##    try:
         self.c.scroll((x, y, x+1, y+1), 1, 1, T[self.land[y-1][x-21]].colour, T[self.land[y-1][x-21]].char)
-    ##    except:
-    ##        print x, y, land[y-1][x-21]
         self.c.pos(*mover.xy)
         if mover.tag=='@' and mover.possessed:
             self.c.scroll((mover.xy[0], mover.xy[1], mover.xy[0]+1, mover.xy[1]+1), 1, 1, mover.possessed[0].emotion, mover.possessed[0].tag)
@@ -328,7 +325,7 @@ class Game:
 
  You have:                  You can build:\n''')
             for i1 in range(len(mat_keys)):
-                print '   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]])
+                print('   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]]))
             if selected_recipes:
                 line=0
                 for r in selected_recipes:
@@ -408,7 +405,7 @@ class Game:
             self.c.write('''
   You can imbue the item with the power of gems you posses:
   (choose the gem you'd like to use or SPACE to continue)\n\n''')
-            for x in range(len(gems)): 
+            for x in range(len(gems)):
                 self.c.write('  %s) %-12s (gives %d %s)' %(chr(97+x),gems[x].name.capitalize(),gems[x].effect['talisman']['temp_attr'][0][1],
                                                     gems[x].effect['talisman']['temp_attr'][0][0]))
             i=msvcrt.getch()
@@ -421,7 +418,7 @@ class Game:
             return creation
         else:
             return creation
-        
+
     def add_flowers(self,creation):
         found=0
         flowers={}
@@ -592,7 +589,7 @@ class Game:
 
  You have:                  You can build:\n''')
             for i1 in range(len(mat_keys)):
-                print '   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]])
+                print('   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]]))
             if selected_recipes:
                 line=0
                 for r in the_keys:
@@ -616,7 +613,7 @@ class Game:
  May need:%s
  You have:                  You can build:\n''' %(', '.join(tools_needed[craft_group])))
             for i1 in range(len(mat_keys)):
-                print '   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]])
+                print('   %s x %d' %(mat_keys[i1].capitalize(),mats[mat_keys[i1]]))
             line=0
             for r in the_keys:
                 self.c.text(28,line+5,'%d) %s' %(line/2+1,r.capitalize()))
@@ -851,11 +848,11 @@ class Game:
         else:
             self.c.write('\n You open your backpack:\n (e)view equipment (q)eat/drink (d)drop item (u)use item\n\n')
         for i in range(len(self.player.inventory)):
-            print ' '+chr(i+97)+')  ', self.player.inventory[i].name.capitalize()+', %d x %s stones' %(self.player.inventory[i].qty,
-                                                                                      str(self.player.inventory[i].weight))
+            print(' '+chr(i+97)+')  ', self.player.inventory[i].name.capitalize()+', %d x %s stones' %(self.player.inventory[i].qty,
+                                                                                      str(self.player.inventory[i].weight)))
             self.c.text(4,i+4,self.player.inventory[i].tag,self.player.inventory[i].color)
-        print '\n Carrying: %s/%s. You can fit %s more in your bag.' %(str(self.player.weight), str(self.player.max_weight),
-                                                                       str(self.player.backpack))
+        print('\n Carrying: %s/%s. You can fit %s more in your bag.' %(str(self.player.weight), str(self.player.max_weight),
+                                                                       str(self.player.backpack)))
         i1 = ' '
         i1 = msvcrt.getch()
         try:
@@ -923,7 +920,7 @@ class Game:
             except IndexError:
                 pass
             self.draw_inv()
-            
+
     def draw_equip(self):
         self.c.page()
         self.c.pos(0,0)
@@ -938,18 +935,18 @@ class Game:
                 if 'engraving' in self.player.equipment[self.player.equip_tags[i]].effect:
                     engrav = '"'+self.player.equipment[self.player.equip_tags[i]].effect['engraving']+'"'
                 if 'two_handed' in self.player.equipment[self.player.equip_tags[i]].type:
-                    print ' '+chr(i+97)+')  ', self.player.equip_tags[i]+': %s (two hands), %d x %s stones %s %s' %(self.player.equipment[self.player.equip_tags[i]].name.capitalize(),
+                    print(' '+chr(i+97)+')  ', self.player.equip_tags[i]+': %s (two hands), %d x %s stones %s %s' %(self.player.equipment[self.player.equip_tags[i]].name.capitalize(),
                                                                                               self.player.equipment[self.player.equip_tags[i]].qty,
                                                                                               str(self.player.equipment[self.player.equip_tags[i]].weight), item_effs,
-                                                                                                                engrav)
+                                                                                                                engrav))
                 else:
-                    print ' '+chr(i+97)+')  ', self.player.equip_tags[i]+': %s, %d x %s stones %s %s' %(self.player.equipment[self.player.equip_tags[i]].name.capitalize(),
+                    print(' '+chr(i+97)+')  ', self.player.equip_tags[i]+': %s, %d x %s stones %s %s' %(self.player.equipment[self.player.equip_tags[i]].name.capitalize(),
                                                                                               self.player.equipment[self.player.equip_tags[i]].qty,
                                                                                               str(self.player.equipment[self.player.equip_tags[i]].weight),item_effs,
-                                                                                                 engrav)
+                                                                                                 engrav))
                 self.c.text(4,i+4,self.player.equipment[self.player.equip_tags[i]].tag,self.player.equipment[self.player.equip_tags[i]].color)
             else:
-                print ' '+chr(i+97)+')  ', self.player.equip_tags[i]+':'
+                print(' '+chr(i+97)+')  ', self.player.equip_tags[i]+':')
         i1 = ' '
         i1 = msvcrt.getch()
         if i1 == '1':
@@ -970,7 +967,7 @@ class Game:
                     self.player.find_equipment(ord(i1)-97)
             else:
                 if self.player.equip_tags[ord(i1)-97] == 'Backpack':
-                    print ' Do you really want to drop your bag to the ground?\n You will be able to carry only one item per free hand at most! (y/n)'
+                    print(' Do you really want to drop your bag to the ground?\n You will be able to carry only one item per free hand at most! (y/n)')
                     b1 = msvcrt.getch()
                     if b1.lower() != 'y':
                         self.draw_equip()
@@ -1107,7 +1104,7 @@ class Game:
  itself (like your own attunement). If you want
  to stop studying and fix the numbers the way
  they are, simply select human as a study race.
- 
+
  IF YOU LOSE YOUR HIGH HUMAN ATTUNEMENT (90%)
  YOU WILL LOSE ALL COLLECTED KNOWLEDGE!''')
 
@@ -1351,7 +1348,7 @@ class Game:
   grow magically under your feet, making you even more powerful, and if you
   find some rare flowers you can make a magical flower crown and other pretty
   things!
-  
+
   Do what I taught you and return sometimes to tell me of what you have seen
   and done!""",'trade':"""\n  I can only give you food and water, or some pretty flowers. What else
   would a fairy need?\n\n"""},'elf':{'learn':
@@ -1548,7 +1545,7 @@ class Game:
         else:
             price+=price*m
         return price
-                            
+
 
     def find_place(self,a,b):
         good_coords=[]
@@ -1595,7 +1592,7 @@ class Game:
     def drink(self,xy):
         if T[self.land[xy[1]-1][xy[0]-21]].drink != {}:
             if self.player.thirst == 0:
-                self.message.use('over_drink',T[self.land[xy[1]-1][xy[0]-21]])            
+                self.message.use('over_drink',T[self.land[xy[1]-1][xy[0]-21]])
                 return 1
             self.message.use('drink',T[self.land[xy[1]-1][xy[0]-21]])
             if T[self.land[xy[1]-1][xy[0]-21]].id=='t' and 'goblin1' in self.player.tool_tags:
@@ -1650,7 +1647,7 @@ class Game:
         elif possessor.equipment['Left hand'] and possessor.possessed[0].name in possessor.equipment['Left hand'].effect:
             possessor.equipment['Left hand'].effect[possessor.possessed[0].name]\
                                        =min([100,possessor.equipment['Left hand'].effect[possessor.possessed[0].name]+0.1])
-            
+
     def find_to_open(self,xy):
         md = {1:[-1,1], 2:[0,1], 3:[1,1], 4:[-1,0], 5:[0,0],
               6:[1,0], 7:[-1,-1], 8:[0,-1], 9:[1,-1]}
@@ -1735,13 +1732,13 @@ class Game:
                 msvcrt.getch()
                 return 0
         self.c.page()
-        print ' You open the %s and look inside.\n (t) take item (p) put item\n' %(chest.name)
+        print(' You open the %s and look inside.\n (t) take item (p) put item\n' %(chest.name))
         for i in range(len(chest.effect['contains'])):
-            print ' %s)   %s %d x %s stones' %(chr(i+97),chest.effect['contains'][i].name.capitalize(),chest.effect['contains'][i].qty,
-                                             str(chest.effect['contains'][i].weight))
+            print(' %s)   %s %d x %s stones' %(chr(i+97),chest.effect['contains'][i].name.capitalize(),chest.effect['contains'][i].qty,
+                                             str(chest.effect['contains'][i].weight)))
             self.c.text(4,i+3,chest.effect['contains'][i].tag,chest.effect['contains'][i].color)
-        print '\n You can carry %s more stones, %s more will fit in your backpack.' %(str(self.player.max_weight-self.player.weight),
-                                                                                      str(self.player.backpack))
+        print('\n You can carry %s more stones, %s more will fit in your backpack.' %(str(self.player.max_weight-self.player.weight),
+                                                                                      str(self.player.backpack)))
         i1 = msvcrt.getch()
         i1 = i1.lower()
         if i1 == 't' and len(chest.effect['contains']):
@@ -1756,7 +1753,7 @@ class Game:
             try:
                 item = chest.effect['contains'][ord(take)-97]
                 if item.qty > 1 and self.player.equipment['Backpack'] != []:
-                    self.message.message('pickup')                    
+                    self.message.message('pickup')
                     a = ''
                     i = ' '
                     while ord(i) != 13:
@@ -1879,7 +1876,7 @@ class Game:
 
  You have:                   Using:     You can make:\n''')
             for i in range(len(mats)):
-                print ' %s)   %s x %d' %(chr(i+97),mats[i].name,mats[i].qty)
+                print(' %s)   %s x %d' %(chr(i+97),mats[i].name,mats[i].qty))
                 self.c.text(4,i+6,mats[i].tag,mats[i].color)
                 self.c.text(31,i+6,str(selected_mats[i].qty))
             if selected_recipes:
@@ -1994,8 +1991,8 @@ class Game:
               |   \  /---|  |      /---|  |  \ |  |     |
               |___/ /    |  |___| /    |  |   \|  \___/ |____
 
-                                    ver 0.6 
-                                         
+                                    ver 0.6
+
                                    (n)ew game
                              (l)oad a previous game
                             ''')
@@ -2015,7 +2012,7 @@ class Game:
                 t=self.load_terr(a)
         self.redraw_screen()
         self.c.pos(*self.player.xy)
-        
+
     def create_character(self,fl):
         races = {'a':'elf','b':'gnome','c':'spirit of nature','d':'dryad','e':'water elemental','f':'fairy','g':'human',
                  'h':'dwarf','i':'spirit of order','j':'ork','k':'troll','l':'spirit of chaos','m':'goblin','n':'kraken',
@@ -2040,7 +2037,7 @@ class Game:
  Choose your character's form:
 
             NATURE                 ORDER                   CHAOS
-            
+
             a) Elf               g) Human                 j) Ork
            b) Gnome              h) Dwarf                k) Troll
       c) Spirit of Nature    i) Spirit of Order      l) Spirit of Chaos
@@ -2075,12 +2072,12 @@ class Game:
   a) Forest healer: light clothes and a healing set.
   b) Traveler: a robe and a stick to help you on the way.
   c) Nature warrior: dryad-crafted armour and an elven bow.
-  
+
   d) Builder of Order: a miner's pick and clothes.
   e) Farmer: clothes, a shovel and some seeds.
   f) Merchant: clothes and some money, a package of goods.
   g) Soldier: a sword and leather armour.
-  
+
   h) Village destroyer: a big club for breaking stuff. Oh, and food...
   i) Pillager: a couple of weapons and a lot of armour.
   j) Shaman: a book of magic and a herb set.''')
@@ -2113,7 +2110,7 @@ class Game:
             self.c.write(i)
             self.player.name = a
             if self.player.name in fl:
-                print '\n  Character savefile already exists!'
+                print('\n  Character savefile already exists!')
                 msvcrt.getch()
             else:
                 break
@@ -2142,7 +2139,6 @@ class Game:
                 else:
                     self.message.creature('no_escape',0)
         if area != 'area0':
-            print 'bla'
             old_temp=self.current_place['Temperature']
             places = open('%s//%s_dir//new_%s.dat'%(os.curdir,self.player.name,self.current_area), 'w')
             pickle.dump(self.ground_items, places)
@@ -2160,7 +2156,6 @@ class Game:
             if self.current_area not in self.player.known_areas:
                 self.player.known_areas.append(self.current_area)
             places.close()
-            print 'bla1'
             self.new_terr(area,direction)
             self.draw_hud()
             self.player.worked_places={'Nature':[],'Chaos':[],'Order':[]}
@@ -2215,7 +2210,7 @@ class Game:
         if not T[self.land[path[-1][1]-1][path[-1][0]-21]].pass_through:
             return 0
         return 1
-        
+
     def highlight_path(self,way):
         if way != []:
             for step in way[1:]:
@@ -2422,7 +2417,7 @@ class Game:
         ## Resisted damage categories based on armour. If armour >=500 there's always a resisted amount
         cats = {5:[1,11],4:[11,26],3:[26,46],2:[46,71],1:[71,101]}
         resisted = 0
-        if chance < defender.armour: 
+        if chance < defender.armour:
             cat = int(100*chance/defender.armour)
             cat = max([cat, 1])
             for x in cats:
@@ -2520,7 +2515,7 @@ class Game:
         try:
             terr = open(f, 'r')
         except:
-            print 'No such file!'
+            print('No such file!')
             terr = msvcrt.getch()
             return 0
         self.c.page()
@@ -2619,7 +2614,7 @@ class Game:
                             elif each=='Population' or each=='Water':
                                 self.T_matrix[x][y][each] = min([self.T_matrix[x][y][each]+(amplitude-(abs(x-fx)+abs(y-fy))*10),100])
                         if self.T_matrix[x][y]["Nature"]+self.T_matrix[x][y]['Order']+self.T_matrix[x][y]['Chaos']>100:
-                            print "Mapping Error:",self.T_matrix[x][y]["Nature"],self.T_matrix[x][y]['Order'],self.T_matrix[x][y]['Chaos']
+                            print("Mapping Error:",self.T_matrix[x][y]["Nature"],self.T_matrix[x][y]['Order'],self.T_matrix[x][y]['Chaos'])
                             raw_input()
                             raise
         temp_borders=[random.randint(0,30),random.randint(70,100)]
@@ -2958,7 +2953,7 @@ class Game:
                     creation = thing.duplicate(x,y,game_id,thing.force,thing.race)
                     creature_coords.append(creation.xy[:])
                     self.all_creatures.append(creation)
-                    
+
         if tp['Population']>35:
             village_type=[]
             if  tp['Order']==max([tp['Nature'],tp['Order'],tp['Chaos']]):
@@ -3243,7 +3238,7 @@ class Game:
                             creation = thing.duplicate(x,y,game_id,thing.force,thing.race)
                             creature_coords.append(creation.xy[:])
                             self.all_creatures.append(creation)
-                                
+
             self.all_beings += self.all_creatures
             self.draw_items()
             terr.close()
@@ -3298,7 +3293,7 @@ class Game:
                 fol.game_id=max_id+1
                 max_id+=1
         return 1
-    
+
     def save(self):
         try:
             f = open(self.player.name, 'w')
@@ -4717,7 +4712,7 @@ if __name__=='__main__':
                             the_game.player.rest = 1
                             the_game.message.message('work')
                             i = ''
-                            while not i:        
+                            while not i:
                                 if msvcrt.kbhit():
                                     i = msvcrt.getch()
                             the_game.work(i)
@@ -4782,5 +4777,5 @@ if __name__=='__main__':
         raw_input("\nIf you got an error, please send it to the creator!\nOtherwise press ENTER to exit (no pun intended).")
         os._exit(0)
     except Exception as e:
-        print e.message
+        print(e.message)
         raw_input()
