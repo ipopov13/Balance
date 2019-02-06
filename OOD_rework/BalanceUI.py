@@ -7,25 +7,25 @@ User interface class for the Balance rogue-like RPG
 @author: IvanPopov
 """
 import pickle
-import World
+import world
 
-class UI:
+class UserInterface:
 
     def __init__(self):
         pass
     
-    def getWorld(self):
+    def get_world(self):
         pass
         # TODO:
         #Display starting screen
-        #If new return World(self.getPlayerCharacter())
+        #If new return World(self._getPlayerCharacter())
         #If load glob the saved worlds directory, unpickle the worlds and present a choiceList using their .present() strings
         #return chosen world
 
-    def getPlayerCharacter(self):
+    def _get_player_character(self):
         pass
 
-    def choiceList(self, prompt, presentables):
+    def choice_list(self, prompt, presentables):
         pass
         # TODO:
 #        Print prompt and the .present() strings of the objects in the list

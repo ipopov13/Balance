@@ -7,21 +7,18 @@ World class for the Balance rogue-like RPG
 @author: IvanPopov
 """
 
-from GameObject import Being
+from gameobject import Being
 
 class World:
     def __init__(self,player_choices):
         # The center of the world, usually the player :P
-        self.activeBeing=Being(player_choices)
+        self._activeBeing=Being(player_choices)
         #TODO: Randomize world params (create world data)
         #TODO: Choose good spot for player as a param dict
         spot={}
-        self.activeBeing.initSceneView(spot)
-        self.living = True
-        
-    def isLive(self):
-        """Accessed by the loop as a game-over signal"""
-        return self.living
+        self._activeBeing.init_scene_view(spot)
+        self.is_live=True
+        self._current_view=None
 
     def setup(self):
         """
@@ -31,5 +28,5 @@ class World:
         return ['viewSceneCommand']
 
     def run(self,command):
-        (additional_commands,self.currentView) = self.activeBeing.executeCommand(command)
+        (additional_commands,self._current_view) = self._activeBeing.execute_command(command)
         return additional_commands

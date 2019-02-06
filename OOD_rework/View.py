@@ -25,4 +25,9 @@ a message and may expend time (depending on the view properties).
 
 class View:
     def __init__(self,being):
-        self.caller=being
+        self._caller=being
+        
+
+class SceneView(View):
+    def __init__(self,being,spot):
+        super().__init__(being) 

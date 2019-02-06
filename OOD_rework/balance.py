@@ -3,36 +3,38 @@ Created on Wed Feb  6 09:41:53 2019
 
 Balance rogue-like RPG
 
-Main loop
+Main instance
 
 @author: IvanPopov
 """
 
-from BalanceUI import UI
+from balanceui import UserInterface
+
 
 class Balance:
     def __init__(self,ui):
-        self.ui=ui
-        self.world=ui.getWorld()
-        self.command_queue = self.world.setup() #this adds setup commands to the queue # noTEST: outgoing query
+        self._ui=ui
+        self._world=self._ui.get_world()
+        self._command_queue = self._world.setup()
         
     def main_loop(self):
-        while self.world.isLive(): # noTEST: outgoing query
-            self.run_world()
-            self.display()
-            self.get_new_command()
+        while self.world.is_live:
+            self._run_world()
+            self._display()
+            self._get_new_command()
         
-    def run_world(self):
-        self.command_queue += self.world.run(self.command_queue.pop(0))
+    def _run_world(self):
+        self._command_queue += self._world.run(self._command_queue.pop(0))
         
-    def display(self):
-        self.ui.display(self.world)
+    def _display(self):
+        self._ui.display(self._world)
         
-    def get_new_command(self):
-        if not self.command_queue:
-            self.command_queue.append(self.ui.getCommand()) # noTEST: outgoing query
+    def _get_new_command(self):
+        if not self._command_queue:
+            self._command_queue.append(self._ui.getCommand())
+
     
 if '__name__'=='__main__':
-    ui=UI()
+    ui=UserInterface()
     game=Balance(ui)
     game.main_loop()
