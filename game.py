@@ -1998,6 +1998,7 @@ class Game:
                             ''')
             i = msvcrt.getch()
             if i == 'n':
+                input('OK')
                 self.create_character(fl)
                 t = self.draw_terr(self.player.start_force)
             if i == 'l':
@@ -2615,7 +2616,7 @@ class Game:
                                 self.T_matrix[x][y][each] = min([self.T_matrix[x][y][each]+(amplitude-(abs(x-fx)+abs(y-fy))*10),100])
                         if self.T_matrix[x][y]["Nature"]+self.T_matrix[x][y]['Order']+self.T_matrix[x][y]['Chaos']>100:
                             print("Mapping Error:",self.T_matrix[x][y]["Nature"],self.T_matrix[x][y]['Order'],self.T_matrix[x][y]['Chaos'])
-                            raw_input()
+                            input()
                             raise
         temp_borders=[random.randint(0,30),random.randint(70,100)]
         temp_step=(temp_borders[1]-temp_borders[0])/self.map_size

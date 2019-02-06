@@ -21,36 +21,49 @@ class Being(GameObject):
     contents (other beings in the scene). What is the difference between Player
     and Being? (Or npc and being?)
     """
-    def __init__(self,player_choices):
-        # Dict of views that are available for the Being. Always contains the
-        # standard ones (AvailableViews, Scene, CharSheet, Inventory), while
-        # others are added/removed according to the Being's properties and
-        # development.
+    # The full list of admin commands used for the game (save,load,quit,change view)
+    _admin_command_list={}
+    
+    def __init__(self,player_choices,scene=None):
+        """
+        Create a Being with the set parameters
+        Optional scene can be passed for creating NPCs inside a scene owned by
+        the player character.
+        """
         self.views=self.initNonScenes()
+        self.views['scene']=scene
         self.currentViewKey='scene'
-        self.intent='' #the action that the Being will take this turn
+        self.action='' #the action that the Being will take this turn
     
     def initSceneView(self,spot):
-        pass
+        self.views['scene']=View.SceneView(self,spot)
     
     def initNonScenes(self):
         """
-        Return a dict of all non-scene views that are applicable to the Being
+        Return a dict of all non-scene views initialized with the Being
         """
-        return {}
+        return View.
     
     def executeCommand(self, command):
         """
-        Set the intent and then update the corresponding View and set its key
-        in self.currentViewKey
+        Set the action, update self.currentViewKey, then update the
+        corresponding View and return it along with any extra commands.
         """
-        self.updateIntent(command)
-        if command in self.views[self.currentviewkey].commands:
-            pass
-            # TODO: Check if view changes (a ctrl+ command)
-            # TODO: Set new view key
+        self.translate_command(command)
+        self.update_view_key()
         additional_commands = self.views[self.currentviewkey].update()
         return (additional_commands,self.views[self.currentviewkey])
     
-    def updateIntent(self,command):
-        pass
+    def update_view_key(self):
+        if self.action in self.views:
+            self.currentViewKey=self.action
+    
+    def translate_command(self,command):
+        """
+        Set action based on the commands allowed by the current view
+        """
+        # Check if command is game admin (not view specific)
+        self.action=self._admin_command_list.get(command,'?')
+        # Look through view specific commands if not admin
+        if self.action=='?':
+            self.action=self.views[self.currentviewkey].available_commands.get(command,'?')
