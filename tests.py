@@ -12,4 +12,4 @@ from game import Game
 class GameTest(unittest.TestCase):
     def test_game_loads(self):
         g=Game()
-        self.assertEqual(g.c.title, "Balance")
+        self.assertEqual(g.c.title(), "Balance")
