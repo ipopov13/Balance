@@ -43,7 +43,7 @@ class WorldTest(unittest.TestCase):
     
     def test_world_setup(self):
         world=World({})
-        assert world.setup()==['viewSceneCommand']
+        assert world.setup()[-1]=='viewSceneCommand'
     
     def test_world_run_sends_commands(self):
         with patch('GameObject.Being.executeCommand') as mockBeing:

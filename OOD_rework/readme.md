@@ -31,6 +31,9 @@ View /abstract class covering all content that can be visualized on the screen f
 (View) Inventory /a View into the external properties of a Being object and its interface for structuring those properties (like inventory slots) - other objects that are attached to it for in-game reasons. The interface is really an internal property that has an undefined range of values and can be filled by any object that implements the respective interface.
 (View) CharacterSheet /a View into the internal properties of a Being object that cannot be added or removed by gameplay, only modified in value in a certain predefined range. Some properties are not visible if they are not initialized (and thus not displayable)
 (View) AvailableViews /a View listing all available Views for the current active (a.k.a. player-controlled) Being, with option for switching to each one.
+(Presentable) GameObject /abstract class for all game objects that are not tile properties
+(Gameobject) Item /passive subclass of game objects, containing only passive properties and methods (weight, hp, etc.)
+*(Gameobject) Being /active abstract subclass of game objects, common active properties and methods (move, attack, pick up, interact with environment)
 
 Emergent properties/functionalities:
 1) Due to any Being being pluggable in standard Views like Inventory/CharSheet a hidden debugging feature can be to switch to another Being to view its specific instance properties!
@@ -39,12 +42,6 @@ Expected:
 (Presentable) Environment /abstract class for terrains and effects (tile properties)
 (Environment) Terrain /passive tile properties that define available actions for actors
 (Environment) Effect /active visible or invisible tile properties that make modifications to actions or actors
-(Presentable) GameObject /abstract class for all game objects that are not tile properties
-(Gameobject) Item /passive subclass of game objects, containing only passive properties and methods (weight, hp, etc.)
-(Gameobject) Being /active abstract subclass of game objects, common active properties and methods (move, attack, pick up, interact with environment)
-Environment
-(Environment) Terrain
-(Environment) Effect
 (Presentable) InventoryInterface /abstract class for the Inventory slot properties. Objects that can be attached to a specific interface have to implement it (helmets and hats implement the HeadSlot interface, almost any object that can be held implements the HandSlot interface, etc)
 (Presentable) CharacterProperty /abstract class for properties shown in a CharacterSheet View. Each subclass has a single instance with an IsInitialized? property, a range, and a current value within that range. Presenting strings return the actual visual representation.
 

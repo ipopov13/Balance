@@ -20,18 +20,6 @@ class Being(GameObject):
     Only called by the world object for player init, and by itself for scene
     contents (other beings in the scene). What is the difference between Player
     and Being? (Or npc and being?)
-
-Public initSceneView(spot): /start up the scene using the params passed by world
-
-Public executeCommand(command): /set the intent and then update the corresponding View and set its key in self.currentViewKey
-If command in self.views[self.currentviewkey].commands:
-Check if view changes (a ctrl+ command)
-Set new view key
-Self.updateIntent(command)
-Additional_commands = Self.views[self.currentviewkey].update()
-Return (additional_commands, Self.views[self.currentviewkey])
-
-private initNonScenes(): /add all non-scene view that are applicable to the Being
     """
     def __init__(self,player_choices):
         # Dict of views that are available for the Being. Always contains the
@@ -46,8 +34,23 @@ private initNonScenes(): /add all non-scene view that are applicable to the Bein
         pass
     
     def initNonScenes(self):
+        """
+        Return a dict of all non-scene views that are applicable to the Being
+        """
         return {}
     
     def executeCommand(self, command):
-        additional_commands=[]
+        """
+        Set the intent and then update the corresponding View and set its key
+        in self.currentViewKey
+        """
+        self.updateIntent(command)
+        if command in self.views[self.currentviewkey].commands:
+            pass
+            # TODO: Check if view changes (a ctrl+ command)
+            # TODO: Set new view key
+        additional_commands = self.views[self.currentviewkey].update()
         return (additional_commands,self.views[self.currentviewkey])
+    
+    def updateIntent(self,command):
+        pass
