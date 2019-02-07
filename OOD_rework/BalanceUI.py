@@ -14,9 +14,9 @@ import Console
 class UserInterface:
 
     def __init__(self):
-        self.con=Console.getconsole()
-        self.con.title("Balance")
-        self.choice=''
+        self._con=Console.getconsole()
+        self._con.title("Balance")
+        self._choice=''
     
     def get_world(self):
         self.con.write('''
@@ -32,19 +32,15 @@ class UserInterface:
                              (l)oad a previous game
                             ''')
         self._get_choice(['n','l'])
-        self.con.page()
-        if self.choice=='n':
-            print('boom')
-            self.get_command()
+        self._con.page()
+        if self._choice=='n':
             return world.World(self._get_player_character())
-        elif self.choice=='l':
-            print('boom2')
-            self.get_command()
+        elif self._choice=='l':
             return self.choice_list("Please choose a game to run:",
                                     self._get_worlds())
 
     def _get_player_character(self):
-        self.con.write("""
+        self._con.write("""
  The form your character may take in Balance is completely controlled by his or
  her actions. If you like to go around and kill things, you are likely to end
  up with an ork, while a character that spends his time in the mine will slowly
@@ -57,7 +53,7 @@ class UserInterface:
  a form now gives you 34% attunement to it, and 34% alignment to the
  respective force. Your total form attunement can't be higher than your
  alignment to the respective force.""")
-        self.get_command()
+        self._get_choice()
     
     def _get_worlds(self):
         #If load glob the saved worlds directory, unpickle the worlds and present a choiceList using their .present() strings
@@ -75,8 +71,8 @@ class UserInterface:
         return 0
     
     def _get_choice(self,options,no_escape=True):
-        self.choice=self.con.getchar().decode()
-        while self.choice not in options and no_escape:
+        self._choice=self._con.getchar().decode()
+        while self._choice not in options and no_escape:
             # TODO: Add error message to prompt for a correct choice?
-            self.choice=self.con.getchar().decode()
+            self._choice=self._con.getchar().decode()
             
