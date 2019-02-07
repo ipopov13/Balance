@@ -12,6 +12,13 @@ from unittest.mock import patch
 #from module import function/object
 from balance import Balance
 from world import World
+from balanceui import UserInterface
+
+class UITest(unittest.TestCase):
+    
+    def test_get_world(self):
+        ui=UserInterface()
+        assert isinstance(ui.get_world(),World)
 
 class BalanceTest(unittest.TestCase):
     
@@ -33,30 +40,27 @@ class BalanceTest(unittest.TestCase):
         game=Balance(ui)
         game._display()
         ui.display.assert_called_with(ui.get_world())
+        
+    def test_get_command(self):
+        ui=mock.Mock()
+        game=Balance(ui)
+        game._get_new_command()
+        ui.get_command.assert_called_once()
 
 class WorldTest(unittest.TestCase):
-    
-    def test_world_creation(self):
-        with patch('gameobject.Being.init_scene_view') as mockBeing:
-            World({})
-        mockBeing.assert_called_once_with({})
     
     def test_world_setup(self):
         world=World({})
         assert world.setup()[-1]=='viewSceneCommand'
-    
-    def test_world_run_sends_commands(self):
-        with patch('gameobject.Being.execute_command') as mockBeing:
-            mockBeing.return_value = ('new_command','')
+        
+    def test_run(self):
+        with patch('view.PlayerController.process_command') as mockPC:
+            mockPC.return_value=(1,2)
+            test_command='test'
             world=World({})
-            assert world.run('test_command')=='new_command'
-
-    def test_world_run_updates_current_view(self):
-        with patch('gameobject.Being.execute_command') as mockBeing:
-            mockBeing.return_value = ('','new_view')
-            world=World({})
-            world.run('test_command')
-            assert world._current_view=='new_view'
+            additional_commands=world.run(test_command)
+            mockPC.assert_called_once_with(test_command)
+            assert additional_commands==1
 
 if __name__ == '__main__':
     unittest.main()

@@ -18,10 +18,11 @@ class Balance:
         self._command_queue = self._world.setup()
         
     def main_loop(self):
-        while self.world.is_live:
+        while self._world.is_live:
             self._run_world()
             self._display()
-            self._get_new_command()
+            if not self._command_queue:
+                self._get_new_command()
         
     def _run_world(self):
         self._command_queue += self._world.run(self._command_queue.pop(0))
@@ -30,11 +31,11 @@ class Balance:
         self._ui.display(self._world)
         
     def _get_new_command(self):
-        if not self._command_queue:
-            self._command_queue.append(self._ui.getCommand())
+        self._command_queue.append(self._ui.get_command())
 
     
-if '__name__'=='__main__':
+if __name__=='__main__':
     ui=UserInterface()
     game=Balance(ui)
     game.main_loop()
+    print('test')

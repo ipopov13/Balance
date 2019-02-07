@@ -23,11 +23,38 @@ a message and may expend time (depending on the view properties).
 @author: IvanPopov
 """
 
-class View:
-    def __init__(self,being):
-        self._caller=being
+from gameobject import Being
+
+class PlayerController:
+    # The full list of admin commands used for the game
+    # (save,load,quit,change view)
+    _admin_command_list={}
+    
+    def __init__(self,player_choices,scene_params):
+        self._controlled_being=Being(player_choices)
+        self._scene=Scene(self._controlled_being,scene_params)
+    
+    def process_command(self,command):
+        """Check if the command is admin and provide the required View
+        subclass instance, or update the current view and return it
+        """
+        pass
         
 
-class SceneView(View):
-    def __init__(self,being,spot):
-        super().__init__(being) 
+class Scene:
+    def __init__(self,player,scene_params):
+        self._player=player
+        
+
+class View:
+    
+    def __init__(self,being):
+        self._owner=being
+        
+    def update(self,command):
+        """Updates the view and returns any emergent extra commands"""
+        pass
+        
+        
+class CharacterView(View):
+    pass
