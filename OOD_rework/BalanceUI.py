@@ -76,9 +76,7 @@ class UserInterface:
     
     def _get_choice(self,options,no_escape=True):
         self.choice=self.con.getchar().decode()
-        self.con.write(self.choice)
         while self.choice not in options and no_escape:
             # TODO: Add error message to prompt for a correct choice?
             self.choice=self.con.getchar().decode()
-            self.con.write(self.choice)
             
