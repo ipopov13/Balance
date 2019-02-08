@@ -7,35 +7,21 @@ Main instance
 
 @author: IvanPopov
 """
-
-from balanceui import UserInterface
+from controllers import PlayerController
 
 
 class Balance:
-    def __init__(self,ui):
-        self._ui=ui
-        self._world=self._ui.get_world()
-        self._command_queue = self._world.setup()
+    
+    def __init__(self):
+        self._pc = PlayerController()
+        self.finished = False
         
     def main_loop(self):
-        while self._world.is_live:
-            self._run_world()
-            self._display()
-            if not self._command_queue:
-                self._get_new_command()
-        
-    def _run_world(self):
-        self._command_queue += self._world.run(self._command_queue.pop(0))
-        
-    def _display(self):
-        self._ui.display(self._world)
-        
-    def _get_new_command(self):
-        self._command_queue.append(self._ui.get_command())
+        """Run the game until finished"""
+        while not self.finished:
+            self.finished = self._pc.run()
 
     
-if __name__=='__main__':
-    ui=UserInterface()
-    game=Balance(ui)
+if __name__ == '__main__':
+    game=Balance()
     game.main_loop()
-    print('test')
