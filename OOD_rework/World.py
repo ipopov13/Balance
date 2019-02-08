@@ -9,6 +9,10 @@ World class for the Balance rogue-like RPG
 
 
 class World:
+    
     def __init__(self):
         #TODO: Randomize world params (create world data)
+        pass
+    
+    def create_scene_objects(self,request):
         pass

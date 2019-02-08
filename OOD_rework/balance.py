@@ -7,19 +7,19 @@ Main instance
 
 @author: IvanPopov
 """
-from controllers import PlayerController
+import controllers as con
 
 
 class Balance:
     
     def __init__(self):
-        self._pc = PlayerController()
-        self.finished = False
+        self._pc = con.PlayerController()
+        self._state = con.GAME_IS_RUNNING
         
     def main_loop(self):
         """Run the game until finished"""
-        while not self.finished:
-            self.finished = self._pc.run()
+        while self._state != con.GAME_IS_OVER:
+            self._state = self._pc.run()
 
     
 if __name__ == '__main__':

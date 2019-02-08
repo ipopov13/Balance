@@ -17,3 +17,6 @@ class UserInterface:
     def __init__(self):
         self._con = Console.getconsole()
         self._con.title("Balance")
+        
+    def get_pc_request(self):
+        pass

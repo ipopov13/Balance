@@ -20,8 +20,8 @@ their own visualization (text and color).
 """     
 
 class Scene:
-    def __init__(self,player,scene_params):
-        self._player = player
+    def __init__(self,objects):
+        pass
         
 
 class View:

@@ -11,12 +11,13 @@ from unittest.mock import patch
 
 #from module import function/object
 from balance import Balance
+import controllers as con
 
 class BalanceTest(unittest.TestCase):
     
     def test_main_loop_runs(self):
         with patch('controllers.PlayerController.run') as myPC:
-            myPC.return_value = True
+            myPC.return_value = con.GAME_IS_OVER
             game = Balance()
             game.main_loop()
             myPC.assert_called_once()

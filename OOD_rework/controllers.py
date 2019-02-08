@@ -24,17 +24,25 @@ and send it for presenting instead.
 
 @author: IvanPopov
 """
+from world import World
+from balanceui import UserInterface
+from view import Scene
 
+GAME_IS_OVER = True
+GAME_IS_RUNNING = False
 
 class PlayerController:
     
     def __init__(self):
-        pass
+        self._ui = UserInterface()
+        self._world = World()
+        objects = self._world.create_scene_objects(self._ui.get_pc_request())
+        self._scene = Scene(objects)
     
     def run(self):
         """
-        Step the game forward
+        Display the scene and get a command back
         
         Returns False if the game is still running, True if it ended.
         """
-        return False
+        return GAME_IS_RUNNING
