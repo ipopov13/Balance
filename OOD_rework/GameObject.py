@@ -6,9 +6,9 @@ GameObject factories for the Balance rogue-like RPG
 
 Called by the World to create all game objects.
 
-Game objects implement .present(), can give requests for new objects
-to their controller, and implement .act(). Their data is changed by the
-game logic in the controller.
+Game objects implement .present() and .act(), and can give requests for
+new objects to their controller. Their data is changed by the game
+logic in the controller.
 
 How do they choose their actions?
 
@@ -23,9 +23,17 @@ class GameObject:
         Return a default presentation dictionary
         
         This returns a blank space and should be overridden by
-        subclasses.
+        visible subclasses.
         """
         return {'character':' ', 'style':0}
+    
+    def act(self):
+        """
+        Choose an action for the object
+        
+        This should be overridden by active subclasses.
+        """
+        return None
 
 
 class Being(GameObject):
