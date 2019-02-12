@@ -4,8 +4,7 @@ Created on Wed Feb  6 10:11:54 2019
 
 User interface class for the Balance rogue-like RPG
 
-UI receives a View for display and responds with the next command
-of the player. It also manages saving/loading games.
+UI receives a call for display from a View and renders the screen.
 
 @author: IvanPopov
 """
@@ -18,5 +17,10 @@ class UserInterface:
         self._con = Console.getconsole()
         self._con.title("Balance")
         
-    def get_pc_request(self):
+    def present(self, screen):
+        """
+        Display the received screen dict in the console.
+        screen = {'char':[],
+                  'color':[]}
+        """
         pass
