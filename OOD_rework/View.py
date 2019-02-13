@@ -26,40 +26,77 @@ Requirements:
 
 @author: IvanPopov
 """
-GET_STARTER_VIEW = 'get starter view'
-GET_SCENE_VIEW = 'get scene view'
-GET_INVENTORY_VIEW = 'get inventory view'
-GET_EQUIPMENT_VIEW = 'get equipment view'
-GET_CHARACTER_VIEW = 'get character view'
 END_GAME = 'end game'
-MESSAGES = [GET_STARTER_VIEW, GET_SCENE_VIEW, GET_INVENTORY_VIEW,
-            GET_EQUIPMENT_VIEW, GET_CHARACTER_VIEW, END_GAME]
+GET_STARTING_VIEW = 'get starting view'
+GET_DEFAULT_VIEW = 'get default view'
+
 
 class View:
+    
+    messages = {}
     
     def __init__(self, user_interface):
         self._user_interface = user_interface
         self._screen = []
+        self._getter_message = None
+        self._set_as_default=False
+        self._post_init()
+        self._add_member(self,message=self._getter_message)
+    
+    def _add_member(self, member, *, message=None):
+        if not message:
+            raise ValueError('Please supply a real message!')
+        if message in self.messages:
+            raise ValueError('Message already exists, please revise!')
+        if member.__class__ not in View.__subclasses__():
+            raise ValueError('Please supply a View subclass as member!')
+        self.messages[message] = member
+        if self._set_as_default:
+            if '' in self.messages:
+                raise ValueError('Second View set as default, there can only be one default!')
+            self.messages[GET_DEFAULT_VIEW] = member
 
     def take_control(self, game_data):
         """
         Take control of the screen and present self, then run a loop
         for commands from the player and finally return the call for
         the next View, or END_GAME if player quit/died.
-        
-        Subclasses need to override this.
         """
-        command = ''
-        while command not in MESSAGES:
-            self._update_screen(command)
-            command = self._present_screen()
+        command = None
+        while command not in self.messages and command != END_GAME:
+            self._update_data(data=game_data,command=command)
+            self._update_screen(game_data)
+            command = self._present()
         return command
     
-    def _update_screen(self, command):
-        pass
-    
-    def _present_screen(self):
+    def _present(self):
         return self._user_interface.present(self._screen)
+        
+    def _post_init(self):
+        """
+        Subclasses need to override this!
+        
+        Used by subclasses to set their unique getter message and
+        declare themselves as default View (only one can be default)!
+        """
+        raise NotImplementedError
+    
+    def _update_data(self,*,data={},command=''):
+        """
+        Subclasses need to override this!
+        
+        Update the game data using the known DataManagers.
+        """
+        raise NotImplementedError
+
+    def _update_screen(self,game_data):
+        """
+        Subclasses need to override this!
+        
+        Build the updated screen.
+        """
+        raise NotImplementedError
+
 
 class StarterView(View):
     """
@@ -67,23 +104,72 @@ class StarterView(View):
     or loads an existing set of data from file,
     and put them in the received variable.
     """
-    pass
+        
+    def _post_init(self):
+        self._getter_message = GET_STARTING_VIEW
+    
+    def _update_data(self,*,data={},command=''):
+        pass
 
+    def _update_screen(self,game_data):
+        pass
 
 class SceneView(View):
-    """
-    Contains and preserves information about the scene of the game.
-    """
-    pass
+        
+    def _post_init(self):
+        self._getter_message = 'get scene view'
+        self._set_as_default = True
+    
+    def _update_data(self,*,data={},command=''):
+        pass
+
+    def _update_screen(self,game_data):
+        pass
 
 
 class CharacterView(View):
-    pass
+        
+    def _post_init(self):
+        self._getter_message = 'get character view'
+    
+    def _update_data(self,*,data={},command=''):
+        pass
+
+    def _update_screen(self,game_data):
+        pass
 
 
 class EquipmentView(View):
-    pass
+        
+    def _post_init(self):
+        self._getter_message = 'get equipment view'
+    
+    def _update_data(self,*,data={},command=''):
+        pass
+
+    def _update_screen(self,game_data):
+        pass
 
 
 class InventoryView(View):
-    pass
+        
+    def _post_init(self):
+        self._getter_message = 'get inventory view'
+    
+    def _update_data(self,*,data={},command=''):
+        pass
+
+    def _update_screen(self,game_data):
+        pass
+        
+
+def prepare_views(ui):
+    """
+    Initialize all View subclasses.
+    Returns the full message dictionary.
+    """
+    for subview in View.__subclasses__():
+        instance = subview(ui)
+    return instance.messages
+
+__all__ = [prepare_views,GET_STARTING_VIEW,END_GAME]
