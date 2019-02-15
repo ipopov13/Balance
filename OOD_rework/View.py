@@ -2,16 +2,9 @@
 """
 Created on Wed Feb  6 10:41:01 2019
 
-Views: implement the _update_current_view() method, can create screens
- for display. Do not implement any commands. Only Views are registered
- in the game instance, but they can include a large number of
- DataManagers by initializing instances of them with self as owner (so
- that the methods are called with the correct arguments).
- 
-Commands are translated to messages by the active View that receives
- them from the UI. The View executes the message chain using its
- DataManagers, then updates the screen and sends it for display to the
- UI, receiving the next user command in turn. Commands or messages
+The View executes the message chain using its
+ DataManager, then updates the screen and displays it,
+ receiving the next user command in turn. Commands or messages
  eventually end the execution of a View and it sends back a call for
  another View, or the END_GAME message. Views cannot send messages to
  one another, they are completely independent.
@@ -21,12 +14,14 @@ Being introspection Views (all except StarterView and SceneView) only
  stored in the game_data['focus_being'].
  
 Requirements:
-    take_control must present a screen by calling the UI
-    Must return a command that is in MESSAGES
+    take_control must present a screen by calling the console
+    take_control must call the dm's update_data()
 
 @author: IvanPopov
 """
-END_GAME = 'end game'
+import Console
+import datamanager
+
 GET_STARTING_VIEW = 'get starting view'
 GET_DEFAULT_VIEW = 'get default view'
 
@@ -34,10 +29,14 @@ GET_DEFAULT_VIEW = 'get default view'
 class View:
     
     messages = {}
+    _console = None
     
-    def __init__(self, user_interface):
-        self._user_interface = user_interface
-        self._screen = []
+    def __init__(self):
+        if View._console is None:
+            View._console = Console.getconsole()
+            View._console.title("Balance")
+        self._screen = {'char':'test',
+                        'color':[1,None,23,45,56]}
         self._getter_message = None
         self._set_as_default=False
         self._post_init()
@@ -46,15 +45,17 @@ class View:
     def _add_member(self, member, *, message=None):
         if not message:
             raise ValueError('Please supply a real message!')
-        if message in self.messages:
+        if message in View.messages:
             raise ValueError('Message already exists, please revise!')
         if member.__class__ not in View.__subclasses__():
             raise ValueError('Please supply a View subclass as member!')
-        self.messages[message] = member
+        View.messages[message] = member
         if self._set_as_default:
-            if '' in self.messages:
-                raise ValueError('Second View set as default, there can only be one default!')
-            self.messages[GET_DEFAULT_VIEW] = member
+            if '' in View.messages:
+                raise ValueError(
+                  'Second View set as default, there can only be one default!'
+                  )
+            View.messages[GET_DEFAULT_VIEW] = member
 
     def take_control(self, game_data):
         """
@@ -63,30 +64,43 @@ class View:
         the next View, or END_GAME if player quit/died.
         """
         command = None
-        while command not in self.messages and command != END_GAME:
-            self._update_data(data=game_data,command=command)
+        while command != datamanager.END_GAME and command not in View.messages:
             self._update_screen(game_data)
-            command = self._present()
+            player_input = self._present()
+            command = self._dm.update_data(data=game_data,command=player_input)
         return command
     
     def _present(self):
-        return self._user_interface.present(self._screen)
+        """
+        Display the screen dict in the console.
+        screen = {'char':[],
+                  'color':[]}
+        """
+        x=0
+        y=0
+        for ch,col in zip(self._screen['char'],self._screen['color']):
+            try:
+                if col is None:
+                    col = 7
+                View._console.text(x,y,ch,col)
+            except:
+                raise TypeError('%s\t%s\t%s\t%s' %(x,y,ch,col))
+            x+=1
+        return View._console.getchar()
         
     def _post_init(self):
         """
         Subclasses need to override this!
         
-        Used by subclasses to set their unique getter message and
-        declare themselves as default View (only one can be default)!
+        Used by subclasses to:
+        1) (required) set their unique getter message
+        2) (required) initialize their personal DataManager
+        3) (optional) declare themselves as default View
+           NOTE: Only one View subclass can be default!
         """
-        raise NotImplementedError
-    
-    def _update_data(self,*,data={},command=''):
-        """
-        Subclasses need to override this!
-        
-        Update the game data using the known DataManagers.
-        """
+        self._getter_message = ''
+        self._dm = datamanager.EmptyManager()
+        #self._set_as_default = False
         raise NotImplementedError
 
     def _update_screen(self,game_data):
@@ -107,10 +121,8 @@ class StarterView(View):
         
     def _post_init(self):
         self._getter_message = GET_STARTING_VIEW
+        self._dm = datamanager.DataManager()
     
-    def _update_data(self,*,data={},command=''):
-        pass
-
     def _update_screen(self,game_data):
         pass
 
@@ -118,10 +130,8 @@ class SceneView(View):
         
     def _post_init(self):
         self._getter_message = 'get scene view'
+        self._dm = datamanager.DataManager()
         self._set_as_default = True
-    
-    def _update_data(self,*,data={},command=''):
-        pass
 
     def _update_screen(self,game_data):
         pass
@@ -131,9 +141,7 @@ class CharacterView(View):
         
     def _post_init(self):
         self._getter_message = 'get character view'
-    
-    def _update_data(self,*,data={},command=''):
-        pass
+        self._dm = datamanager.DataManager()
 
     def _update_screen(self,game_data):
         pass
@@ -143,9 +151,7 @@ class EquipmentView(View):
         
     def _post_init(self):
         self._getter_message = 'get equipment view'
-    
-    def _update_data(self,*,data={},command=''):
-        pass
+        self._dm = datamanager.DataManager()
 
     def _update_screen(self,game_data):
         pass
@@ -155,21 +161,19 @@ class InventoryView(View):
         
     def _post_init(self):
         self._getter_message = 'get inventory view'
-    
-    def _update_data(self,*,data={},command=''):
-        pass
+        self._dm = datamanager.DataManager()
 
     def _update_screen(self,game_data):
         pass
         
 
-def prepare_views(ui):
+def prepare_views():
     """
     Initialize all View subclasses.
     Returns the full message dictionary.
     """
     for subview in View.__subclasses__():
-        instance = subview(ui)
-    return instance.messages
+        subview()
+    return View.messages
 
-__all__ = [prepare_views,GET_STARTING_VIEW,END_GAME]
+__all__ = [prepare_views,GET_STARTING_VIEW]

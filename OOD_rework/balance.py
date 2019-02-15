@@ -17,14 +17,12 @@ Requirements:
 @author: IvanPopov
 """
 import view
-import balanceui
 
 
 class Balance:
     
     def __init__(self):
-        ui = balanceui.UserInterface()
-        self._views = view.prepare_views(ui)
+        self._views = view.prepare_views()
         self._message = view.GET_STARTING_VIEW
         self._game_data = {}
         
@@ -34,13 +32,10 @@ class Balance:
         Call the next required View to action, then resolve the
         returned message by calling another View or ending the game.
         """
-        while True:
-            if self._message == view.END_GAME:
-                break
-            else:
-                self._message = self._views[self._message].take_control(
-                    self._game_data
-                    )
+        while self._message in self._views:
+            self._message = self._views[self._message].take_control(
+                self._game_data
+                )
         return self._message
 
 

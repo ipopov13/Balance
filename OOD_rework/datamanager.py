@@ -26,9 +26,18 @@ Emergent behavior is possible when all activities are available to more
 
 @author: IvanPopov
 """
+END_GAME = 'end game'
 
 
 class DataManager:
     
-    def __init__(self,game_data):
+    def __init__(self):
         pass
+    
+    def update_data(self,*,data={},command=''):
+        return END_GAME
+    
+class EmptyManager:
+    
+    def __init__(self):
+        raise NotImplementedError
