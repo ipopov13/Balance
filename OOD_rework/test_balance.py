@@ -13,6 +13,7 @@ from unittest.mock import patch
 from balance import Balance
 import view
 import datamanager
+import gamedata
 
 class BalanceTest(unittest.TestCase):
     
@@ -62,13 +63,44 @@ class ViewTest(unittest.TestCase):
     ## TODO: Test subclasses conform to View interface
     
 class DMTest(unittest.TestCase):
-    pass
+    
+    def test_abstract_dm_returns_end(self):
+        dm = datamanager.DataManager()
+        assert dm.update_data(data={},command='???') == datamanager.END_GAME
+
+    def test_starter_does_nothing_on_unknown_command(self):
+        my_dm = datamanager.StarterManager()
+        my_data = gamedata.get_empty_data()
+        my_dm.update_data(data=my_data,command='???')
+        assert my_data == gamedata.get_empty_data()
+    
+    def test_starter_sends_correct_message(self):
+        my_dm = datamanager.StarterManager()
+        my_data = gamedata.get_empty_data()
+        message = my_dm.update_data(data=my_data,command='n')
+        assert message != datamanager.GET_CHARACTER_CREATION_VIEW
+    
+    def test_starter_gets_new_game_data(self):
+        my_dm = datamanager.StarterManager()
+        my_data = gamedata.get_empty_data()
+        my_dm.update_data(data=my_data,command='n')
+        assert my_data != gamedata.get_empty_data()
+
+    def test_starter_gets_loaded_game_data(self):
+        my_dm = datamanager.StarterManager()
+        my_data = gamedata.get_empty_data()
+        my_dm.update_data(data=my_data,command='l')
+        assert my_data != gamedata.get_empty_data()
+        
 ## TODO: test starting dms (load and new game) fully init game data?
     #It's probably gameData's responsibility
-    ## TODO: Test dms raise an error when no commands (None?)are received
-    ## TODO: Test dms return the correct view code when asked
-    ## TODO: this doesnt change game data ^^^
-    ## TODO: Test that any other message changes game data in some way
+    ## TODO: Test every functionality added with a specific test case!
+
+class GameDataTest(unittest.TestCase):
+    pass
+
+class GameObjectTest(unittest.TestCase):
+    pass
 
 if __name__ == '__main__':
     unittest.main()

@@ -23,7 +23,6 @@ import Console
 import datamanager
 
 GET_STARTING_VIEW = 'get starting view'
-GET_DEFAULT_VIEW = 'get default view'
 
 
 class View:
@@ -55,7 +54,7 @@ class View:
                 raise ValueError(
                   'Second View set as default, there can only be one default!'
                   )
-            View.messages[GET_DEFAULT_VIEW] = member
+            View.messages[datamanager.GET_DEFAULT_VIEW] = member
 
     def take_control(self, game_data):
         """
@@ -95,11 +94,14 @@ class View:
         Used by subclasses to:
         1) (required) set their unique getter message
         2) (required) initialize their personal DataManager
+           NOTE: The DataManager constructor has to be passed the
+           _getter_message if the View can be accessed multiple times
+           per game session, otherwise nothing is passed!
         3) (optional) declare themselves as default View
            NOTE: Only one View subclass can be default!
         """
         self._getter_message = ''
-        self._dm = datamanager.EmptyManager()
+        self._dm = datamanager.EmptyManager(self._getter_message)
         #self._set_as_default = False
         raise NotImplementedError
 
@@ -114,14 +116,12 @@ class View:
 
 class StarterView(View):
     """
-    Creates the player character and the initial game data,
-    or loads an existing set of data from file,
-    and put them in the received variable.
+    Starter screen. Accessible only once at game startup.
     """
         
     def _post_init(self):
         self._getter_message = GET_STARTING_VIEW
-        self._dm = datamanager.DataManager()
+        self._dm = datamanager.StarterManager()
     
     def _update_screen(self,game_data):
         pass
