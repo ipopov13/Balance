@@ -4,28 +4,51 @@ Created on Wed Feb  6 10:42:32 2019
 
 GameData class for the Balance rogue-like RPG
 
-Only instances of GameData can create new GameObjects and contain them.
- The class includes methods for these operations and a rigid structure
- for containing the objects that the users (DataManagers) can rely
- upon.
- 
-Only DataManagers can call the GameData methods.
-
-Include it as a View class property to isolate from the loop and for
- sharing between Views without passing it every time?
- 
-Do the Views need access to it? - Probably, they need to be able to
- make screens (their main task), which is not trivial.
- 
-Game data may need to copy itself in new instances (for loading)?
+Controlled being object: default for character description views and
+ control, and the one that is used when the focus being is reset to
+ None; Usually the player character
+Current scene key: the coords of the current scene object (also a key
+ to the object in the seen scenes dict)
+Seen scenes: dict (coords: scene object) for maintaining a persistent
+ world.
+World data: the randomized array of values (or formula for calculating
+ them) used to build yet unseen scenes.
+Message buffer: List of messages added by the handlers, that have to be
+ shown to the player. Fixed length of 100 elements?
 
 @author: IvanPopov
 """
+import pickle
+from glob import glob
+import random
 
-
-def get_empty_data():
-    return {'beings':[],
-            'items':[],
-            'terrains':[],
-            'effects':[],
-            'message_buffer':[]}
+class GameData():
+    _game_list = {}
+    
+    @classmethod
+    def save(cls, game):
+        """Store the data to file using the controlled being name"""
+        filename = game._controlled_being.name+str(random.randint(100,999))
+        with open(f'{filename}.bal','wb') as outfile:
+            pickle.dump(outfile, game)
+    
+    @classmethod
+    def get_saved_games(cls):
+        """Return a list of found saved games and keep it"""
+        for f in glob('*.bal'):
+            with open(f,'rb') as infile:
+                game = pickle.load(infile)
+                cls._game_list[game._controlled_being.name] = game
+        return cls._game_list
+    
+    @classmethod
+    def load(cls, index):
+        """Return the GameData object at that index"""
+        return cls._game_list[index]
+    
+    def __init__(self):
+        self._controlled_being = None
+        self._current_scene_key = None
+        self._scenes = {}
+        self._world = {}
+        self._message_buffer = []
