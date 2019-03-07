@@ -26,8 +26,10 @@ Requirements for testing (already covered in the abstract base class):
 
 @author: IvanPopov
 """
+from itertools import zip_longest
 import Console
 import ai
+from assets import StaticScreens
 
 UNKNOWN_COMMAND = 'unknown command'
 
@@ -100,7 +102,9 @@ class DataManager(metaclass=DMMeta):
         row_length = 79
         x = 0
         y = 0
-        for ch,st in zip(self._screen['char'],self._screen['style']):
+        for ch,st in zip_longest(self._screen['char'],self._screen['style']):
+            if st is None:
+                st = 7
             DataManager._console.text(x,y,ch,st)
             x+=1
             if x>row_length:
@@ -124,4 +128,4 @@ class StarterDM(DataManager):
                  UNKNOWN_COMMAND:ai.STARTER_UNKNOWN}
     
     def _update_screen(self):
-        pass
+        self._screen['char'] = StaticScreens.starter[:]
