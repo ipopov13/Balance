@@ -41,7 +41,6 @@ class DataManager:
             DataManager._console = Console.getconsole()
             DataManager._console.title("Balance")
         self._screen = {'char':['a'], 'style':[7]}
-        self._commands = {'command':TestHandler()}
         self._unknown_command_dme = None
                 
     def take_control(self):
@@ -49,9 +48,7 @@ class DataManager:
         next_dm = 0
         while not next_dm:
             command = self._present()
-            self._ai.evaluate_command(command)
-            for command,caller in self._ai.turn():
-                next_dm = self._commands[command].execute(caller)
+            next_dm = self._ai.execute(command)
         return next_dm
     
     def _present(self):
@@ -77,5 +74,5 @@ class CommandHandler:
 
 class TestHandler(CommandHandler):
     
-    def execute(self):
+    def execute(self, _):
         return 'command'

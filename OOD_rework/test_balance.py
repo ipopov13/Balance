@@ -24,7 +24,7 @@ class BalanceTest(unittest.TestCase):
                 
 class DMTest(unittest.TestCase):
     
-    def test_dm_calls_console_and_gets_command(self):
+    def test_dm_activity_loop(self):
         with patch('datamanager.DataManager._console') as console:
             command = 'command'
             console.getchar.return_value = command

@@ -8,4 +8,6 @@ AI module for the Balance rogue-like RPG.
 """
 
 class AI:
-    pass
+    
+    def execute(self, command):
+        return 'command'
