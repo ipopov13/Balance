@@ -3,42 +3,29 @@
 Created on Fri Feb  8 10:06:51 2019
 
 Main instance for the Balance rogue-like RPG
-
-Balance is a View manager. It calls the View initializer function
- prepare_views() and serves the game data to the next View in the
- queue, starting with the StarterView if no message is available.
- If a View returns END_GAME the loop breaks.
  
 Requirements:
-    After receiving a correct command it gives control to the called View
-    After receiving a wrong command it raises ValueError
-    After receiving END_GAME it breaks out
+    Calls take_control() of the current DM.
 
 @author: IvanPopov
 """
-import view
+
+from datamanager import DataManager
 
 
 class Balance:
     
     def __init__(self):
-        self._views = view.prepare_views()
-        self._message = view.GET_STARTING_VIEW
-        self._game_data = {}
-        
-    
+        self._dm = DataManager.get_starting_dm()
+            
     def run(self):
         """
-        Call the next required View to action, then resolve the
-        returned message by calling another View or ending the game.
+        Call DMs to action in sequence until no DM is available.
         """
-        while self._message in self._views:
-            self._message = self._views[self._message].take_control(
-                self._game_data
-                )
-        return self._message
+        while self._dm is not None:
+            self._dm = self._dm.take_control()
 
 
 if __name__ == '__main__':
     game=Balance()
-    _ = game.run()
+    game.run()
