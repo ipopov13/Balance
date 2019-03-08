@@ -5,8 +5,19 @@ Created on Mon Feb 11 14:51:49 2019
 DataManager classes for the Balance rogue-like RPG
 
 This family of classes creates the screens of the game and passes
- player commands to the AI.
+ player commands to the AI. DMs are singletons. At subclass definition
+ they are entered into a dictionary in the abstract parent class and
+ are returned from there whenever they are needed.
  
+Order of DM actions:
+0) The DM refreshes its screen and presents it in the console, getting
+    a player command back.
+1) The DM translates the raw command into a message.
+2) The DM calls AI.execute(message) for a full update of the game data
+3) The AI sends back 0 or a DM ID if screens have changed.
+4) if a DM ID was returned the active DM returns the respective subclass
+    instance, otherwise it repeats the loop.
+    
 Requirements for subclassing (enforced through the metaclass):
     DMs have a unique id_
         have a dictionary mapping keyboard hits to messages defined in
