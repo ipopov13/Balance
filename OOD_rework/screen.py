@@ -9,27 +9,21 @@ Screen class for the Balance rogue-like RPG.
 
 class Screen:
     
-    def __init__(self,*,chars='',fores=None,backs=None):
+    def __init__(self,*,chars='',fores='',backs=''):
         self._x_limit = 79
         self._y_limit = 25
-        chars = chars.split('\n')
-        if fores is None:
-            fores = []
-        else:
-            fores = fores.split('\n')
-        if backs is None:
-            backs = []
-        else:
-            backs = backs.split('\n')
-        ## Do validation of input
         for array in [chars,fores,backs]:
-            if array:
-                if len(array) > self._y_limit:
-                    raise ValueError("A Screen object cannot have "
-                                     "more than 25 rows!")
-                if max([len(x) for x in array]) > self._x_limit:
-                    raise ValueError("A Screen object cannot have "
-                                     "more than 79 columns!")
+            if array.count('\n') > self._y_limit - 1:
+                raise ValueError("A Screen object cannot have "
+                                 f"more than {self._y_limit} rows!")
+        chars = chars.split('\n')
+        fores = fores.split('\n')
+        backs = backs.split('\n')
+        ## Do validation of input
+        for line in chars+fores+backs:
+            if len(line) > self._x_limit:
+                raise ValueError("A Screen object cannot have "
+                                 f"more than {self._x_limit} columns!")
         ## Build data dictionary
         self._data = {}
         for x in range(self._x_limit):
