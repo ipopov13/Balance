@@ -27,12 +27,12 @@ class DMTest(unittest.TestCase):
     
     def test_dm_activity_loop(self):
         with patch('datamanager.DataManager._console') as console:
-            command = 'command'
+            command = b'command'
             console.getchar.return_value = command
             dm = DataManager.get_starting_dm()
             result = dm.take_control()
             console.text.assert_called()
-            assert result == command
+            assert result == None
 
 class ScreenTest(unittest.TestCase):
     
@@ -51,7 +51,7 @@ class ScreenTest(unittest.TestCase):
         for i in range(6):
             pixels.append(next(stream))
         assert pixels == [(0,0,'a',176),(1,0,'s',193),(2,0,'d',210),
-                          (3,0,' ',227),(4,0,' ',240),(5,0,' ',0)]
+                          (3,0,' ',227),(4,0,' ',247),(5,0,' ',7)]
         ## Test longer char strings
         screen = Screen(chars='asdfgh',fores='abcd',backs='lmn')
         stream = screen.get_pixels()
@@ -59,7 +59,7 @@ class ScreenTest(unittest.TestCase):
         for i in range(6):
             pixels.append(next(stream))
         assert pixels == [(0,0,'a',176),(1,0,'s',193),(2,0,'d',210),
-                          (3,0,'f',3),(4,0,'g',0),(5,0,'h',0)]
+                          (3,0,'f',3),(4,0,'g',7),(5,0,'h',7)]
         
     def test_raise_on_bad_input(self):
         screen = Screen(chars='\n'*24)

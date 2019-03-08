@@ -8,7 +8,11 @@ Assets classes for the Balance rogue-like RPG.
 """
 
 class StaticScreens:
-    starter = '''
+    """
+    Screens should be dictionaries in the format:
+        {'chars':String, 'fores':String, 'backs':String}
+    """
+    starter = {'chars':'''
                ___      _   _         _   _    _   ___   ____
               |   \    / |  |        / |  |\   |  /   \ |
               |___/   /  |  |       /  |  | \  |  |     |___
@@ -18,4 +22,4 @@ class StaticScreens:
                                     ver 0.7
 
                                    (n)ew game
-                             (l)oad a previous game'''
+                             (l)oad a previous game'''}

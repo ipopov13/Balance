@@ -37,9 +37,9 @@ Requirements for testing (already covered in the abstract base class):
 
 @author: IvanPopov
 """
-from itertools import zip_longest
 import Console
 import ai
+from screen import Screen
 from assets import StaticScreens
 
 UNKNOWN_COMMAND = 'unknown command'
@@ -96,13 +96,14 @@ class DataManager(metaclass=DMMeta):
             DataManager._console.title("Balance")
         if DataManager._ai is None:
             DataManager._ai = ai.AI()
-        self._screen = {'char':['a'], 'style':[7]}
+        self._screen = None
                 
     def take_control(self):
         """The DM activity loop"""
-        next_dm = 0
-        while not next_dm:
-            command = self._present()
+        next_dm = self
+        while next_dm is not None:
+            self._present()
+            command = DataManager._console.getchar().decode()
             message = self._commands.get(command,
                                          self._commands[UNKNOWN_COMMAND])
             next_dm = self._ai.execute(message)
@@ -110,25 +111,15 @@ class DataManager(metaclass=DMMeta):
     
     def _present(self):
         self._update_screen()
-        row_length = 79
-        x = 0
-        y = 0
-        for ch,st in zip_longest(self._screen['char'],self._screen['style']):
-            if st is None:
-                st = 7
-            DataManager._console.text(x,y,ch,st)
-            x+=1
-            if x>row_length:
-                x = 0
-                y += 1
-        return DataManager._console.getchar()
+        for pixel in self._screen.get_pixels():
+            DataManager._console.text(*pixel)
     
     def _update_screen(self):
         """
         Concrete DMs should override this to implement their
         screen updating procedure!
         """
-        pass
+        raise NotImplementedError
     
     
 class StarterDM(DataManager):
@@ -139,4 +130,4 @@ class StarterDM(DataManager):
                  UNKNOWN_COMMAND:ai.STARTER_UNKNOWN}
     
     def _update_screen(self):
-        self._screen['char'] = StaticScreens.starter[:]
+        self._screen = Screen(**StaticScreens.starter)

@@ -31,7 +31,7 @@ class Screen:
                 try:
                     fore = self._normalize_style(fores[y][x])
                 except IndexError:
-                    fore = 0
+                    fore = 7
                 try:
                     back = self._normalize_style(backs[y][x])
                 except IndexError:

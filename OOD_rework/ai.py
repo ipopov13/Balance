@@ -25,7 +25,7 @@ STARTER_UNKNOWN = 'starter unknown'
 class AI:
     
     def execute(self, command):
-        return 'command'
+        return None
     
 
 class CommandHandler:
@@ -35,4 +35,4 @@ class CommandHandler:
 class TestHandler(CommandHandler):
     
     def execute(self, _):
-        return 'command'
+        return None

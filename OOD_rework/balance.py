@@ -9,7 +9,7 @@ Requirements:
 
 @author: IvanPopov
 """
-
+import os
 from datamanager import DataManager
 
 
@@ -29,3 +29,4 @@ class Balance:
 if __name__ == '__main__':
     game=Balance()
     game.run()
+    os._exit(0)
