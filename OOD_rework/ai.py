@@ -20,6 +20,7 @@ Requirements:
 """
 STARTER_NEW_GAME = 'starter_new_game'
 STARTER_LOAD_GAME = 'starter_load_game'
+STARTER_QUIT_GAME = 'starter_quit_game'
 STARTER_UNKNOWN = 'starter unknown'
 
 class AI:

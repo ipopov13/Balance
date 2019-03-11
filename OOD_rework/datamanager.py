@@ -37,7 +37,6 @@ Requirements for testing (already covered in the abstract base class):
 
 @author: IvanPopov
 """
-import Console
 import ai
 from screen import Screen
 from assets import StaticScreens
@@ -57,6 +56,9 @@ class DMMeta(type):
             if cls._commands == {}:
                 raise ValueError('You must define player commands for the '
                                  f'{name} class!')
+            if cls._screen_template == bases[0]._screen_template:
+                raise ValueError('You must define a screen template for the '
+                                 f'{name} class!')
             if UNKNOWN_COMMAND not in cls._commands:
                 raise ValueError(f'{name} must implement the UNKNOWN_COMMAND!')
             if cls._is_starter_instance == True:
@@ -69,13 +71,14 @@ class DMMeta(type):
 
 
 class DataManager(metaclass=DMMeta):
-    _console = None
-    _ai = None
+    _screen = Screen()
+    _ai = ai.AI()
     _subclass_instances = {}
     _starters = 0
     
     ## These should be redefined in every subclass!
     id_ = 'Make this unique for every subclass!'
+    _screen_template = StaticScreens.tester
     _commands = {}
     _is_starter_instance = False
     
@@ -90,29 +93,21 @@ class DataManager(metaclass=DMMeta):
     def register_subclass(cls, subcls):
         cls._subclass_instances[subcls.id_] = subcls()
         
-    def __init__(self,personal_message=''):
-        if DataManager._console is None:
-            DataManager._console = Console.getconsole()
-            DataManager._console.title("Balance")
-        if DataManager._ai is None:
-            DataManager._ai = ai.AI()
-        self._screen = None
-                
+    def __init__(self):
+        pass
+        
     def take_control(self):
         """The DM activity loop"""
         next_dm = self
+        DataManager._screen.load_template(**self._screen_template)
         while next_dm is not None:
-            self._present()
-            command = DataManager._console.getchar().decode()
+            self._update_screen()
+            DataManager._screen.present()
+            command =  DataManager._screen.get_command()
             message = self._commands.get(command,
                                          self._commands[UNKNOWN_COMMAND])
             next_dm = self._ai.execute(message)
         return next_dm
-    
-    def _present(self):
-        self._update_screen()
-        for pixel in self._screen.get_pixels():
-            DataManager._console.text(*pixel)
     
     def _update_screen(self):
         """
@@ -124,10 +119,12 @@ class DataManager(metaclass=DMMeta):
     
 class StarterDM(DataManager):
     id_ = 'starter'
+    _screen_template = StaticScreens.starter
     _is_starter_instance = True
     _commands = {'n':ai.STARTER_NEW_GAME,
-                 'l':ai.STARTER_LOAD_GAME,
-                 UNKNOWN_COMMAND:ai.STARTER_UNKNOWN}
+                     'l':ai.STARTER_LOAD_GAME,
+                     'q':ai.STARTER_QUIT_GAME,
+                     UNKNOWN_COMMAND:ai.STARTER_UNKNOWN}
     
     def _update_screen(self):
-        self._screen = Screen(**StaticScreens.starter)
+        pass
