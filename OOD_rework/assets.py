@@ -24,3 +24,4 @@ class StaticScreens:
                                    (n)ew game
                              (l)oad a previous game'''}
     tester = {'chars':'a','fores':'a','backs':'l'}
+    tester2 = {'chars':'z','fores':'h','backs':'a'}

@@ -13,6 +13,7 @@ from unittest.mock import patch
 from balance import Balance
 from datamanager import DataManager
 from screen import Screen
+from screen import Pixel
 from assets import StaticScreens
 import ai
 
@@ -42,35 +43,50 @@ class ScreenTest(unittest.TestCase):
     def test_load_template(self):
         screen = Screen()
         screen.load_template(**StaticScreens.tester)
-        self._check_pixels(screen,[(0,0,'a',176)])
+        assert screen._data[(0,0)].data == ['a',176]
         
     def test_present(self):
-        assert 1==0
+        with patch('screen.Screen._console') as console:
+            screen = Screen()
+            screen.load_template(**StaticScreens.tester)
+            screen.present()
+            console.text.assert_called_with(78, 24,' ',7)
         
     def test_get_command(self):
-        assert 1==0
-    
-    def test_calls_console(self):
-        assert 1==0
+        with patch('screen.Screen._console') as console:
+            console.get_char.return_value = b'test'
+            screen = Screen()
+            command = screen.get_command()
+            assert command == 'test'
         
     def test_calls_console_only_for_changes(self):
-        assert 1==0
+        with patch('screen.Screen._console') as console:
+            console.get_char.return_value = b'test'
+            screen = Screen()
+            screen.load_template(**StaticScreens.tester)
+            screen.present()
+            console.reset_mock()
+            screen.load_template(**StaticScreens.tester2)
+            screen.present()
+            console.text.assert_called_with(0,0,'z',7)
         
     def test_does_not_call_console_when_no_changes(self):
-        assert 1==0
+        with patch('screen.Screen._console') as console:
+            console.get_char.return_value = b'test'
+            screen = Screen()
+            screen.load_template(**StaticScreens.tester)
+            screen.present()
+            console.reset_mock()
+            screen.load_template(**StaticScreens.tester)
+            screen.present()
+            console.text.assert_not_called()
     
     def test_set_pixel(self):
+        ## For all these tests when get_changed_pixels() is called in
+        ##  the _check_pixels method, it returns all available pixels,
+        ##  because there have been no screen.present() calls.
         screen = Screen()
         screen.load_template(**StaticScreens.tester)
-        ## Full call test
-        screen.set_pixel(x=0,y=0,char='z',fore='b',back='m')
-        self._check_pixels(screen,[(0,0,'z',193)])
-        ## New pixel test
-        screen.set_pixel(x=1,y=0,char='a')
-        self._check_pixels(screen,[(0,0,'z',193),(1,0,'a',
-                                                  Screen._default_fore+ \
-                                                  16*Screen._default_back)],
-                            check_size=2)
         ## Exceptions test
         with self.assertRaises(ValueError):
             screen.set_pixel(x=0,char='z',fore='b',back='m')
@@ -80,26 +96,39 @@ class ScreenTest(unittest.TestCase):
             screen.set_pixel(x=0,y=0,char='z',fore='z',back='m')
         with self.assertRaises(ValueError):
             screen.set_pixel(x=0,y=0,char='z',fore='a',back='z')
+        ## Full call test
+        screen.present()
+        screen.set_pixel(x=0,y=0,char='z',fore='b',back='m')
+        self._check_pixels(screen,[(0,0,'z',193)])
         ## Test set fore only
+        screen.present()
         screen.set_pixel(x=0,y=0,fore='c')
         self._check_pixels(screen,[(0,0,'z',194)])
         ## Test set back only
+        screen.present()
         screen.set_pixel(x=0,y=0,back='n')
         self._check_pixels(screen,[(0,0,'z',210)])
         ## Test set char only
+        screen.present()
         screen.set_pixel(x=0,y=0,char='B')
         self._check_pixels(screen,[(0,0,'B',210)])
-        ## Test delete pixel
-        screen.set_pixel(x=0,y=0)
+        ## New pixel test
+        screen.present()
+        screen.set_pixel(x=1,y=0,char='a')
         self._check_pixels(screen,[(1,0,'a',
-                                    Screen._default_fore+ \
-                                    16*Screen._default_back)])
+                                    Pixel._default_fore+ \
+                                    16*Pixel._default_back)])
+        ## Test delete pixel
+        screen.present()
+        screen.set_pixel(x=0,y=0)
+        self._check_pixels(screen,[(0,0,Pixel._default_char,
+                                    Pixel._default_fore+ \
+                                    16*Pixel._default_back)])
         
-    def _check_pixels(self,screen,expected,check_size=1):
+    def _check_pixels(self,screen,expected):
         pixels = []
-        stream = screen._get_pixels()
-        for i in range(check_size):
-            pixels.append(next(stream))
+        for coords,pixel in screen._get_changed_pixels():
+            pixels.append((*coords,*pixel.data))
         assert pixels == expected
         
     def test_raise_on_bad_input(self):

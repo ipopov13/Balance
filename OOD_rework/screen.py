@@ -6,17 +6,20 @@ Screen class for the Balance rogue-like RPG.
 
 @author: IvanPopov
 """
+import Console
 
 class Screen:
-    _default_char = ' '
-    _default_fore = 7
-    _default_back = 0
+    _console = Console.getconsole()
     
-    def __init__(self,*,chars='',fores='',backs=''):
+    def __init__(self):
         self._x_limit = 79
         self._y_limit = 25
+        self._data = {(x,y):Pixel() for x in range(self._x_limit) \
+                                    for y in range(self._y_limit)}
+        Screen._console.title('Balance')
         
     def load_template(self,*,chars='',fores='',backs=''):
+        ## Do validation of input
         for array in [chars,fores,backs]:
             if array.count('\n') > self._y_limit - 1:
                 raise ValueError("A Screen object cannot have "
@@ -24,13 +27,11 @@ class Screen:
         chars = chars.split('\n')
         fores = fores.split('\n')
         backs = backs.split('\n')
-        ## Do validation of input
         for line in chars+fores+backs:
             if len(line) > self._x_limit:
                 raise ValueError("A Screen object cannot have "
                                  f"more than {self._x_limit} columns!")
         ## Build data dictionary
-        self._data = {}
         for x in range(self._x_limit):
             for y in range(self._y_limit):
                 try:
@@ -45,10 +46,84 @@ class Screen:
                     char = chars[y][x]
                 except IndexError:
                     char = None
-                self.set_pixel(x=x,y=y,char=char,fore=fore,back=back)
+                self._data[(x,y)].update(char=char,fore=fore,back=back)
+                
+    def _get_changed_pixels(self):
+        for coords,pixel in self._data.items():
+            if not pixel.is_presented:
+                yield (coords,pixel)
+                    
+    def set_pixel(self,*,x=None,y=None,char=None,fore=None,back=None):
+        """
+        Set pixel information
+        """
+        if x is not None and y is not None:
+            if 0<=x<=self._x_limit and 0<=y<=self._y_limit:
+                ## Update pixel at (x,y)
+                self._data[(x,y)].update(char=char,fore=fore,back=back)
+            else:
+                raise ValueError("Coordinates for set_pixel must be in range: "
+                                 f"x=[0,{self._x_limit}], "
+                                 f"y=[0,{self._y_limit}]!")
+        else:
+            raise ValueError("Both coordinates must be used for set_pixel()!")
+            
+    def present(self):
+        """
+        Update the console with the current screen information
+        
+        Additionally store that information in order to implement minimum
+        change needed.
+        """
+        for coords,pixel in self._get_changed_pixels():
+            pixel.is_presented = True
+            self._console.text(*coords,*pixel.data)
+            
+    def get_command(self):
+        """Return a single character command from the console"""
+        return self._console.get_char().decode()
+    
+    
+class Pixel:
+    _default_char = ' '
+    _default_fore = 7
+    _default_back = 0
+    
+    def __init__(self):
+        self.is_presented = False
+        self._data = {'char':Pixel._default_char,
+                     'fore':Pixel._default_fore,
+                     'back':Pixel._default_back}
+       
+    @property
+    def data(self):
+        return [self._data['char'],
+                self._data['fore'] + 16*self._data['back']]
+        
+    def update(self,*,char=None,fore=None,back=None):
+        new_char = self._normalize_char(char)
+        if char is not None and new_char != self._data['char']:
+            self._data['char'] = new_char
+            self.is_presented = False
+        new_fore = self._normalize_style(fore, is_foreground = True)
+        if fore is not None and new_fore != self._data['fore']:
+            self._data['fore'] = new_fore
+            self.is_presented = False
+        new_back = self._normalize_style(back)
+        if back is not None and new_back != self._data['back']:
+            self._data['back'] = new_back
+            self.is_presented = False
+        if (char,fore,back) == (None,None,None):
+            if self._data != {'char':Pixel._default_char,
+                              'fore':Pixel._default_fore,
+                              'back':Pixel._default_back}:
+                self.is_presented = False
+                self._data = {'char':Pixel._default_char,
+                              'fore':Pixel._default_fore,
+                              'back':Pixel._default_back}
                     
     def _normalize_style(self,style_char,is_foreground=False):
-        defaults = [Screen._default_back, Screen._default_fore]
+        defaults = [Pixel._default_back, Pixel._default_fore]
         if style_char is None:
             style = defaults[is_foreground]
         else:
@@ -61,53 +136,9 @@ class Screen:
     
     def _normalize_char(self, char):
         if char is None:
-            return Screen._default_char
+            return Pixel._default_char
         elif not isinstance(char,str):
             raise TypeError("Screen char must be a single character string!")
         elif len(char)!=1:
             raise ValueError("Screen char must be of length 1!")
         return char
-                
-    def _get_pixels(self):
-        """Yield the state of all pixels in range"""
-        for y in range(self._y_limit):
-            for x in range(self._x_limit):
-                try:
-                    d = self._data[(x,y)]
-                    yield (x,y,d['char'],d['fore']+16*d['back'])
-                except KeyError:
-                    pass
-#                    yield (x,y,Screen._default_char,
-#                           Screen._default_fore+ 16*Screen._default_back)
-                    
-    def set_pixel(self,*,x=None,y=None,char=None,fore=None,back=None):
-        """
-        Set pixel information
-        
-        If only coords are given and pixel exists, deletes it
-        If pixel does not exist, creates it
-        """
-        if x is not None and y is not None:
-            if 0<=x<=self._x_limit and 0<=y<=self._y_limit:
-                if (x,y) not in self._data:
-                    self._data[(x,y)] = {'char':Screen._default_char,
-                                         'fore':Screen._default_fore,
-                                         'back':Screen._default_back}
-                change = False
-                if char is not None:
-                    self._data[(x,y)]['char'] = self._normalize_char(char)
-                    change = True
-                if fore is not None:
-                    self._data[(x,y)]['fore'] = self._normalize_style(fore)
-                    change = True
-                if back is not None:
-                    self._data[(x,y)]['back'] = self._normalize_style(back)
-                    change = True
-                if not change:
-                    self._data.pop((x,y))
-            else:
-                raise ValueError("Coordinates for set_pixel must be in range: "
-                                 f"x=[0,{self._x_limit}], "
-                                 f"y=[0,{self._y_limit}]!")
-        else:
-            raise ValueError("Both coordinates must be used for set_pixel()!")
