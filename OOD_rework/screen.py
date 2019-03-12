@@ -20,6 +20,7 @@ class Screen:
         self._pixels = {(x,y):Pixel() for x in range(self._x_limit) \
                                     for y in range(self._y_limit)}
         self._text = {}
+        self._presented_text = {}
         Screen._console.title('Balance')
         
     def load_data(self,template):
@@ -64,7 +65,7 @@ class Screen:
         for pixel in self._pixels.values():
             pixel.reset()
             
-    def present(self,initial=False):
+    def present(self):
         """
         Update the console with the current screen information
         
@@ -74,10 +75,11 @@ class Screen:
         for coords,pixel in self._get_changed_pixels():
             pixel.is_presented = True
             self._console.text(*coords,*pixel.data)
-        if initial:
-            for coords,text in self._text.items():
+        for coords,text in self._text.items():
+            if self._presented_text.get(coords,None) != self._text[coords]:
                 self._console.text(*coords,text['text'],text.get('style',
                                                              DEFAULT_STYLE))
+                self._presented_text[coords] = self._text[coords].copy()
             
     def get_command(self):
         """Return a single character command from the console"""

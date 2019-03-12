@@ -46,12 +46,12 @@ class ScreenTest(unittest.TestCase):
             screen.load_data(StaticScreens.tester)
             assert screen._text == StaticScreens.tester
         
-    def test_initial_present(self):
+    def test_present(self):
         with patch('screen.Screen._console') as console:
             screen = Screen()
             screen.load_data(StaticScreens.tester)
-            screen.present(initial=True)
-            console.text.assert_called_with(0, 0,'test',125)
+            screen.present()
+            console.text.assert_called_once_with(0, 0,'test',125)
         
     def test_get_command(self):
         with patch('screen.Screen._console') as console:
@@ -62,14 +62,26 @@ class ScreenTest(unittest.TestCase):
         
     def test_calls_console_only_for_changes(self):
         with patch('screen.Screen._console') as console:
-            console.get_char.return_value = b'test'
             screen = Screen()
+            obj = mock.Mock()
+            obj.present.return_value = {'char':'a','style':8}
+            screen.attach(x=0,y=0,presentable=obj)
+            screen.update_pixels()
+            screen.present()
+            console.text.assert_called_once_with(0,0,'a',8)
+            console.text.reset_mock()
+            screen.update_pixels()
+            screen.present()
+            console.text.assert_not_called()
             screen.load_data(StaticScreens.tester)
             screen.present()
-            console.reset_mock()
+            console.text.assert_called_once_with(0, 0,'test',125)
+            console.text.reset_mock()
+            screen.present()
+            console.text.assert_not_called()
             screen.load_data(StaticScreens.tester2)
             screen.present()
-            console.text.assert_called_with(0,0,'z',7)
+            console.text.assert_called_once_with(0, 0,'test2',126)
         
     def test_does_not_call_console_when_no_changes(self):
         with patch('screen.Screen._console') as console:
