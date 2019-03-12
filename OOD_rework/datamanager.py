@@ -99,7 +99,9 @@ class DataManager(metaclass=DMMeta):
     def take_control(self):
         """The DM activity loop"""
         next_dm = self
-        DataManager._screen.load_template(**self._screen_template)
+        ## Templating the screen
+        DataManager._screen.load_template(self._screen_template)
+        self._init_screen()
         while next_dm is not None:
             self._update_screen()
             DataManager._screen.present()
@@ -110,9 +112,15 @@ class DataManager(metaclass=DMMeta):
         return next_dm
     
     def _update_screen(self):
+        DataManager._screen.load_data(self._screen_data)
+        DataManager._screen.update_pixels()
+    
+    def _init_screen(self):
         """
         Concrete DMs should override this to implement their
-        screen updating procedure!
+        screen initialization procedure, adding session specific data
+        from game_data on top of the template, as well as attaching
+        game_data presentable objects to screen pixels!
         """
         raise NotImplementedError
     
@@ -125,6 +133,9 @@ class StarterDM(DataManager):
                      'l':ai.STARTER_LOAD_GAME,
                      'q':ai.STARTER_QUIT_GAME,
                      UNKNOWN_COMMAND:ai.STARTER_UNKNOWN}
+    
+    def _init_screen(self):
+        pass
     
     def _update_screen(self):
         pass

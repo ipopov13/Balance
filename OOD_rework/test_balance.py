@@ -33,24 +33,25 @@ class DMTest(unittest.TestCase):
             screen.get_command.return_value = ai.STARTER_QUIT_GAME
             dm = DataManager.get_starting_dm()
             result = dm.take_control()
-            screen.load_template.assert_called()
+            screen.load_data.assert_called_with(StaticScreens.starter)
             screen.get_command.assert_called()
             screen.present.assert_called()
             assert result == None
 
 class ScreenTest(unittest.TestCase):
     
-    def test_load_template(self):
-        screen = Screen()
-        screen.load_template(**StaticScreens.tester)
-        assert screen._data[(0,0)].data == ['a',176]
-        
-    def test_present(self):
+    def test_load_data(self):
         with patch('screen.Screen._console') as console:
             screen = Screen()
-            screen.load_template(**StaticScreens.tester)
-            screen.present()
-            console.text.assert_called_with(78, 24,' ',7)
+            screen.load_data(StaticScreens.tester)
+            assert screen._text == StaticScreens.tester
+        
+    def test_initial_present(self):
+        with patch('screen.Screen._console') as console:
+            screen = Screen()
+            screen.load_data(StaticScreens.tester)
+            screen.present(initial=True)
+            console.text.assert_called_with(0, 0,'test',125)
         
     def test_get_command(self):
         with patch('screen.Screen._console') as console:
@@ -63,93 +64,89 @@ class ScreenTest(unittest.TestCase):
         with patch('screen.Screen._console') as console:
             console.get_char.return_value = b'test'
             screen = Screen()
-            screen.load_template(**StaticScreens.tester)
+            screen.load_data(StaticScreens.tester)
             screen.present()
             console.reset_mock()
-            screen.load_template(**StaticScreens.tester2)
+            screen.load_data(StaticScreens.tester2)
             screen.present()
             console.text.assert_called_with(0,0,'z',7)
         
     def test_does_not_call_console_when_no_changes(self):
         with patch('screen.Screen._console') as console:
-            console.get_char.return_value = b'test'
             screen = Screen()
-            screen.load_template(**StaticScreens.tester)
+            screen.load_data(StaticScreens.tester)
             screen.present()
             console.reset_mock()
-            screen.load_template(**StaticScreens.tester)
+            screen.load_data(StaticScreens.tester)
             screen.present()
             console.text.assert_not_called()
     
-    def test_set_pixel(self):
-        ## For all these tests when get_changed_pixels() is called in
-        ##  the _check_pixels method, it returns all available pixels,
-        ##  because there have been no screen.present() calls.
-        screen = Screen()
-        screen.load_template(**StaticScreens.tester)
-        ## Exceptions test
-        with self.assertRaises(ValueError):
-            screen.set_pixel(x=0,char='z',fore='b',back='m')
-        with self.assertRaises(ValueError):
-            screen.set_pixel(y=0,char='z',fore='b',back='m')
-        with self.assertRaises(ValueError):
-            screen.set_pixel(x=0,y=0,char='z',fore='z',back='m')
-        with self.assertRaises(ValueError):
-            screen.set_pixel(x=0,y=0,char='z',fore='a',back='z')
-        ## Full call test
-        screen.present()
-        screen.set_pixel(x=0,y=0,char='z',fore='b',back='m')
-        self._check_pixels(screen,[(0,0,'z',193)])
-        ## Test set fore only
-        screen.present()
-        screen.set_pixel(x=0,y=0,fore='c')
-        self._check_pixels(screen,[(0,0,'z',194)])
-        ## Test set back only
-        screen.present()
-        screen.set_pixel(x=0,y=0,back='n')
-        self._check_pixels(screen,[(0,0,'z',210)])
-        ## Test set char only
-        screen.present()
-        screen.set_pixel(x=0,y=0,char='B')
-        self._check_pixels(screen,[(0,0,'B',210)])
-        ## New pixel test
-        screen.present()
-        screen.set_pixel(x=1,y=0,char='a')
-        self._check_pixels(screen,[(1,0,'a',
-                                    Pixel._default_fore+ \
-                                    16*Pixel._default_back)])
-        ## Test delete pixel
-        screen.present()
-        screen.set_pixel(x=0,y=0)
-        self._check_pixels(screen,[(0,0,Pixel._default_char,
-                                    Pixel._default_fore+ \
-                                    16*Pixel._default_back)])
-        
-    def _check_pixels(self,screen,expected):
-        pixels = []
-        for coords,pixel in screen._get_changed_pixels():
-            pixels.append((*coords,*pixel.data))
-        assert pixels == expected
+    def test_attach_update_clear(self):
+        with patch('screen.Screen._console') as console:
+            screen = Screen()
+            obj = mock.Mock()
+            screen.attach(x=0,y=0,presentable=obj)
+            assert screen._pixels[(0,0)].is_active
+            screen.update_pixels()
+            obj.present.assert_called_once()
+            screen.reset()
+            assert not screen._pixels[(0,0)].is_active
+    
+    def test_attach_raises_on_bad_coords(self):
+        with patch('screen.Screen._console') as console:
+            screen = Screen()
+            obj = mock.Mock()
+            with self.assertRaises(ValueError):
+                screen.attach(x=0,presentable=obj)
+    
+    def test_attach_scene(self):
+        with patch('screen.Screen._console') as console:
+            screen = Screen()
+            tile = mock.Mock()
+            tile.present.return_value = 0
+            scene = {(i,i):tile for i in range(10)}
+            screen.attach_scene(x=0,y=0,scene=scene)
+            screen.update_pixels()
+            assert len(list(screen._get_changed_pixels()))==10
         
     def test_raise_on_bad_input(self):
         screen = Screen()
-        screen.load_template(chars='\n'*24)
+        screen.load_data({(x,x+1):{'text':''} \
+                              for x in range(screen._y_limit)})
         assert isinstance(screen,Screen)
         with self.assertRaises(ValueError):
-            screen.load_template(chars='\n'*25)
-        screen.load_template(chars='a'*79)
+            screen.load_data({(x,x+1):{'text':''} \
+                                  for x in range(screen._y_limit+1)})
+        screen.load_data({(0,0):{'text':'a'*screen._x_limit}})
         assert isinstance(screen,Screen)
         with self.assertRaises(ValueError):
-            screen.load_template(chars='a'*80)
+            screen.load_data({(0,0):{'text':'a'*(screen._x_limit+1)}})
         with self.assertRaises(ValueError):
-            screen.load_template(fores='pq')
-        with self.assertRaises(ValueError):
-            screen.load_template(fores='-')
-        with self.assertRaises(ValueError):
-            screen.load_template(backs='pq')
-        with self.assertRaises(ValueError):
-            screen.load_template(backs='-')
+            screen.load_data({(0,0):{'text':'a','style':260}})
         
+
+class PixelTest(unittest.TestCase):
+    
+    def test_update_raises_on_no_presentable(self):
+        p = Pixel()
+        with self.assertRaises(IOError):
+            p.update()
+    
+    def test_attach_raises_on_nonpresentable(self):
+        p = Pixel()
+        with self.assertRaises(TypeError):
+            p.attach('a')
+    
+    def test_attach_and_update_from_object(self):
+        test_data = {'char':'s','style':3}
+        p = Pixel()
+        obj = mock.Mock()
+        p.attach(obj)
+        obj.present.return_value = test_data
+        p.update()
+        obj.present.assert_called_once()
+        assert p.data == ['s',3]
+
 
 class GameDataTest(unittest.TestCase):
     pass
