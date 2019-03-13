@@ -36,10 +36,18 @@ Requirements:
 """
 from gamedata import GameData
 
+## DM calls (only sent, not expected to be handled)
+## Handled
 STARTER_NEW_GAME = 'starter_new_game'
-STARTER_LOAD_GAME = 'starter_load_game'
 QUIT_GAME = 'quit_game'
 SILENT_UNKNOWN = 'silently do nothing'
+CHOOSE_HUMAN_RACE = 'choose human race'
+GET_RACE_SELECTION = 'get character selection'
+GET_STAT_SELECTION = 'get stat selection'
+STAT_SEL_DECR_STR = 'stat selection decrease strength'
+## Unhandled
+STARTER_LOAD_GAME = 'starter_load_game'
+STAT_SEL_INCR_STR = 'stat selection increase strength'
 
 class AI:
     game_data = GameData()
@@ -93,3 +101,39 @@ class SilentUnknownHandler(CommandHandler):
     
     def execute(self):
         return SILENT_UNKNOWN
+        
+
+class StarterNewGameHandler(CommandHandler):
+    message = STARTER_NEW_GAME
+    
+    def execute(self):
+        return GET_RACE_SELECTION
+        
+
+class GetRaceSelHandler(CommandHandler):
+    message = GET_RACE_SELECTION
+    
+    def execute(self):
+        return GET_RACE_SELECTION
+        
+
+class ChooseHumanRaceHandler(CommandHandler):
+    message = CHOOSE_HUMAN_RACE
+    
+    def execute(self):
+        AI.game_data.start_human()
+        return GET_STAT_SELECTION
+    
+class StatSelDecrSTRHandler(CommandHandler):
+    message = STAT_SEL_DECR_STR
+    
+    def execute(self):
+        AI.game_data.change_stat('Str',-1)
+        return GET_STAT_SELECTION
+    
+class StatSelIncrSTRHandler(CommandHandler):
+    message = STAT_SEL_INCR_STR
+    
+    def execute(self):
+        AI.game_data.change_stat('Str',1)
+        return GET_STAT_SELECTION

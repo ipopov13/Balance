@@ -4,13 +4,10 @@ Created on Wed Feb  6 11:00:45 2019
 
 GameObject factories for the Balance rogue-like RPG
 
-Called by the World to create all game objects.
+Called by the handlers to create all game objects.
 
-Game objects implement .present() and .act(), and can give requests for
-new objects to their controller. Their data is changed by the game
-logic in the controller.
-
-How do they choose their actions?
+Game objects implement .present(). Their data is changed by the game
+logic in the handlers.
 
 @author: IvanPopov
 """
@@ -25,15 +22,7 @@ class GameObject:
         This returns a blank space and should be overridden by
         visible subclasses.
         """
-        return {'character':' ', 'style':0}
-    
-    def act(self):
-        """
-        Choose an action for the object
-        
-        This should be overridden by active subclasses.
-        """
-        return None
+        return {'char':' ', 'style':0}
 
 
 class Being(GameObject):
@@ -45,6 +34,23 @@ class Being(GameObject):
         Create a Being with the set parameters
         """
         pass
+
+
+class PlayableRace(Being):
+    
+    def __init__(self):
+        self.stats = {'Str':5,
+                      'Dex':5,
+                      'Int':5,
+                      'Cre':5,
+                      'Spi':5,
+                      'Tra':5,
+                      }
+        self.extra_points = 5
+
+
+class Human(PlayableRace):
+    name = 'human'
 
 
 class Item(GameObject):

@@ -16,6 +16,8 @@ from screen import Screen
 from screen import Pixel
 from assets import StaticScreens
 import ai
+from gamedata import GameData
+import gameobject
 
 class BalanceTest(unittest.TestCase):
     
@@ -168,8 +170,6 @@ class AITest(unittest.TestCase):
         with self.assertRaises(ValueError):
             myAI.execute('asddafae')
 
-class CommandHandlerTest(unittest.TestCase):
-    pass
 
 class GameDataTest(unittest.TestCase):
     pass

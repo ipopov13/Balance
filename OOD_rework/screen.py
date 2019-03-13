@@ -66,6 +66,7 @@ class Screen:
             pixel.reset()
         self._text = {}
         self._presented_text = {}
+        self._console.page()
             
     def present(self):
         """
@@ -85,7 +86,9 @@ class Screen:
             
     def get_command(self):
         """Return a single character command from the console"""
-        return self._console.getchar().decode()
+        keypress = self._console.getchar()
+        print(keypress)
+        return keypress.decode()
                 
     def _get_changed_pixels(self):
         for coords,pixel in self._pixels.items():

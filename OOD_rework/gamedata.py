@@ -21,6 +21,7 @@ Message buffer: List of messages added by the handlers, that have to be
 import pickle
 from glob import glob
 import random
+import gameobject
 
 class GameData:
     _game_list = {}
@@ -52,3 +53,13 @@ class GameData:
         self._scenes = {}
         self._world = {}
         self._message_buffer = []
+    
+    def start_human(self):
+        self._controlled_being = gameobject.Human()
+        
+    def get_stat(self,stat):
+        return self._controlled_being.stats[stat]
+        
+    def change_stat(self,stat,amount):
+        if 0 < self._controlled_being.stats[stat]+amount < 11:
+            self._controlled_being.stats[stat] += amount

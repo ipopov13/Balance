@@ -100,6 +100,7 @@ class DataManager(metaclass=DMMeta):
         """The DM activity loop"""
         next_dm = self.id_
         ## Templating the screen
+        self._screen.reset()
         DataManager._screen.load_data(self._screen_template)
         self._init_screen()
         ## Handle commands
@@ -154,3 +155,35 @@ class StarterDM(DataManager):
     
     def _get_screen_content(self):
         return {}
+    
+    
+class RaceSelectionDM(DataManager):
+    id_ = ai.GET_RACE_SELECTION
+    _screen_template = StaticScreens.race_selection
+    _is_starter_instance = False
+    _commands = {'q':ai.QUIT_GAME,
+                 '1':ai.CHOOSE_HUMAN_RACE,
+                 UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
+    
+    def _init_screen(self):
+        pass
+    
+    def _get_screen_content(self):
+        return {}
+    
+    
+class StatSelectionDM(DataManager):
+    id_ = ai.GET_STAT_SELECTION
+    _screen_template = StaticScreens.stat_selection
+    _is_starter_instance = False
+    _commands = {'q':ai.QUIT_GAME,
+                 'b':ai.GET_RACE_SELECTION,
+                 's':ai.STAT_SEL_DECR_STR,
+                 UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
+    
+    def _init_screen(self):
+        pass
+    
+    def _get_screen_content(self):
+        return {(20,2):{'text':str(self._ai.game_data.get_stat('Str')),
+                        'style':10}}
