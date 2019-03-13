@@ -12,7 +12,7 @@ class StaticScreens:
     Screens should be dictionaries in the format:
         {'chars':String, 'fores':String, 'backs':String}
     """
-    starter = {'chars':'''
+    starter = {(0,i):{'text':t} for (i,t) in enumerate('''
                ___      _   _         _   _    _   ___   ____
               |   \    / |  |        / |  |\   |  /   \ |
               |___/   /  |  |       /  |  | \  |  |     |___
@@ -22,6 +22,6 @@ class StaticScreens:
                                     ver 0.7
 
                                    (n)ew game
-                             (l)oad a previous game'''}
+                             (l)oad a previous game'''.split('\n'))}
     tester = {(0,0):{'text':'test','style':125}}
     tester2 = {(0,0):{'text':'test2','style':126}}

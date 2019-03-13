@@ -4,13 +4,29 @@ Created on Wed Feb  6 10:41:01 2019
 
 AI module for the Balance rogue-like RPG.
 
- Every
- functionality is expected to exist as a handler that responds to
+The AI inits a dictionary of messages:handlers (messages are unique so
+ that handlers for different DMs don't clash).
+The AI loads/creates the game data when handling commands from the
+ starting DM.
+The AI gets the message sent by the DM and updates the controlled being
+ object.
+Then it calls the handler associated with the respective action.
+The handler changes the game data accordingly. It also increments the
+ controlled object's timer property if the action takes time, and
+ returns 0 if no DM change is necessary, or a DM ID string if it is.
+The AI checks if all active objects are at the same point in time. If
+ not, it picks the next one to act, decides on its action and sends it
+ to a handler.
+This repeats until all active objects have their timer properties equal
+ (everyone has acted).
+In the end of a turn if any handler returned a DM ID the AI sends it
+ back, or returns 0.
+ 
+Every functionality is expected to exist as a handler that responds to
  specific messages by modifying the game state passed in the game_data
  variable and then returning the data back to the calling DM.
  
-Handlers register with a specific DM in order to handle messages sent by
- the player (keyboard commands) or the AI (message_string's).
+Handlers respond to specific messages sent by the AI.
  
 Requirements:
     Handlers change game data
@@ -18,22 +34,62 @@ Requirements:
         
 @author: IvanPopov
 """
+from gamedata import GameData
+
 STARTER_NEW_GAME = 'starter_new_game'
 STARTER_LOAD_GAME = 'starter_load_game'
-STARTER_QUIT_GAME = 'starter_quit_game'
-STARTER_UNKNOWN = 'starter unknown'
+QUIT_GAME = 'quit_game'
+SILENT_UNKNOWN = 'silently do nothing'
 
 class AI:
+    game_data = GameData()
+    _handler_mapping = {}
+    
+    @classmethod
+    def register_handler(cls,handler):
+        if handler.message in cls._handler_mapping:
+            raise ValueError(f"Repeated handler message: '{handler.message}'!")
+        cls._handler_mapping[handler.message] = handler()
     
     def execute(self, command):
-        return None
+        """
+        Pass the command to a handler, update the game data and
+        return the next DM ID string or None
+        """
+        if command not in AI._handler_mapping:
+            raise ValueError(f"Unknown message to AI: '{command}'!")
+        result = AI._handler_mapping[command].execute()
+        return result
+
+
+class CHMeta(type):
+    def __new__(meta, name, bases, class_dict):
+        cls = type.__new__(meta, name, bases, class_dict)
+        if bases != ():
+            AI.register_handler(cls)
+        return cls
+
+class CommandHandler(metaclass=CHMeta):
+    message = ''
     
+    def execute(self):
+        """
+        Execute an action on the game data
+        
+        Concrete handler subclasses override this method
+        """
+        raise NotImplementedError
+        
 
-class CommandHandler:
-    pass
-
-
-class TestHandler(CommandHandler):
+class QuitHandler(CommandHandler):
+    message = QUIT_GAME
     
-    def execute(self, _):
+    def execute(self):
         return None
+        
+
+class SilentUnknownHandler(CommandHandler):
+    message = SILENT_UNKNOWN
+    
+    def execute(self):
+        return SILENT_UNKNOWN

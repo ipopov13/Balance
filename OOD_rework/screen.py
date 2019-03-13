@@ -61,9 +61,11 @@ class Screen:
                 pixel.update()
             
     def reset(self):
-        """Clear the presentables of all pixels"""
+        """Clear the contents of the screen"""
         for pixel in self._pixels.values():
             pixel.reset()
+        self._text = {}
+        self._presented_text = {}
             
     def present(self):
         """
@@ -83,7 +85,7 @@ class Screen:
             
     def get_command(self):
         """Return a single character command from the console"""
-        return self._console.get_char().decode()
+        return self._console.getchar().decode()
                 
     def _get_changed_pixels(self):
         for coords,pixel in self._pixels.items():

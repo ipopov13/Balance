@@ -30,12 +30,13 @@ class DMTest(unittest.TestCase):
     
     def test_dm_activity_loop(self):
         with patch('datamanager.DataManager._screen') as screen:
-            screen.get_command.return_value = ai.STARTER_QUIT_GAME
+            screen.get_command.return_value = 'q'
             dm = DataManager.get_starting_dm()
             result = dm.take_control()
-            screen.load_data.assert_called_with(StaticScreens.starter)
+            screen.load_data.assert_called_with({})
             screen.get_command.assert_called()
             screen.present.assert_called()
+            screen.update_pixels.assert_called()
             assert result == None
 
 class ScreenTest(unittest.TestCase):
@@ -55,7 +56,7 @@ class ScreenTest(unittest.TestCase):
         
     def test_get_command(self):
         with patch('screen.Screen._console') as console:
-            console.get_char.return_value = b'test'
+            console.getchar.return_value = b'test'
             screen = Screen()
             command = screen.get_command()
             assert command == 'test'
@@ -159,6 +160,16 @@ class PixelTest(unittest.TestCase):
         obj.present.assert_called_once()
         assert p.data == ['s',3]
 
+
+class AITest(unittest.TestCase):
+    
+    def test_execute_raises_unknown_command(self):
+        myAI = ai.AI()
+        with self.assertRaises(ValueError):
+            myAI.execute('asddafae')
+
+class CommandHandlerTest(unittest.TestCase):
+    pass
 
 class GameDataTest(unittest.TestCase):
     pass

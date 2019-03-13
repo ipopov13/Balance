@@ -73,7 +73,7 @@ class DMMeta(type):
 class DataManager(metaclass=DMMeta):
     _screen = Screen()
     _ai = ai.AI()
-    _subclass_instances = {}
+    _subclass_instances = {None:None}
     _starters = 0
     
     ## These should be redefined in every subclass!
@@ -86,7 +86,7 @@ class DataManager(metaclass=DMMeta):
     def get_starting_dm(cls):
         """Return the DM registered as the starter one"""
         for instance in cls._subclass_instances.values():
-            if instance._is_starter_instance:
+            if instance is not None and instance._is_starter_instance:
                 return instance
     
     @classmethod
@@ -98,29 +98,44 @@ class DataManager(metaclass=DMMeta):
         
     def take_control(self):
         """The DM activity loop"""
-        next_dm = self
+        next_dm = self.id_
         ## Templating the screen
-        DataManager._screen.load_template(self._screen_template)
+        DataManager._screen.load_data(self._screen_template)
         self._init_screen()
-        while next_dm is not None:
+        ## Handle commands
+        while next_dm == self.id_:
             self._update_screen()
             DataManager._screen.present()
             command =  DataManager._screen.get_command()
             message = self._commands.get(command,
                                          self._commands[UNKNOWN_COMMAND])
             next_dm = self._ai.execute(message)
-        return next_dm
+            if next_dm == ai.SILENT_UNKNOWN:
+                next_dm = self.id_
+        return DataManager._subclass_instances[next_dm]
     
     def _update_screen(self):
-        DataManager._screen.load_data(self._screen_data)
+        DataManager._screen.load_data(self._get_screen_content())
         DataManager._screen.update_pixels()
+        
+    def _get_screen_content(self):
+        """
+        Concrete DMs should override this to implement their dynamic
+        screen data presentation by extracting text from
+        DataManager._ai.game_data. This method should return a
+        dictionary of (x,y):{'text':..., 'style':...},
+        where (x,y) are coords of the beginning of the text,
+        text is a single line string, and style is an integer in the
+        range from 0 to 255. See Console guide for info on styles.
+        """
+        raise NotImplementedError
     
     def _init_screen(self):
         """
         Concrete DMs should override this to implement their
         screen initialization procedure, adding session specific data
-        from game_data on top of the template, as well as attaching
-        game_data presentable objects to screen pixels!
+        from DataManager._ai.game_data on top of the template, as well
+        as attaching game_data presentable objects to screen pixels!
         """
         raise NotImplementedError
     
@@ -131,11 +146,11 @@ class StarterDM(DataManager):
     _is_starter_instance = True
     _commands = {'n':ai.STARTER_NEW_GAME,
                      'l':ai.STARTER_LOAD_GAME,
-                     'q':ai.STARTER_QUIT_GAME,
-                     UNKNOWN_COMMAND:ai.STARTER_UNKNOWN}
+                     'q':ai.QUIT_GAME,
+                     UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
     
     def _init_screen(self):
         pass
     
-    def _update_screen(self):
-        pass
+    def _get_screen_content(self):
+        return {}

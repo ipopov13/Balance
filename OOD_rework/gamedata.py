@@ -22,7 +22,7 @@ import pickle
 from glob import glob
 import random
 
-class GameData():
+class GameData:
     _game_list = {}
     
     @classmethod
