@@ -61,5 +61,7 @@ class GameData:
         return self._controlled_being.stats[stat]
         
     def change_stat(self,stat,amount):
-        if 0 < self._controlled_being.stats[stat]+amount < 11:
+        if 0 < self._controlled_being.stats[stat]+amount < 11 \
+          and self._controlled_being.stats['stat_p']-amount>=0:
             self._controlled_being.stats[stat] += amount
+            self._controlled_being.stats['stat_p'] -= amount

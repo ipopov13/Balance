@@ -45,8 +45,8 @@ class PlayableRace(Being):
                       'Cre':5,
                       'Spi':5,
                       'Tra':5,
+                      'stat_p':5
                       }
-        self.extra_points = 5
 
 
 class Human(PlayableRace):

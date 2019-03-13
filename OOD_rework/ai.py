@@ -45,9 +45,20 @@ CHOOSE_HUMAN_RACE = 'choose human race'
 GET_RACE_SELECTION = 'get character selection'
 GET_STAT_SELECTION = 'get stat selection'
 STAT_SEL_DECR_STR = 'stat selection decrease strength'
+STAT_SEL_INCR_STR = 'stat selection increase strength'
+STAT_SEL_DECR_DEX = 'stat selection decrease dex'
+STAT_SEL_INCR_DEX = 'stat selection increase dex'
+STAT_SEL_DECR_INT = 'stat selection decrease int'
+STAT_SEL_INCR_INT = 'stat selection increase int'
+STAT_SEL_DECR_CRE = 'stat selection decrease cre'
+STAT_SEL_INCR_CRE = 'stat selection increase cre'
+STAT_SEL_DECR_SPI = 'stat selection decrease spi'
+STAT_SEL_INCR_SPI = 'stat selection increase spi'
+STAT_SEL_DECR_TRA = 'stat selection decrease tra'
+STAT_SEL_INCR_TRA = 'stat selection increase tra'
 ## Unhandled
 STARTER_LOAD_GAME = 'starter_load_game'
-STAT_SEL_INCR_STR = 'stat selection increase strength'
+GET_SCENE = 'get scene view'
 
 class AI:
     game_data = GameData()
@@ -136,4 +147,74 @@ class StatSelIncrSTRHandler(CommandHandler):
     
     def execute(self):
         AI.game_data.change_stat('Str',1)
+        return GET_STAT_SELECTION
+    
+class StatSelDecrDEXHandler(CommandHandler):
+    message = STAT_SEL_DECR_DEX
+    
+    def execute(self):
+        AI.game_data.change_stat('Dex',-1)
+        return GET_STAT_SELECTION
+    
+class StatSelIncrDEXHandler(CommandHandler):
+    message = STAT_SEL_INCR_DEX
+    
+    def execute(self):
+        AI.game_data.change_stat('Dex',1)
+        return GET_STAT_SELECTION
+    
+class StatSelDecrINTHandler(CommandHandler):
+    message = STAT_SEL_DECR_INT
+    
+    def execute(self):
+        AI.game_data.change_stat('Int',-1)
+        return GET_STAT_SELECTION
+    
+class StatSelIncrINTHandler(CommandHandler):
+    message = STAT_SEL_INCR_INT
+    
+    def execute(self):
+        AI.game_data.change_stat('Int',1)
+        return GET_STAT_SELECTION
+    
+class StatSelDecrCREHandler(CommandHandler):
+    message = STAT_SEL_DECR_CRE
+    
+    def execute(self):
+        AI.game_data.change_stat('Cre',-1)
+        return GET_STAT_SELECTION
+    
+class StatSelIncrCREHandler(CommandHandler):
+    message = STAT_SEL_INCR_CRE
+    
+    def execute(self):
+        AI.game_data.change_stat('Cre',1)
+        return GET_STAT_SELECTION
+    
+class StatSelDecrSPIHandler(CommandHandler):
+    message = STAT_SEL_DECR_SPI
+    
+    def execute(self):
+        AI.game_data.change_stat('Spi',-1)
+        return GET_STAT_SELECTION
+    
+class StatSelIncrSPIHandler(CommandHandler):
+    message = STAT_SEL_INCR_SPI
+    
+    def execute(self):
+        AI.game_data.change_stat('Spi',1)
+        return GET_STAT_SELECTION
+    
+class StatSelDecrTRAHandler(CommandHandler):
+    message = STAT_SEL_DECR_TRA
+    
+    def execute(self):
+        AI.game_data.change_stat('Tra',-1)
+        return GET_STAT_SELECTION
+    
+class StatSelIncrTRAHandler(CommandHandler):
+    message = STAT_SEL_INCR_TRA
+    
+    def execute(self):
+        AI.game_data.change_stat('Tra',1)
         return GET_STAT_SELECTION

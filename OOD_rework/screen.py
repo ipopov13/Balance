@@ -7,6 +7,7 @@ Screen class for the Balance rogue-like RPG.
 @author: IvanPopov
 """
 import Console
+import msvcrt
 
 DEFAULT_STYLE = 7
 DEFAULT_CHAR = ' '
@@ -85,10 +86,10 @@ class Screen:
                 self._presented_text[coords] = self._text[coords].copy()
             
     def get_command(self):
-        """Return a single character command from the console"""
-        keypress = self._console.getchar()
-        print(keypress)
-        return keypress.decode()
+        """Return a command from the console"""
+        a=msvcrt.getch()
+        #self._console.text(30,10,f'#{a.decode()}#')
+        return a.decode()
                 
     def _get_changed_pixels(self):
         for coords,pixel in self._pixels.items():

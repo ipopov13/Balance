@@ -178,12 +178,43 @@ class StatSelectionDM(DataManager):
     _is_starter_instance = False
     _commands = {'q':ai.QUIT_GAME,
                  'b':ai.GET_RACE_SELECTION,
+                 '\r':ai.GET_SCENE,
                  's':ai.STAT_SEL_DECR_STR,
+                 'S':ai.STAT_SEL_INCR_STR,
+                 'd':ai.STAT_SEL_DECR_DEX,
+                 'D':ai.STAT_SEL_INCR_DEX,
+                 'i':ai.STAT_SEL_DECR_INT,
+                 'I':ai.STAT_SEL_INCR_INT,
+                 'c':ai.STAT_SEL_DECR_CRE,
+                 'C':ai.STAT_SEL_INCR_CRE,
+                 'p':ai.STAT_SEL_DECR_SPI,
+                 'P':ai.STAT_SEL_INCR_SPI,
+                 't':ai.STAT_SEL_DECR_TRA,
+                 'T':ai.STAT_SEL_INCR_TRA,
                  UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
     
     def _init_screen(self):
         pass
     
     def _get_screen_content(self):
-        return {(20,2):{'text':str(self._ai.game_data.get_stat('Str')),
-                        'style':10}}
+        content = {(21,2):{'text':str(self._ai.game_data.get_stat('Str')),
+                        'style':10},
+                (21,3):{'text':str(self._ai.game_data.get_stat('Dex')),
+                        'style':10},
+                (21,4):{'text':str(self._ai.game_data.get_stat('Int')),
+                        'style':10},
+                (21,5):{'text':str(self._ai.game_data.get_stat('Cre')),
+                        'style':10},
+                (21,6):{'text':str(self._ai.game_data.get_stat('Spi')),
+                        'style':10},
+                (21,7):{'text':str(self._ai.game_data.get_stat('Tra')),
+                        'style':10},
+                (21,9):{'text':'%2d' %self._ai.game_data.get_stat('stat_p'),
+                        'style':10},
+                }
+        if self._ai.game_data.get_stat('stat_p') == 0:
+            content[(4,11)] = {'text':'Press ENTER to begin your adventure!  ',
+                                'style':13}
+        else:
+            content[(4,11)] = {'text':'You have to use all your extra points.'}
+        return content

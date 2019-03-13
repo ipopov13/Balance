@@ -29,8 +29,16 @@ class StaticScreens:
         1) Human'''.split('\n'))}
     stat_selection = {(0,i):{'text':t} for (i,t) in enumerate('''
     Modify stats:
-        Strength       (s/S)
+        Strength          (s/S)
+        Dexterity         (d/D)
+        Inteligence       (i/I)
+        Creativity        (c/C)
+        Spirit            (p/P)
+        Tradition         (t/T)
         
-    Or you can go (b)ack to race selection.'''.split('\n'))}
+        Points left:
+            
+    
+    You can go (b)ack to race selection or (q)uit.'''.split('\n'))}
     tester = {(0,0):{'text':'test','style':125}}
     tester2 = {(0,0):{'text':'test2','style':126}}
