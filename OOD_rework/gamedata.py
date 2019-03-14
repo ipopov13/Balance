@@ -55,13 +55,28 @@ class GameData:
         self._message_buffer = []
     
     def start(self,*,race=None):
+        """Initialize a player character"""
         self._controlled_being = gameobject.PlayableRace.get_being(race=race)
         
     def get_stat(self,stat):
+        """Return the stat of a being"""
         return self._controlled_being.get_stat(stat=stat)
         
-    def change_stat(self,stat,amount):
-        if 0 < self._controlled_being.stats[stat]+amount < 11 \
-          and self._controlled_being.stats['stat_p']-amount>=0:
-            self._controlled_being.stats[stat] += amount
-            self._controlled_being.stats['stat_p'] -= amount
+    def change_stat(self,stat,amount,from_pool=True):
+        """Change the stats of the player character"""
+        ## If using pool check availability first
+        if from_pool:
+            try:
+                self._controlled_being.change_stat(stat='stat_pool',
+                                                   amount=-1*amount)
+            except ValueError:
+                return
+        try:
+            ## Try to change stat
+            self._controlled_being.change_stat(stat=stat,amount=amount)
+        except ValueError:
+            ## Reverse any changes made to pool
+            if from_pool:
+                self._controlled_being.change_stat(stat='stat_pool',
+                                                   amount=amount)
+            return

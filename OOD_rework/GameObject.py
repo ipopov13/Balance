@@ -36,10 +36,23 @@ class Being(GameObject):
         pass
         
     def get_stat(self,stat=None):
+        """Return the current level of a stat"""
         try:
             return self.stats[stat][0]
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
+            
+    def change_stat(self,stat=None,amount=None):
+        """Safely change the current level of a stat"""
+        if stat is None or amount is None:
+            raise TypeError(f'Stat or amount not set: stat"{stat}",'
+                            f'amount"{amount}".')
+        new_stat_level = self.stats[stat][0] +amount
+        if self.stats[stat][1] <= new_stat_level <= self.stats[stat][2]:
+            self.stats[stat][0] += amount
+        else:
+            raise ValueError(f'Stat would go out of bounds: stat:"{stat}",'
+                             f'amount:"{amount}".')
 
 
 class RegistrableBeingMeta(type):
@@ -68,10 +81,11 @@ class PlayableRace(Being, metaclass=RegistrableBeingMeta):
             raise ValueError(f'Race not specified correctly, got "{race}".')
         
     def __init__(self):
-        ## Stats format: name->[current,max]
-        self.stats = {'Str':[5,10],'Dex':[5,10],'Int':[5,10],'Cre':[5,10],
-                      'Cun':[5,10],'Spi':[5,10],'Tra':[5,10],
-                      'stat_p':[7,999]
+        ## Stats format: name->[current,min,max]
+        self.stats = {'Str':[5,1,10],'Dex':[5,1,10],'Int':[5,1,10],
+                      'Cre':[5,1,10],'Cun':[5,1,10],'Spi':[5,1,10],
+                      'Tra':[5,1,10],
+                      'stat_pool':[7,0,999]
                       }
         self._post_init()
         
@@ -84,8 +98,8 @@ class Human(PlayableRace):
     name = 'human'
     
     def _post_init(self):
-        pass
-
+        self.change_stat(stat='stat_pool',amount=5)
+        
 
 class Item(GameObject):
     pass

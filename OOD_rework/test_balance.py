@@ -194,12 +194,40 @@ class GameDataTest(unittest.TestCase):
             gd.start(race=race)
             gd.get_stat(stat)
             getter.assert_called_once_with(stat=stat)
+    
+    def test_change_stat(self):
+        with patch('gameobject.PlayableRace.change_stat') as changer:
+            race = 'human'
+            stat = 'Str'
+            amount = 10
+            gd = GameData()
+            gd.start(race=race)
+            gd.change_stat(stat=stat,amount=amount,from_pool=False)
+            changer.assert_called_with(stat=stat,amount=amount)
 
 class PlayableRaceTest(unittest.TestCase):
     
     def test_get_being(self):
         being = gameobject.PlayableRace.get_being(race='human')
         assert isinstance(being,gameobject.Human)
+        
+class BeingTest(unittest.TestCase):
+        
+    def test_get_stat(self):
+        being = gameobject.PlayableRace.get_being(race='human')
+        assert being.get_stat(stat='Str') == 5
+        
+    def test_change_stat(self):
+        being = gameobject.PlayableRace.get_being(race='human')
+        being.change_stat(stat='Str',amount=4)
+        assert being.get_stat(stat='Str') == 9
+        with self.assertRaises(ValueError):
+            being.change_stat(stat='Str',amount=4)
+        being.change_stat(stat='Str',amount=-3)
+        assert being.get_stat(stat='Str') == 6
+        with self.assertRaises(ValueError):
+            being.change_stat(stat='Str',amount=-8)
+        
 
 if __name__ == '__main__':
     unittest.main()

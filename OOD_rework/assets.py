@@ -33,6 +33,7 @@ class StaticScreens:
         Dexterity         (d/D)
         Inteligence       (i/I)
         Creativity        (c/C)
+        Cunning           (u/U)
         Spirit            (p/P)
         Tradition         (t/T)
         

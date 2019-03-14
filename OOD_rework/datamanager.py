@@ -205,16 +205,18 @@ class StatSelectionDM(DataManager):
                         'style':10},
                 (21,5):{'text':str(self._ai.game_data.get_stat('Cre')),
                         'style':10},
-                (21,6):{'text':str(self._ai.game_data.get_stat('Spi')),
+                (21,6):{'text':str(self._ai.game_data.get_stat('Cun')),
                         'style':10},
-                (21,7):{'text':str(self._ai.game_data.get_stat('Tra')),
+                (21,7):{'text':str(self._ai.game_data.get_stat('Spi')),
                         'style':10},
-                (21,9):{'text':'%2d' %self._ai.game_data.get_stat('stat_p'),
+                (21,8):{'text':str(self._ai.game_data.get_stat('Tra')),
+                        'style':10},
+               (21,10):{'text':'%2d' %self._ai.game_data.get_stat('stat_pool'),
                         'style':10},
                 }
-        if self._ai.game_data.get_stat('stat_p') == 0:
-            content[(4,11)] = {'text':'Press ENTER to begin your adventure!  ',
+        if self._ai.game_data.get_stat('stat_pool') == 0:
+            content[(4,12)] = {'text':'Press ENTER to begin your adventure!  ',
                                 'style':13}
         else:
-            content[(4,11)] = {'text':'You have to use all your extra points.'}
+            content[(4,12)] = {'text':'You have to use all your extra points.'}
         return content
