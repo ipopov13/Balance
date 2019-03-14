@@ -98,7 +98,7 @@ class Human(PlayableRace):
     name = 'human'
     
     def _post_init(self):
-        self.change_stat(stat='stat_pool',amount=5)
+        pass
         
 
 class Item(GameObject):

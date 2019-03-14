@@ -187,6 +187,8 @@ class StatSelectionDM(DataManager):
                  'I':ai.STAT_SEL_INCR_INT,
                  'c':ai.STAT_SEL_DECR_CRE,
                  'C':ai.STAT_SEL_INCR_CRE,
+                 'u':ai.STAT_SEL_DECR_CUN,
+                 'U':ai.STAT_SEL_INCR_CUN,
                  'p':ai.STAT_SEL_DECR_SPI,
                  'P':ai.STAT_SEL_INCR_SPI,
                  't':ai.STAT_SEL_DECR_TRA,

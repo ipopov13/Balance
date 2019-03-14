@@ -52,6 +52,8 @@ STAT_SEL_DECR_INT = 'stat selection decrease int'
 STAT_SEL_INCR_INT = 'stat selection increase int'
 STAT_SEL_DECR_CRE = 'stat selection decrease cre'
 STAT_SEL_INCR_CRE = 'stat selection increase cre'
+STAT_SEL_DECR_CUN = 'stat selection decrease cun'
+STAT_SEL_INCR_CUN = 'stat selection increase cun'
 STAT_SEL_DECR_SPI = 'stat selection decrease spi'
 STAT_SEL_INCR_SPI = 'stat selection increase spi'
 STAT_SEL_DECR_TRA = 'stat selection decrease tra'
@@ -189,6 +191,20 @@ class StatSelIncrCREHandler(CommandHandler):
     
     def execute(self):
         AI.game_data.change_stat('Cre',1)
+        return GET_STAT_SELECTION
+    
+class StatSelDecrCUNHandler(CommandHandler):
+    message = STAT_SEL_DECR_CUN
+    
+    def execute(self):
+        AI.game_data.change_stat('Cun',-1)
+        return GET_STAT_SELECTION
+    
+class StatSelIncrCUNHandler(CommandHandler):
+    message = STAT_SEL_INCR_CUN
+    
+    def execute(self):
+        AI.game_data.change_stat('Cun',1)
         return GET_STAT_SELECTION
     
 class StatSelDecrSPIHandler(CommandHandler):
