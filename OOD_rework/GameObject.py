@@ -39,18 +39,21 @@ class Being(GameObject):
 class PlayableRace(Being):
     
     def __init__(self):
-        self.stats = {'Str':5,
-                      'Dex':5,
-                      'Int':5,
-                      'Cre':5,
-                      'Spi':5,
-                      'Tra':5,
+        self.stats = {'Str':5,'Dex':5,'Int':5,'Cre':5,'Cun':5,'Spi':5,'Tra':5,
                       'stat_p':5
                       }
+        self._post_init()
+        
+    def _post_init(self):
+        """Do race specific modifications here"""
+        raise NotImplementedError
 
 
 class Human(PlayableRace):
     name = 'human'
+    
+    def _post_init(self):
+        pass
 
 
 class Item(GameObject):

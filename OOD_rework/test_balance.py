@@ -57,8 +57,8 @@ class ScreenTest(unittest.TestCase):
             console.text.assert_called_once_with(0, 0,'test',125)
         
     def test_get_command(self):
-        with patch('screen.Screen._console') as console:
-            console.getchar.return_value = b'test'
+        with patch('msvcrt.getch') as char_input:
+            char_input.return_value = b'test'
             screen = Screen()
             command = screen.get_command()
             assert command == 'test'
