@@ -169,13 +169,28 @@ class AITest(unittest.TestCase):
         myAI = ai.AI()
         with self.assertRaises(ValueError):
             myAI.execute('asddafae')
+            
+    def test_starting_race(self):
+        with patch('gamedata.GameData.start') as starter:
+            myAI = ai.AI()
+            myAI.execute(ai.CHOOSE_HUMAN_RACE)
+            starter.assert_called_once_with(race='human')
 
 
 class GameDataTest(unittest.TestCase):
-    pass
+    
+    def test_start_race(self):
+        with patch('gameobject.PlayableRace.get_being') as getter:
+            race = 'human'
+            gd = GameData()
+            gd.start(race=race)
+            getter.assert_called_once_with(race=race)
 
-class GameObjectTest(unittest.TestCase):
-    pass
+class PlayableRaceTest(unittest.TestCase):
+    
+    def test_get_being(self):
+        being = gameobject.PlayableRace.get_being(race='human')
+        assert isinstance(being,gameobject.Human)
 
 if __name__ == '__main__':
     unittest.main()

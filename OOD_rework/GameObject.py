@@ -36,8 +36,31 @@ class Being(GameObject):
         pass
 
 
-class PlayableRace(Being):
+class RegistrableBeingMeta(type):
+    def __new__(meta, name, bases, class_dict):
+        cls = type.__new__(meta, name, bases, class_dict)
+        if bases != (Being,):
+            bases[-1].register_subclass(cls)
+        return cls
+
+
+class PlayableRace(Being, metaclass=RegistrableBeingMeta):
+    _subs = {}
     
+    @classmethod
+    def register_subclass(cls,race):
+        if race.name in cls._subs:
+            raise ValueError('Race name repeats twice: {race.name}!')
+        cls._subs[race.name] = race
+    
+    
+    @classmethod
+    def get_being(cls,race=None):
+        try:
+            return cls._subs[race]()
+        except KeyError:
+            raise ValueError(f'Race not specified correctly, got "{race}". {list(cls._subs.keys())}')
+        
     def __init__(self):
         self.stats = {'Str':5,'Dex':5,'Int':5,'Cre':5,'Cun':5,'Spi':5,'Tra':5,
                       'stat_p':5
@@ -47,6 +70,7 @@ class PlayableRace(Being):
     def _post_init(self):
         """Do race specific modifications here"""
         raise NotImplementedError
+        
 
 
 class Human(PlayableRace):

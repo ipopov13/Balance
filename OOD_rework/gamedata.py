@@ -54,8 +54,8 @@ class GameData:
         self._world = {}
         self._message_buffer = []
     
-    def start_human(self):
-        self._controlled_being = gameobject.Human()
+    def start(self,*,race=None):
+        self._controlled_being = gameobject.PlayableRace.get_being(race=race)
         
     def get_stat(self,stat):
         return self._controlled_being.stats[stat]

@@ -132,7 +132,7 @@ class ChooseHumanRaceHandler(CommandHandler):
     message = CHOOSE_HUMAN_RACE
     
     def execute(self):
-        AI.game_data.start_human()
+        AI.game_data.start(race='human')
         return GET_STAT_SELECTION
     
 class StatSelDecrSTRHandler(CommandHandler):
