@@ -29,11 +29,17 @@ class Being(GameObject):
     """
     Covers all active actors in the game
     """
-    def __init__(self,player_choices):
+    def __init__(self):
         """
-        Create a Being with the set parameters
+        Create a Being of the specified type. Defined in subclasses.
         """
         pass
+        
+    def get_stat(self,stat=None):
+        try:
+            return self.stats[stat][0]
+        except KeyError:
+            raise ValueError(f'Bad stat identifier: "{stat}".')
 
 
 class RegistrableBeingMeta(type):
@@ -59,18 +65,19 @@ class PlayableRace(Being, metaclass=RegistrableBeingMeta):
         try:
             return cls._subs[race]()
         except KeyError:
-            raise ValueError(f'Race not specified correctly, got "{race}". {list(cls._subs.keys())}')
+            raise ValueError(f'Race not specified correctly, got "{race}".')
         
     def __init__(self):
-        self.stats = {'Str':5,'Dex':5,'Int':5,'Cre':5,'Cun':5,'Spi':5,'Tra':5,
-                      'stat_p':5
+        ## Stats format: name->[current,max]
+        self.stats = {'Str':[5,10],'Dex':[5,10],'Int':[5,10],'Cre':[5,10],
+                      'Cun':[5,10],'Spi':[5,10],'Tra':[5,10],
+                      'stat_p':[7,999]
                       }
         self._post_init()
         
     def _post_init(self):
         """Do race specific modifications here"""
         raise NotImplementedError
-        
 
 
 class Human(PlayableRace):

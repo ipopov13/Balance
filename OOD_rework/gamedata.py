@@ -58,7 +58,7 @@ class GameData:
         self._controlled_being = gameobject.PlayableRace.get_being(race=race)
         
     def get_stat(self,stat):
-        return self._controlled_being.stats[stat]
+        return self._controlled_being.get_stat(stat=stat)
         
     def change_stat(self,stat,amount):
         if 0 < self._controlled_being.stats[stat]+amount < 11 \

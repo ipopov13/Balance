@@ -185,6 +185,15 @@ class GameDataTest(unittest.TestCase):
             gd = GameData()
             gd.start(race=race)
             getter.assert_called_once_with(race=race)
+    
+    def test_get_stat(self):
+        with patch('gameobject.PlayableRace.get_stat') as getter:
+            race = 'human'
+            stat = 'Str'
+            gd = GameData()
+            gd.start(race=race)
+            gd.get_stat(stat)
+            getter.assert_called_once_with(stat=stat)
 
 class PlayableRaceTest(unittest.TestCase):
     
