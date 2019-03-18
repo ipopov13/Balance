@@ -10,12 +10,35 @@ Requirements:
 @author: IvanPopov
 """
 import os
-from datamanager import DataManager
-
+from glob import glob
+import json
 
 class Balance:
     
+    @classmethod
+    def _get_games(cls):
+        """List available games and change the config accordingly"""
+        games = glob('./*/design/game_settings.txt')
+        names = []
+        for g in games:
+            with open(g) as infile:
+                settings = json.load(infile)
+                names.append((settings['name'],os.path.dirname(g)))
+        choice = input('Select game to run:\n%s\n' %('\n'.join(['%d) %s' %(i,game[0]) for i,game in enumerate(names)])))
+        game_path = names[int(choice)][1]
+        with open('config.py') as infile:
+            data = infile.readlines()
+        for line in range(len(data)):
+            if data[line].startswith('game_path ='):
+                data[line] = f'game_path = "{game_path}"\n'
+        with open('config.py','w') as outfile:
+            outfile.write(''.join(data))
+    
     def __init__(self):
+        Balance._get_games()
+        ## Delay import until game has been selected
+        from datamanager import DataManager
+        
         self._dm = DataManager.get_starting_dm()
             
     def run(self):

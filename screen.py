@@ -8,6 +8,7 @@ Screen class for the Balance rogue-like RPG.
 """
 import Console
 import msvcrt
+import config
 
 DEFAULT_STYLE = 7
 DEFAULT_CHAR = ' '
@@ -22,7 +23,8 @@ class Screen:
                                     for y in range(self._y_limit)}
         self._text = {}
         self._presented_text = {}
-        Screen._console.title('Balance')
+        settings = config.get_settings()
+        Screen._console.title(settings['name'])
         
     def load_data(self,template):
         """Load a styled text dictionary from assets"""
