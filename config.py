@@ -6,12 +6,13 @@ Config file for the Balance rogue-like framework.
 
 @author: IvanPopov
 """
-import json
 import os
+import configparser
 
 game_path = ".\Balance\design"
-settings_file = 'game_settings.txt'
+settings_file = 'game_settings.ini'
+parser = configparser.ConfigParser()
 
 def get_settings():
-    with open(os.path.join(game_path,settings_file)) as infile:
-        return json.load(infile)
+    parser.read(os.path.join(game_path,settings_file))
+    return parser['game_settings']

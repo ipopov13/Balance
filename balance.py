@@ -11,20 +11,22 @@ Requirements:
 """
 import os
 from glob import glob
-import json
+import configparser
 
 class Balance:
     
     @classmethod
     def get_games(cls):
         """List available games and change the config accordingly"""
-        games = glob('./*/design/game_settings.txt')
+        games = glob('./*/design/game_settings.ini')
         names = []
+        parser = configparser.ConfigParser()
         for g in games:
-            with open(g) as infile:
-                settings = json.load(infile)
-                names.append((settings['name'],os.path.dirname(g)))
-        choice = input('Select game to run:\n%s\n' %('\n'.join(['%d) %s' %(i,game[0]) for i,game in enumerate(names)])))
+            parser.read(g)
+            names.append((parser['game_settings']['name'],os.path.dirname(g)))
+        choice = input('Select game to run:\n%s\n' \
+                       %('\n'.join(['%d) %s' %(i,game[0]) \
+                                    for i,game in enumerate(names)])))
         game_path = names[int(choice)][1]
         with open('config.py') as infile:
             data = infile.readlines()

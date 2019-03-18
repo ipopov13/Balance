@@ -22,6 +22,7 @@ import pickle
 from glob import glob
 import random
 import gameobject
+import config
 
 class World:
     _game_list = {}
@@ -53,6 +54,10 @@ class World:
         self._scenes = {}
         self._world = {}
         self._message_buffer = []
+        settings = config.get_settings()
+        self._rows = settings.getint('world_size')
+        self._is_globe = settings.getboolean('world_is_globe')
+        self._columns = self._rows * (2 if self._is_globe else 1)
     
     def start(self,*,race=None):
         """Initialize a player character"""

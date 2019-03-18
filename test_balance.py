@@ -8,6 +8,7 @@ Tests for the Balance rogue-like RPG
 import unittest
 from unittest import mock
 from unittest.mock import patch
+from copy import deepcopy
 
 #from module import function/object
 from balance import Balance
@@ -179,12 +180,19 @@ class AITest(unittest.TestCase):
 
 class WorldTest(unittest.TestCase):
     
-    def test_start_race(self):
+    def test_start_world(self):
         with patch('gameobject.PlayableRace.get_being') as getter:
             race = 'human'
-            gd = World()
-            gd.start(race=race)
+            world = World()
+            world.start(race=race)
+            # test race call
             getter.assert_called_once_with(race=race)
+            # test world creation
+            assert world._world != {}
+            first_world = deepcopy(world._world)
+            world.start(race=race)
+            # test world reset at start()
+            assert first_world != world._world
     
     def test_get_stat(self):
         with patch('gameobject.PlayableRace.get_stat') as getter:

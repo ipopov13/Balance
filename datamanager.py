@@ -178,7 +178,6 @@ class StatSelectionDM(DataManager):
     _is_starter_instance = False
     _commands = {'q':ai.QUIT_GAME,
                  'b':ai.GET_RACE_SELECTION,
-                 '\r':ai.GET_SCENE,
                  's':ai.STAT_SEL_DECR_STR,
                  'S':ai.STAT_SEL_INCR_STR,
                  'd':ai.STAT_SEL_DECR_DEX,
@@ -193,6 +192,7 @@ class StatSelectionDM(DataManager):
                  'P':ai.STAT_SEL_INCR_SPI,
                  't':ai.STAT_SEL_DECR_TRA,
                  'T':ai.STAT_SEL_INCR_TRA,
+                 '\r':ai.SILENT_UNKNOWN,
                  UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
     
     def _init_screen(self):
@@ -219,6 +219,8 @@ class StatSelectionDM(DataManager):
         if self._ai.game_data.get_stat('stat_pool') == 0:
             content[(4,12)] = {'text':'Press ENTER to begin your adventure!  ',
                                 'style':13}
+            self._commands['\r'] = ai.GET_SCENE
         else:
             content[(4,12)] = {'text':'You have to use all your extra points.'}
+            self._commands['\r'] = ai.SILENT_UNKNOWN
         return content

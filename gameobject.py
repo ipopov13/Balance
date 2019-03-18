@@ -68,9 +68,9 @@ class PlayableRace(Being, metaclass=RegistrableBeingMeta):
     
     @classmethod
     def register_subclass(cls,race):
-        if race.name in cls._subs:
+        if race.race in cls._subs:
             raise ValueError('Race name repeats twice: {race.name}!')
-        cls._subs[race.name] = race
+        cls._subs[race.race] = race
     
     
     @classmethod
@@ -95,7 +95,7 @@ class PlayableRace(Being, metaclass=RegistrableBeingMeta):
 
 
 class Human(PlayableRace):
-    name = 'human'
+    race = 'human'
     
     def _post_init(self):
         pass
