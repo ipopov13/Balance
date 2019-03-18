@@ -23,7 +23,7 @@ class Balance:
         parser = configparser.ConfigParser()
         for g in games:
             parser.read(g)
-            names.append((parser['game_settings']['name'],os.path.dirname(g)))
+            names.append((parser['game']['name'],os.path.dirname(g)))
         choice = input('Select game to run:\n%s\n' \
                        %('\n'.join(['%d) %s' %(i,game[0]) \
                                     for i,game in enumerate(names)])))

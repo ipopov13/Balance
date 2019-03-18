@@ -50,18 +50,32 @@ class World:
     
     def __init__(self):
         self._controlled_being = None
-        self._current_scene_key = None
-        self._scenes = {}
-        self._world = {}
-        self._message_buffer = []
-        settings = config.get_settings()
-        self._rows = settings.getint('world_size')
-        self._is_globe = settings.getboolean('world_is_globe')
-        self._columns = self._rows * (2 if self._is_globe else 1)
+        self._theme_peaks = {}
+        self._themes = config.get_themes()
+        self._settings = config.get_world_settings()
+        self._rows = self._settings.getint('size')
+        self._columns = self._rows * (2 if \
+                                self._settings.getboolean('is_globe') else 1)
     
     def start(self,*,race=None):
-        """Initialize a player character"""
+        """Initialize the world instance"""
+        # Start a player character
         self._controlled_being = gameobject.PlayableRace.get_being(race=race)
+        # Generate theme peak points
+        self._generate_theme_peaks()
+        
+    def _generate_theme_peaks(self):
+        self._theme_peaks = {}
+        peak_density = self._themes['DEFAULT'].getint('peak_rarity')
+        peak_min = self._themes['DEFAULT'].getint('peak_minimum')
+        for x in range(0,self._rows,peak_density):
+            for y in range(0,self._columns,peak_density):
+                spot = random.randint(0,peak_density**2-1)
+                actual_x = x + (spot % peak_density)
+                actual_y = y + (spot // peak_density)
+                theme = random.choice(self._themes.sections())
+                level = random.randint(peak_min,100)
+                self._theme_peaks[(actual_x,actual_y)] = {theme:level}
         
     def get_stat(self,stat):
         """Return the stat of a being"""

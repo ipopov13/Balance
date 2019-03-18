@@ -188,11 +188,13 @@ class WorldTest(unittest.TestCase):
             # test race call
             getter.assert_called_once_with(race=race)
             # test world creation
-            assert world._world != {}
-            first_world = deepcopy(world._world)
+            assert world._theme_peaks != {}
+            assert len(world._theme_peaks) == 25*50
+            first_world = deepcopy(world._theme_peaks)
             world.start(race=race)
             # test world reset at start()
-            assert first_world != world._world
+            assert first_world != world._theme_peaks
+            assert len(world._theme_peaks) == 25*50
     
     def test_get_stat(self):
         with patch('gameobject.PlayableRace.get_stat') as getter:

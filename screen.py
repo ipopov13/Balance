@@ -24,7 +24,7 @@ class Screen:
                                     for y in range(self._y_limit)}
         self._text = {}
         self._presented_text = {}
-        settings = config.get_settings()
+        settings = config.get_game_settings()
         Screen._console.title(settings['name'])
         
     def load_data(self,template):

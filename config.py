@@ -10,9 +10,20 @@ import os
 import configparser
 
 game_path = ".\Balance\design"
-settings_file = 'game_settings.ini'
+game_settings_file = 'game_settings.ini'
+themes_file = 'themes.ini'
 parser = configparser.ConfigParser()
 
-def get_settings():
-    parser.read(os.path.join(game_path,settings_file))
-    return parser['game_settings']
+def get_game_settings():
+    parser.read(os.path.join(game_path,game_settings_file))
+    return parser['game']
+
+def get_world_settings():
+    new_parser = configparser.ConfigParser()
+    new_parser.read(os.path.join(game_path,game_settings_file))
+    return new_parser['world']
+
+def get_themes():
+    new_parser = configparser.ConfigParser()
+    new_parser.read(os.path.join(game_path,themes_file))
+    return new_parser
