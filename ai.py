@@ -34,7 +34,7 @@ Requirements:
         
 @author: IvanPopov
 """
-from gamedata import GameData
+from world import World
 
 ## DM calls (only sent, not expected to be handled)
 ## Handled
@@ -63,7 +63,7 @@ STARTER_LOAD_GAME = 'starter_load_game'
 GET_SCENE = 'get scene view'
 
 class AI:
-    game_data = GameData()
+    game_data = World()
     _handler_mapping = {}
     
     @classmethod

@@ -8,6 +8,7 @@ Screen class for the Balance rogue-like RPG.
 """
 import Console
 import msvcrt
+from copy import deepcopy
 import config
 
 DEFAULT_STYLE = 7
@@ -85,7 +86,7 @@ class Screen:
             if self._presented_text.get(coords,None) != self._text[coords]:
                 self._console.text(*coords,text['text'],text.get('style',
                                                              DEFAULT_STYLE))
-                self._presented_text[coords] = self._text[coords].copy()
+        self._presented_text = deepcopy(self._text)
             
     def get_command(self):
         """Return a command from the console"""

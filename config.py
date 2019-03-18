@@ -9,7 +9,7 @@ Config file for the Balance rogue-like framework.
 import json
 import os
 
-game_path = ".\Balance_tester\design"
+game_path = ".\Balance\design"
 settings_file = 'game_settings.txt'
 
 def get_settings():

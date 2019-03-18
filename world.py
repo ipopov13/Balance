@@ -2,19 +2,19 @@
 """
 Created on Wed Feb  6 10:42:32 2019
 
-GameData class for the Balance rogue-like RPG
+World class for the Balance rogue-like RPG
 
-Controlled being object: default for character description views and
- control, and the one that is used when the focus being is reset to
- None; Usually the player character
-Current scene key: the coords of the current scene object (also a key
- to the object in the seen scenes dict)
-Seen scenes: dict (coords: scene object) for maintaining a persistent
- world.
-World data: the randomized array of values (or formula for calculating
- them) used to build yet unseen scenes.
-Message buffer: List of messages added by the handlers, that have to be
- shown to the player. Fixed length of 100 elements?
+Holds all the gameobjects created, all scenes in a (coords):scene dict,
+ knows internally which scene is active (current scene key), keeps
+ internally the world generation data (points of high forces and
+ modifiers) to use when unvisited scenes are required, and the message
+ buffer.
+Exposes:
+.current_scene_tiles() generator over the tiles for pixel coupling
+.start() method for char creation.
+.get_attribute() defaulting to controlled char
+.change_attribute() defaulting to controlled char
+Game load/save
 
 @author: IvanPopov
 """
@@ -23,7 +23,7 @@ from glob import glob
 import random
 import gameobject
 
-class GameData:
+class World:
     _game_list = {}
     
     @classmethod

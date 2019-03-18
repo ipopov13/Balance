@@ -16,7 +16,7 @@ import json
 class Balance:
     
     @classmethod
-    def _get_games(cls):
+    def get_games(cls):
         """List available games and change the config accordingly"""
         games = glob('./*/design/game_settings.txt')
         names = []
@@ -35,7 +35,6 @@ class Balance:
             outfile.write(''.join(data))
     
     def __init__(self):
-        Balance._get_games()
         ## Delay import until game has been selected
         from datamanager import DataManager
         
@@ -50,6 +49,7 @@ class Balance:
 
 
 if __name__ == '__main__':
+    Balance.get_games()
     game=Balance()
     game.run()
     os._exit(0)

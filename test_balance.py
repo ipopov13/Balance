@@ -16,7 +16,7 @@ from screen import Screen
 from screen import Pixel
 from assets import StaticScreens
 import ai
-from gamedata import GameData
+from world import World
 import gameobject
 
 class BalanceTest(unittest.TestCase):
@@ -171,18 +171,18 @@ class AITest(unittest.TestCase):
             myAI.execute('asddafae')
             
     def test_starting_race(self):
-        with patch('gamedata.GameData.start') as starter:
+        with patch('world.World.start') as starter:
             myAI = ai.AI()
             myAI.execute(ai.CHOOSE_HUMAN_RACE)
             starter.assert_called_once_with(race='human')
 
 
-class GameDataTest(unittest.TestCase):
+class WorldTest(unittest.TestCase):
     
     def test_start_race(self):
         with patch('gameobject.PlayableRace.get_being') as getter:
             race = 'human'
-            gd = GameData()
+            gd = World()
             gd.start(race=race)
             getter.assert_called_once_with(race=race)
     
@@ -190,7 +190,7 @@ class GameDataTest(unittest.TestCase):
         with patch('gameobject.PlayableRace.get_stat') as getter:
             race = 'human'
             stat = 'Str'
-            gd = GameData()
+            gd = World()
             gd.start(race=race)
             gd.get_stat(stat)
             getter.assert_called_once_with(stat=stat)
@@ -200,7 +200,7 @@ class GameDataTest(unittest.TestCase):
             race = 'human'
             stat = 'Str'
             amount = 10
-            gd = GameData()
+            gd = World()
             gd.start(race=race)
             gd.change_stat(stat=stat,amount=amount,from_pool=False)
             changer.assert_called_with(stat=stat,amount=amount)
