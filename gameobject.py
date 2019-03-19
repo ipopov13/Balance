@@ -138,11 +138,11 @@ class Terrain(Environment, metaclass=RegistrableEnvMeta):
     def load_subs(cls):
         for terrain in config.get_terrains():
             class NewTerrain(cls):
-                id_ = terrain['general']['name']
-                char  = terrain['general']['char']
-                style = terrain['general'].getint('style')
-                spawned_creature = terrain['general']['spawned_creature']
-                tire_move = terrain['general'].getint('tire_move')
-                tire_stay = terrain['general'].getint('tire_stay')
-                passable_for_types = \
-                                eval(terrain['general']['passable_for_types'])
+                id_ = terrain.name
+                char  = terrain['char']
+                style = terrain.getint('style')
+                spawned_creature = terrain['spawned_creature']
+                tire_move = terrain.getint('tire_move')
+                tire_stay = terrain.getint('tire_stay')
+                creates_context = terrain.getboolean('creates_context')
+                passable_for_types = eval(terrain['passable_for_types'])

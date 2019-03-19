@@ -27,6 +27,7 @@ TODO:
 
 @author: IvanPopov
 """
+from collections import defaultdict
 import pickle
 from glob import glob
 import random
@@ -62,7 +63,7 @@ class World:
         self._controlled_being = None
         self._theme_peaks = {}
         self._themes = config.get_themes()
-        self._settings = config.get_world_settings()
+        self._settings = config.get_settings(key='world')
         self._rows = self._settings.getint('size')
         self._columns = self._rows * (2 if \
                                 self._settings.getboolean('is_globe') else 1)
@@ -75,17 +76,21 @@ class World:
         self._generate_theme_peaks()
         
     def _generate_theme_peaks(self):
-        self._theme_peaks = {}
-        peak_density = self._themes['DEFAULT'].getint('peak_rarity')
-        peak_min = self._themes['DEFAULT'].getint('peak_minimum')
-        for x in range(0,self._rows,peak_density):
-            for y in range(0,self._columns,peak_density):
-                spot = random.randint(0,peak_density**2-1)
-                actual_x = x + (spot % peak_density)
-                actual_y = y + (spot // peak_density)
-                theme = random.choice(self._themes.sections())
-                level = random.randint(peak_min,100)
-                self._theme_peaks[(actual_x,actual_y)] = {theme:level}
+        self._theme_peaks = defaultdict(lambda:{})
+        for t in self._themes.sections():
+            theme = self._themes[t]
+            if theme['distribution'] != 'peaks':
+                continue
+            peak_distance = theme.getint('average_peak_distance')
+            peak_min = theme.getint('peak_minimum')
+            for x in range(0,self._rows,peak_distance):
+                for y in range(0,self._columns,peak_distance):
+                    spot = random.randint(0,peak_distance**2-1)
+                    actual_x = x + (spot % peak_distance)
+                    actual_y = y + (spot // peak_distance)
+                    level = random.randint(peak_min,100)
+                    self._theme_peaks[(actual_x,actual_y)].update(
+                                                            {theme.name:level})
         
     def get_stat(self,stat):
         """Return the stat of a being"""

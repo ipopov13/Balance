@@ -190,12 +190,22 @@ class WorldTest(unittest.TestCase):
             getter.assert_called_once_with(id_=race)
             # test world creation
             assert world._theme_peaks != {}
-            assert len(world._theme_peaks) == 25*50
             first_world = deepcopy(world._theme_peaks)
             world.start(race=race)
             # test world reset at start()
             assert first_world != world._theme_peaks
-            assert len(world._theme_peaks) == 25*50
+            # test that a single theme generates the correct number of peaks
+            themes = config.get_themes()
+            for theme in themes.sections():
+                if themes[theme]['distribution'] == 'peaks':
+                    theme = themes[theme]
+                    break
+            dist = theme.getint('average_peak_distance')
+            settings = config.get_settings(key='world')
+            areas = (1+settings.getboolean('is_globe')) \
+                    * settings.getint('size')**2
+            assert sum([list(v.keys()).count(theme.name) for v in 
+                        world._theme_peaks.values()]) == areas/dist**2
     
     def test_get_stat(self):
         with patch('gameobject.PlayableRace.get_stat') as getter:

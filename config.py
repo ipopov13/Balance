@@ -8,23 +8,16 @@ Config functions for the Balance rogue-like framework.
 """
 import os
 import configparser
-from glob import glob
 
 parser = configparser.ConfigParser()
 parser.read('config.ini')
 config = parser['general']
 
-def get_game_settings():
+def get_settings(key='game'):
     new_parser = configparser.ConfigParser()
     new_parser.read(os.path.join(config['game_path'],
                                  config['game_settings_file']))
-    return new_parser['game']
-
-def get_world_settings():
-    new_parser = configparser.ConfigParser()
-    new_parser.read(os.path.join(config['game_path'],
-                                 config['game_settings_file']))
-    return new_parser['world']
+    return new_parser[key]
 
 def get_themes():
     new_parser = configparser.ConfigParser()
@@ -33,9 +26,9 @@ def get_themes():
     return new_parser
 
 def get_terrains():
-    terrains = glob(config['terrains_folder']+'/*.ini')
     new_parser = configparser.ConfigParser()
-    for terrain in terrains:
-        new_parser.read(terrain)
-        yield new_parser
+    new_parser.read(os.path.join(config['game_path'],
+                                 config['terrains_file']))
+    for terrain in new_parser.sections():
+        yield new_parser[terrain]
     
