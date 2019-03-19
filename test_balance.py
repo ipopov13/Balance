@@ -19,6 +19,7 @@ from assets import StaticScreens
 import ai
 from world import World
 import gameobject
+import config
 
 class BalanceTest(unittest.TestCase):
     
@@ -181,12 +182,12 @@ class AITest(unittest.TestCase):
 class WorldTest(unittest.TestCase):
     
     def test_start_world(self):
-        with patch('gameobject.PlayableRace.get_being') as getter:
+        with patch('gameobject.PlayableRace.get_instance') as getter:
             race = 'human'
             world = World()
             world.start(race=race)
             # test race call
-            getter.assert_called_once_with(race=race)
+            getter.assert_called_once_with(id_=race)
             # test world creation
             assert world._theme_peaks != {}
             assert len(world._theme_peaks) == 25*50
@@ -218,17 +219,17 @@ class WorldTest(unittest.TestCase):
 class PlayableRaceTest(unittest.TestCase):
     
     def test_get_being(self):
-        being = gameobject.PlayableRace.get_being(race='human')
+        being = gameobject.PlayableRace.get_instance(id_='human')
         assert isinstance(being,gameobject.Human)
         
 class BeingTest(unittest.TestCase):
         
     def test_get_stat(self):
-        being = gameobject.PlayableRace.get_being(race='human')
+        being = gameobject.PlayableRace.get_instance(id_='human')
         assert being.get_stat(stat='Str') == 5
         
     def test_change_stat(self):
-        being = gameobject.PlayableRace.get_being(race='human')
+        being = gameobject.PlayableRace.get_instance(id_='human')
         being.change_stat(stat='Str',amount=4)
         assert being.get_stat(stat='Str') == 9
         with self.assertRaises(ValueError):
@@ -237,7 +238,11 @@ class BeingTest(unittest.TestCase):
         assert being.get_stat(stat='Str') == 6
         with self.assertRaises(ValueError):
             being.change_stat(stat='Str',amount=-8)
-        
+
+class TerrainsTest(unittest.TestCase):
+
+    def test_all_terrains_loaded(self):
+        assert len(gameobject.Terrain._subs)==len(list(config.get_terrains()))
 
 if __name__ == '__main__':
     unittest.main()

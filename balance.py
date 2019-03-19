@@ -24,16 +24,22 @@ class Balance:
         for g in games:
             parser.read(g)
             names.append((parser['game']['name'],os.path.dirname(g)))
-        choice = input('Select game to run:\n%s\n' \
-                       %('\n'.join(['%d) %s' %(i,game[0]) \
-                                    for i,game in enumerate(names)])))
+        if len(names) == 1:
+            choice = 0
+        else:
+            while True:
+                choice = input('Select game to run:\n%s\n' \
+                               %('\n'.join(['%d) %s' %(i,game[0]) \
+                                        for i,game in enumerate(names)])))
+                if choice.isdigit() and int(choice)<len(names):
+                    break
         game_path = names[int(choice)][1]
-        with open('config.py') as infile:
+        with open('config.ini') as infile:
             data = infile.readlines()
         for line in range(len(data)):
             if data[line].startswith('game_path ='):
-                data[line] = f'game_path = "{game_path}"\n'
-        with open('config.py','w') as outfile:
+                data[line] = f'game_path = {game_path}\n'
+        with open('config.ini','w') as outfile:
             outfile.write(''.join(data))
     
     def __init__(self):

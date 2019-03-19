@@ -6,14 +6,32 @@ GameObject factories for the Balance rogue-like RPG
 
 Called by the handlers to create all game objects.
 
+Each subfamily has a metaclass that handles automatic registration of
+ subclasses and loading from the ini files.
+
 Game objects implement .present(). Their data is changed by the game
 logic in the handlers.
 
 @author: IvanPopov
 """
+import config
 
 
 class GameObject:
+    
+    @classmethod
+    def register_subclass(cls,subcls):
+        if subcls.id_ in cls._subs:
+            raise ValueError('Subclass id repeats twice: {subcls.id_}!')
+        cls._subs[subcls.id_] = subcls
+    
+    @classmethod
+    def get_instance(cls,id_=None):
+        try:
+            return cls._subs[id_]()
+        except KeyError:
+            raise ValueError(f'Subclass not specified correctly, got "{id_}", '
+                             'but {cls} does not have that subclass.')
     
     def present(self):
         """
@@ -65,20 +83,6 @@ class RegistrableBeingMeta(type):
 
 class PlayableRace(Being, metaclass=RegistrableBeingMeta):
     _subs = {}
-    
-    @classmethod
-    def register_subclass(cls,race):
-        if race.race in cls._subs:
-            raise ValueError('Race name repeats twice: {race.name}!')
-        cls._subs[race.race] = race
-    
-    
-    @classmethod
-    def get_being(cls,race=None):
-        try:
-            return cls._subs[race]()
-        except KeyError:
-            raise ValueError(f'Race not specified correctly, got "{race}".')
         
     def __init__(self):
         ## Stats format: name->[current,min,max]
@@ -95,7 +99,7 @@ class PlayableRace(Being, metaclass=RegistrableBeingMeta):
 
 
 class Human(PlayableRace):
-    race = 'human'
+    id_ = 'human'
     
     def _post_init(self):
         pass
@@ -109,9 +113,36 @@ class Environment(GameObject):
     pass
 
 
-class Effect(Environment):
-    pass
+class RegistrableEnvMeta(type):
+    def __new__(meta, name, bases, class_dict):
+        cls = type.__new__(meta, name, bases, class_dict)
+        if bases != (Environment,):
+            bases[-1].register_subclass(cls)
+        else:
+            cls.load_subs()
+        return cls
+    
+
+class Effect(Environment, metaclass=RegistrableEnvMeta):
+    _subs = {}
+    
+    @classmethod
+    def load_subs(cls):
+        pass
 
 
-class Terrain(Environment):
-    pass
+class Terrain(Environment, metaclass=RegistrableEnvMeta):
+    _subs = {}
+    
+    @classmethod
+    def load_subs(cls):
+        for terrain in config.get_terrains():
+            class NewTerrain(cls):
+                id_ = terrain['general']['name']
+                char  = terrain['general']['char']
+                style = terrain['general'].getint('style')
+                spawned_creature = terrain['general']['spawned_creature']
+                tire_move = terrain['general'].getint('tire_move')
+                tire_stay = terrain['general'].getint('tire_stay')
+                passable_for_types = \
+                                eval(terrain['general']['passable_for_types'])

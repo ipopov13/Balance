@@ -10,17 +10,27 @@ Holds all the gameobjects created, all scenes in a (coords):scene dict,
  modifiers) to use when unvisited scenes are required, and the message
  buffer.
 Exposes:
-.current_scene_tiles() generator over the tiles for pixel coupling
 .start() method for char creation.
-.get_attribute() defaulting to controlled char
-.change_attribute() defaulting to controlled char
+.get_stat() defaulting to controlled char
+.change_stat() defaulting to controlled char
 Game load/save
+
+Scene object:
+The scene is at its core a dict of tile objects. It also includes
+ some timing information used to determine when (if at all) to purge
+ the scene to free up memory. A purged location is
+ generated anew by the new scene functionality if the player visits
+ again.
+
+TODO:
+.current_scene_tiles() generator over the tiles for pixel coupling
 
 @author: IvanPopov
 """
 import pickle
 from glob import glob
 import random
+
 import gameobject
 import config
 
@@ -60,7 +70,7 @@ class World:
     def start(self,*,race=None):
         """Initialize the world instance"""
         # Start a player character
-        self._controlled_being = gameobject.PlayableRace.get_being(race=race)
+        self._controlled_being = gameobject.PlayableRace.get_instance(id_=race)
         # Generate theme peak points
         self._generate_theme_peaks()
         
