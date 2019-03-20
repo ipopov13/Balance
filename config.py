@@ -23,7 +23,7 @@ def get_themes():
     new_parser = configparser.ConfigParser()
     new_parser.read(os.path.join(config['game_path'],
                                  config['themes_file']))
-    return new_parser
+    return [new_parser[t] for t in new_parser.sections()]
 
 def get_terrains():
     new_parser = configparser.ConfigParser()

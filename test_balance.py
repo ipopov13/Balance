@@ -18,6 +18,7 @@ from screen import Pixel
 from assets import StaticScreens
 import ai
 from world import World
+from world import Scene
 import gameobject
 import config
 
@@ -190,15 +191,18 @@ class WorldTest(unittest.TestCase):
             getter.assert_called_once_with(id_=race)
             # test world creation
             assert world._theme_peaks != {}
+            # test starting coordinates are set
+            assert world._current_scene_key is not None
+            # test starting scene is created
+            assert isinstance(world.current_scene, Scene)
+            # test world reset at start()
             first_world = deepcopy(world._theme_peaks)
             world.start(race=race)
-            # test world reset at start()
             assert first_world != world._theme_peaks
             # test that a single theme generates the correct number of peaks
             themes = config.get_themes()
-            for theme in themes.sections():
-                if themes[theme]['distribution'] == 'peaks':
-                    theme = themes[theme]
+            for theme in themes:
+                if theme['distribution'] == 'peaks':
                     break
             dist = theme.getint('average_peak_distance')
             settings = config.get_settings(key='world')
@@ -225,6 +229,23 @@ class WorldTest(unittest.TestCase):
             gd.start(race=race)
             gd.change_stat(stat=stat,amount=amount,from_pool=False)
             changer.assert_called_with(stat=stat,amount=amount)
+            
+    def test_calc_themes(self):
+        with patch('gameobject.PlayableRace.get_instance') as _:
+            race = 'human'
+            world = World()
+            world.start(race=race)
+            assert list(world.current_scene._themes.keys()) == \
+                                            [t.name for t in world._themes]
+        
+
+class SceneTest(unittest.TestCase):
+    
+    def test_refresh(self):
+        assert 1==0
+    
+    def test_insert_player(self):
+        assert 1==0
 
 class PlayableRaceTest(unittest.TestCase):
     
