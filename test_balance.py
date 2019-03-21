@@ -237,7 +237,6 @@ class WorldTest(unittest.TestCase):
             world.start(race=race)
             assert list(world.current_scene._themes.keys()) == \
                                             [t.name for t in world._themes]
-        
 
 class SceneTest(unittest.TestCase):
     
@@ -245,7 +244,19 @@ class SceneTest(unittest.TestCase):
         assert 1==0
     
     def test_insert_player(self):
-        assert 1==0
+        scene = Scene({'Nature':35})
+        player = gameobject.PlayableRace.get_instance(id_='human')
+        with self.assertRaises(ValueError):
+            scene.insert_player()
+        scene.insert_player(player)
+        assert tile.set_being at generic coords called!
+        scene.insert_player(player,coords=(0,0))
+        assert tile at (0,0) called!
+
+class TileTest(unittest.TestCase):
+    
+    def test_set_being(self):
+        
 
 class PlayableRaceTest(unittest.TestCase):
     
@@ -274,6 +285,14 @@ class TerrainsTest(unittest.TestCase):
 
     def test_all_terrains_loaded(self):
         assert len(gameobject.Terrain._subs)==len(list(config.get_terrains()))
+
+class ThemeTest(unittest.TestCase):
+
+    def test_get_structures(self):
+        assert 1==0
+
+    def test_get_terrains(self):
+        assert 1==0
 
 if __name__ == '__main__':
     unittest.main()

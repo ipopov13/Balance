@@ -189,6 +189,25 @@ class Scene:
     
     def __init__(self,themes):
         self._themes = themes
+        self._tiles = {}
+        settings = config.get_settings(key='scene')
+        self._width = settings.getint('width')
+        self._height = settings.getint('height')
+        structures = gameobject.Theme.get_structures(themes)
+        self._set_structures(structures)
+        empty_spots = self._width*self._height - len(self._tiles)
+        terrains = gameobject.Theme.get_terrains(themes,num=empty_spots)
+        self._lay_terrains(terrains)
+        
+    def _set_structures(self,structures):
+        pass
+    
+    def _lay_terrains(self,terrains):
+        for x in range(self._width):
+            for y in range(self._height):
+                if (x,y) not in self._tiles:
+                    terrain = random.randint(0,len(terrains)-1)
+                    self._tiles[(x,y)] = Tile(terrains.pop(terrain))
     
     def refresh(self):
         """resetting timed out objects, randomizing positions of
@@ -201,4 +220,20 @@ class Scene:
         Place player as close to coords as possible based on
         terrain passability.
         """
-        pass
+        if player is None:
+            raise ValueError("No player passed to scene!")
+    
+
+class Tile:
+    """
+    Tiles summarize the group of objects that they contain (intent,
+    effect, terrain, item, being).
+    
+    Tiles should update their pixels proactively when they change, not
+    let pixels query them! This way only the pixels that are changed
+    will be updated and a huge amount of calls will be saved in the
+    screen update as the screen would only need to update its labels!
+    """
+    
+    def __init__(self,terrain):
+        self.terrain = terrain

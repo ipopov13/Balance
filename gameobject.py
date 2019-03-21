@@ -140,12 +140,15 @@ class Terrain(Environment, metaclass=RegistrableEnvMeta):
             class NewTerrain(cls):
                 id_ = terrain.name
                 char  = terrain['char']
+                type_  = terrain['type']
                 style = terrain.getint('style')
                 spawned_creature = terrain['spawned_creature']
                 tire_move = terrain.getint('tire_move')
                 tire_stay = terrain.getint('tire_stay')
                 creates_context = terrain.getboolean('creates_context')
                 passable_for_types = eval(terrain['passable_for_types'])
+                single_char_id  = terrain['id']
+                asset  = terrain['asset']
 
 
 class Theme(Environment, metaclass=RegistrableEnvMeta):
@@ -162,3 +165,11 @@ class Theme(Environment, metaclass=RegistrableEnvMeta):
                     modifiers = eval(theme['modifiers'])
                     mod_thresholds = eval(theme['mod_thresholds'])
                     terrains = eval(theme['terrains'])
+    
+    @classmethod
+    def get_structures(cls, themes):
+        pass
+    
+    @classmethod
+    def get_terrains(cls, themes, num=0):
+        return [Terrain.get_instance(id_='dirt')]*num
