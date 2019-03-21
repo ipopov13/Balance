@@ -134,11 +134,24 @@ class DataManager(metaclass=DMMeta):
     def _init_screen(self):
         """
         Concrete DMs should override this to implement their
-        screen initialization procedure, adding session specific data
-        from DataManager._ai.game_data on top of the template, as well
-        as attaching game_data presentable objects to screen pixels!
+        screen initialization procedure, adding static session specific
+        data from DataManager._ai.game_data on top of the template, as
+        well as attaching world.current_scene to screen pixels!
         """
         raise NotImplementedError
+    
+    
+class SceneDM(DataManager):
+    id_ = ai.GET_SCENE
+    _screen_template = StaticScreens.scene
+    _is_starter_instance = False
+    _commands = {UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
+    
+    def _init_screen(self):
+        pass
+    
+    def _get_screen_content(self):
+        return {}
     
     
 class StarterDM(DataManager):

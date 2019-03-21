@@ -234,3 +234,9 @@ class StatSelIncrTRAHandler(CommandHandler):
     def execute(self):
         AI.game_data.change_stat('Tra',1)
         return GET_STAT_SELECTION
+    
+class GetSceneHandler(CommandHandler):
+    message = GET_SCENE
+    
+    def execute(self):
+        return GET_SCENE

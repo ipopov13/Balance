@@ -43,3 +43,4 @@ class StaticScreens:
     You can go (b)ack to race selection or (q)uit.'''.split('\n'))}
     tester = {(0,0):{'text':'test','style':125}}
     tester2 = {(0,0):{'text':'test2','style':126}}
+    scene = {(0,0):{'text':'scene view'}}

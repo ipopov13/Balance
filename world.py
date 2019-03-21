@@ -79,7 +79,7 @@ class World:
         self._set_starting_coords()
         self._scenes = {}
         self._ready_scene()
-        self.current_scene.insert_player(player=self._controlled_being)
+        self.current_scene.insert_being(being=self._controlled_being)
         
     def _ready_scene(self,coords=None):
         if coords is None:
@@ -190,6 +190,7 @@ class Scene:
     def __init__(self,themes):
         self._themes = themes
         self._tiles = {}
+        self._beings = {}
         settings = config.get_settings(key='scene')
         self._width = settings.getint('width')
         self._height = settings.getint('height')
@@ -215,13 +216,23 @@ class Scene:
         terrain, etc."""
         pass
     
-    def insert_player(self,player=None,coords=None):
+    def insert_being(self,being=None,coords=None):
         """
-        Place player as close to coords as possible based on
+        Place being as close to coords as possible based on
         terrain passability.
         """
-        if player is None:
-            raise ValueError("No player passed to scene!")
+        if being is None:
+            raise ValueError("No being passed to scene!")
+        if being in self._beings.values():
+            raise ValueError(f"Duplicate being in scene! {being}")
+        if coords is None:
+            x = self._width//2
+            y = self._height//2
+            self._tiles[(x,y)].being = being
+            self._beings[(x,y)] = being
+        else:
+            self._tiles[coords].being = being
+            self._beings[coords] = being
     
 
 class Tile:
@@ -236,4 +247,15 @@ class Tile:
     """
     
     def __init__(self,terrain):
-        self.terrain = terrain
+        self._terrain = terrain
+        self._being = None
+        
+    @property
+    def being(self):
+        return self._being
+    
+    @being.setter
+    def being(self,value):
+        if value is not None and self._being is not None:
+            raise ValueError("Tile is already occupied!")
+        self._being = value

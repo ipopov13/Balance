@@ -9,9 +9,6 @@ Called by the handlers to create all game objects.
 Each subfamily has a metaclass that handles automatic registration of
  subclasses and loading from the ini files.
 
-Game objects implement .present(). Their data is changed by the game
-logic in the handlers.
-
 @author: IvanPopov
 """
 import config
@@ -32,15 +29,6 @@ class GameObject:
         except KeyError:
             raise ValueError(f'Subclass not specified correctly, got "{id_}", '
                              'but {cls} does not have that subclass.')
-    
-    def present(self):
-        """
-        Return a default presentation dictionary
-        
-        This returns a blank space and should be overridden by
-        visible subclasses.
-        """
-        return {'char':' ', 'style':0}
 
 
 class Being(GameObject):

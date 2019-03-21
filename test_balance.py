@@ -19,6 +19,7 @@ from assets import StaticScreens
 import ai
 from world import World
 from world import Scene
+from world import Tile
 import gameobject
 import config
 
@@ -243,19 +244,21 @@ class SceneTest(unittest.TestCase):
     def test_refresh(self):
         assert 1==0
     
-    def test_insert_player(self):
+    def test_insert_being(self):
+        """Also tests Tile.being"""
         scene = Scene({'Nature':35})
-        player = gameobject.PlayableRace.get_instance(id_='human')
+        being = gameobject.PlayableRace.get_instance(id_='human')
         with self.assertRaises(ValueError):
-            scene.insert_player()
-        scene.insert_player(player)
-        assert tile.set_being at generic coords called!
-        scene.insert_player(player,coords=(0,0))
-        assert tile at (0,0) called!
+            scene.insert_being()
+        x = scene._width//2
+        y = scene._height//2
+        scene.insert_being(being)
+        assert scene._tiles[(x,y)].being is being
+        with self.assertRaises(ValueError):
+            scene.insert_being(being,coords=(0,0))
 
 class TileTest(unittest.TestCase):
-    
-    def test_set_being(self):
+    pass
         
 
 class PlayableRaceTest(unittest.TestCase):
