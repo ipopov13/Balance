@@ -146,3 +146,19 @@ class Terrain(Environment, metaclass=RegistrableEnvMeta):
                 tire_stay = terrain.getint('tire_stay')
                 creates_context = terrain.getboolean('creates_context')
                 passable_for_types = eval(terrain['passable_for_types'])
+
+
+class Theme(Environment, metaclass=RegistrableEnvMeta):
+    _subs = {}
+    
+    @classmethod
+    def load_subs(cls):
+        for theme in config.get_themes():
+            if theme['terrains']:
+                class NewTheme(cls):
+                    id_ = theme.name
+                    theme_breakpoints = eval(theme['theme_level_breakpoints'])
+                    terrain_distribution = eval(theme['terrain_distribution'])
+                    modifiers = eval(theme['modifiers'])
+                    mod_thresholds = eval(theme['mod_thresholds'])
+                    terrains = eval(theme['terrains'])
