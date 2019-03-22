@@ -32,3 +32,8 @@ def get_terrains():
     for terrain in new_parser.sections():
         yield new_parser[terrain]
     
+def get_char_template():
+    new_parser = configparser.ConfigParser()
+    new_parser.read(os.path.join(config['game_path'],
+                                 config['character_template_file']))
+    return [new_parser[t] for t in new_parser.sections()]

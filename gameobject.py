@@ -44,7 +44,7 @@ class Being(GameObject):
     def get_stat(self,stat=None):
         """Return the current level of a stat"""
         try:
-            return self.stats[stat][0]
+            return self._stats[stat][0]
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
             
@@ -53,9 +53,9 @@ class Being(GameObject):
         if stat is None or amount is None:
             raise TypeError(f'Stat or amount not set: stat"{stat}",'
                             f'amount"{amount}".')
-        new_stat_level = self.stats[stat][0] +amount
-        if self.stats[stat][1] <= new_stat_level <= self.stats[stat][2]:
-            self.stats[stat][0] += amount
+        new_stat_level = self._stats[stat][0] +amount
+        if self._stats[stat][1] <= new_stat_level <= self._stats[stat][2]:
+            self._stats[stat][0] += amount
         else:
             raise ValueError(f'Stat would go out of bounds: stat:"{stat}",'
                              f'amount:"{amount}".')
@@ -73,12 +73,12 @@ class PlayableRace(Being, metaclass=RegistrableBeingMeta):
     _subs = {}
         
     def __init__(self):
-        ## Stats format: name->[current,min,max]
-        self.stats = {'Str':[5,1,10],'Dex':[5,1,10],'Int':[5,1,10],
-                      'Cre':[5,1,10],'Cun':[5,1,10],'Spi':[5,1,10],
-                      'Tra':[5,1,10],
-                      'stat_pool':[7,0,999]
-                      }
+        self._stats = {}
+        stats = config.get_char_template()
+        for stat in stats:
+            self._stats[stat.name] = [stat.getint('initial_value'),
+                                      stat.getint('min'),
+                                      stat.getint('max')]
         self._post_init()
         
     def _post_init(self):

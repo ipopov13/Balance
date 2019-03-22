@@ -271,18 +271,18 @@ class BeingTest(unittest.TestCase):
         
     def test_get_stat(self):
         being = gameobject.PlayableRace.get_instance(id_='human')
-        assert being.get_stat(stat='Str') == 5
+        assert being.get_stat(stat='Strength') == 5
         
     def test_change_stat(self):
         being = gameobject.PlayableRace.get_instance(id_='human')
-        being.change_stat(stat='Str',amount=4)
-        assert being.get_stat(stat='Str') == 9
+        being.change_stat(stat='Strength',amount=4)
+        assert being.get_stat(stat='Strength') == 9
         with self.assertRaises(ValueError):
-            being.change_stat(stat='Str',amount=4)
-        being.change_stat(stat='Str',amount=-3)
-        assert being.get_stat(stat='Str') == 6
+            being.change_stat(stat='Strength',amount=4)
+        being.change_stat(stat='Strength',amount=-3)
+        assert being.get_stat(stat='Strength') == 6
         with self.assertRaises(ValueError):
-            being.change_stat(stat='Str',amount=-8)
+            being.change_stat(stat='Strength',amount=-8)
 
 class TerrainsTest(unittest.TestCase):
 
