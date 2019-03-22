@@ -37,14 +37,14 @@ class Being(GameObject):
     """
     def __init__(self):
         """
-        Create a Being of the specified type. Defined in subclasses.
+        Create a Being of the specified type. Specified in subclasses.
         """
         pass
         
     def get_stat(self,stat=None):
         """Return the current level of a stat"""
         try:
-            return self._stats[stat][0]
+            return self._stats[stat]['current']
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
             
@@ -53,44 +53,24 @@ class Being(GameObject):
         if stat is None or amount is None:
             raise TypeError(f'Stat or amount not set: stat"{stat}",'
                             f'amount"{amount}".')
-        new_stat_level = self._stats[stat][0] +amount
-        if self._stats[stat][1] <= new_stat_level <= self._stats[stat][2]:
-            self._stats[stat][0] += amount
+        new_stat_level = self._stats[stat]['current'] + amount
+        if self._stats[stat]['min'] \
+           <= new_stat_level \
+           <= self._stats[stat]['max']:
+            self._stats[stat]['current'] += amount
         else:
             raise ValueError(f'Stat would go out of bounds: stat:"{stat}",'
                              f'amount:"{amount}".')
 
 
-class RegistrableBeingMeta(type):
-    def __new__(meta, name, bases, class_dict):
-        cls = type.__new__(meta, name, bases, class_dict)
-        if bases != (Being,):
-            bases[-1].register_subclass(cls)
-        return cls
-
-
-class PlayableRace(Being, metaclass=RegistrableBeingMeta):
-    _subs = {}
+class PlayableCharacter(Being):
         
     def __init__(self):
         self._stats = {}
-        stats = config.get_char_template()
+        stats = config.get_config(section='character_template')
         for stat in stats:
-            self._stats[stat.name] = [stat.getint('initial_value'),
-                                      stat.getint('min'),
-                                      stat.getint('max')]
-        self._post_init()
-        
-    def _post_init(self):
-        """Do race specific modifications here"""
-        raise NotImplementedError
-
-
-class Human(PlayableRace):
-    id_ = 'human'
-    
-    def _post_init(self):
-        pass
+            self._stats[stat.name] = config.simplify(stat)
+        load available modifiers AT_START_OF_GAME!
         
 
 class Item(GameObject):
@@ -124,7 +104,7 @@ class Terrain(Environment, metaclass=RegistrableEnvMeta):
     
     @classmethod
     def load_subs(cls):
-        for terrain in config.get_terrains():
+        for terrain in config.get_config(section='terrains'):
             class NewTerrain(cls):
                 id_ = terrain.name
                 char  = terrain['char']
@@ -144,7 +124,7 @@ class Theme(Environment, metaclass=RegistrableEnvMeta):
     
     @classmethod
     def load_subs(cls):
-        for theme in config.get_themes():
+        for theme in config.get_config(section='themes'):
             if theme['terrains']:
                 class NewTheme(cls):
                     id_ = theme.name

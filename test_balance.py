@@ -201,7 +201,7 @@ class WorldTest(unittest.TestCase):
             world.start(race=race)
             assert first_world != world._theme_peaks
             # test that a single theme generates the correct number of peaks
-            themes = config.get_themes()
+            themes = config.get_config(section='themes')
             for theme in themes:
                 if theme['distribution'] == 'peaks':
                     break
@@ -247,7 +247,7 @@ class SceneTest(unittest.TestCase):
     def test_insert_being(self):
         """Also tests Tile.being"""
         scene = Scene({'Nature':35})
-        being = gameobject.PlayableRace.get_instance(id_='human')
+        being = gameobject.PlayableCharacter()
         with self.assertRaises(ValueError):
             scene.insert_being()
         x = scene._width//2
@@ -260,21 +260,14 @@ class SceneTest(unittest.TestCase):
 class TileTest(unittest.TestCase):
     pass
         
-
-class PlayableRaceTest(unittest.TestCase):
-    
-    def test_get_being(self):
-        being = gameobject.PlayableRace.get_instance(id_='human')
-        assert isinstance(being,gameobject.Human)
-        
 class BeingTest(unittest.TestCase):
         
     def test_get_stat(self):
-        being = gameobject.PlayableRace.get_instance(id_='human')
+        being = gameobject.PlayableCharacter()
         assert being.get_stat(stat='Strength') == 5
         
     def test_change_stat(self):
-        being = gameobject.PlayableRace.get_instance(id_='human')
+        being = gameobject.PlayableCharacter()
         being.change_stat(stat='Strength',amount=4)
         assert being.get_stat(stat='Strength') == 9
         with self.assertRaises(ValueError):
@@ -287,7 +280,8 @@ class BeingTest(unittest.TestCase):
 class TerrainsTest(unittest.TestCase):
 
     def test_all_terrains_loaded(self):
-        assert len(gameobject.Terrain._subs)==len(list(config.get_terrains()))
+        assert len(gameobject.Terrain._subs) == \
+               len(config.get_config(section='terrains'))
 
 class ThemeTest(unittest.TestCase):
 

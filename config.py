@@ -16,24 +16,23 @@ config = parser['general']
 def get_settings(key='game'):
     new_parser = configparser.ConfigParser()
     new_parser.read(os.path.join(config['game_path'],
-                                 config['game_settings_file']))
+                                 config['settings']))
     return new_parser[key]
 
-def get_themes():
+def get_config(section=''):
     new_parser = configparser.ConfigParser()
     new_parser.read(os.path.join(config['game_path'],
-                                 config['themes_file']))
+                                 config[section]))
     return [new_parser[t] for t in new_parser.sections()]
 
-def get_terrains():
-    new_parser = configparser.ConfigParser()
-    new_parser.read(os.path.join(config['game_path'],
-                                 config['terrains_file']))
-    for terrain in new_parser.sections():
-        yield new_parser[terrain]
-    
-def get_char_template():
-    new_parser = configparser.ConfigParser()
-    new_parser.read(os.path.join(config['game_path'],
-                                 config['character_template_file']))
-    return [new_parser[t] for t in new_parser.sections()]
+def simplify(parsed_dict):
+    simple = {}
+    for key in parsed_dict:
+        try:
+            simple[key] = parsed_dict.getint(key)
+        except ValueError:
+            try:
+                simple[key] = parsed_dict.getboolean(key)
+            except ValueError:
+                simple[key] = parsed_dict.get(key)
+    return simple

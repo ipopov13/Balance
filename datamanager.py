@@ -102,24 +102,26 @@ class DataManager(metaclass=DMMeta):
         ## Templating the screen
         self._screen.reset()
         DataManager._screen.load_data(self._screen_template)
-        self._init_screen()
+        DataManager._screen.load_data(self._screen_details)
         ## Handle commands
-        while next_dm == self.id_:
+        refresh = False
+        while next_dm == self.id_ and not refresh:
             self._update_screen()
             DataManager._screen.present()
             command =  DataManager._screen.get_command()
             message = self._commands.get(command,
                                          self._commands[UNKNOWN_COMMAND])
-            next_dm = self._ai.execute(message)
+            next_dm,refresh = self._ai.execute(message)
             if next_dm == ai.SILENT_UNKNOWN:
                 next_dm = self.id_
         return DataManager._subclass_instances[next_dm]
     
     def _update_screen(self):
-        DataManager._screen.load_data(self._get_screen_content())
+        DataManager._screen.load_data(self._screen_content)
         DataManager._screen.update_pixels()
-        
-    def _get_screen_content(self):
+    
+    @property
+    def _dynamic_screen_content(self):
         """
         Concrete DMs should override this to implement their dynamic
         screen data presentation by extracting text from
@@ -129,16 +131,17 @@ class DataManager(metaclass=DMMeta):
         text is a single line string, and style is an integer in the
         range from 0 to 255. See Console guide for info on styles.
         """
-        raise NotImplementedError
+        return {}
     
-    def _init_screen(self):
+    @property
+    def _screen_details(self):
         """
         Concrete DMs should override this to implement their
         screen initialization procedure, adding static session specific
         data from DataManager._ai.game_data on top of the template, as
         well as attaching world.current_scene to screen pixels!
         """
-        raise NotImplementedError
+        return {}
     
     
 class SceneDM(DataManager):
@@ -147,10 +150,12 @@ class SceneDM(DataManager):
     _is_starter_instance = False
     _commands = {UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
     
-    def _init_screen(self):
-        pass
+    @property
+    def _screen_details(self):
+        return {}
     
-    def _get_screen_content(self):
+    @property
+    def _dynamic_screen_content(self):
         return {}
     
     
@@ -158,82 +163,71 @@ class StarterDM(DataManager):
     id_ = 'starter'
     _screen_template = StaticScreens.starter
     _is_starter_instance = True
-    _commands = {'n':ai.STARTER_NEW_GAME,
+    _commands = {'n':ai.NEW_GAME,
                      'l':ai.STARTER_LOAD_GAME,
                      'q':ai.QUIT_GAME,
                      UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
     
-    def _init_screen(self):
-        pass
     
-    def _get_screen_content(self):
-        return {}
-    
-    
-class RaceSelectionDM(DataManager):
-    id_ = ai.GET_RACE_SELECTION
-    _screen_template = StaticScreens.race_selection
+class ModifierSelectionDM(DataManager):
+    id_ = ai.GET_MODIFIER_SELECTION
+    _screen_template = {}
     _is_starter_instance = False
     _commands = {'q':ai.QUIT_GAME,
-                 '1':ai.CHOOSE_HUMAN_RACE,
                  UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
     
-    def _init_screen(self):
-        pass
-    
-    def _get_screen_content(self):
-        return {}
+    @property
+    def _screen_details(self):
+        modifier,mod_values = self._ai.next_modifier()
+        mod_string = ''
+        for i,value in enumerate(mod_values,1):
+            mod_string += f'        {i}) {value}\n'
+            self._commands[str(i)] = ai.SELECT_MODIFIER+modifier+value
+        return {(0,i):{'text':t} for (i,t) in enumerate(f'''
+    Choose a {modifier} for your character:
+{mod_string}'''.split('\n'))}
     
     
 class StatSelectionDM(DataManager):
     id_ = ai.GET_STAT_SELECTION
-    _screen_template = StaticScreens.stat_selection
+    _screen_template = {}
     _is_starter_instance = False
     _commands = {'q':ai.QUIT_GAME,
-                 'b':ai.GET_RACE_SELECTION,
-                 's':ai.STAT_SEL_DECR_STR,
-                 'S':ai.STAT_SEL_INCR_STR,
-                 'd':ai.STAT_SEL_DECR_DEX,
-                 'D':ai.STAT_SEL_INCR_DEX,
-                 'i':ai.STAT_SEL_DECR_INT,
-                 'I':ai.STAT_SEL_INCR_INT,
-                 'c':ai.STAT_SEL_DECR_CRE,
-                 'C':ai.STAT_SEL_INCR_CRE,
-                 'u':ai.STAT_SEL_DECR_CUN,
-                 'U':ai.STAT_SEL_INCR_CUN,
-                 'p':ai.STAT_SEL_DECR_SPI,
-                 'P':ai.STAT_SEL_INCR_SPI,
-                 't':ai.STAT_SEL_DECR_TRA,
-                 'T':ai.STAT_SEL_INCR_TRA,
                  '\r':ai.SILENT_UNKNOWN,
                  UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
     
-    def _init_screen(self):
-        pass
+    @property
+    def _screen_details(self):
+        self._stats = self._ai.next_stat_selection()
+        stat_string = ''
+        self._max_len = max([len(stat) for stat in self._stats])+3
+        for i,stat in enumerate(self._stats,ord('A')):
+            stat_string += ('        {:<%d}({})-      +({})\n' \
+                            %(self._max_len)).format(stat,chr(i+32),chr(i))
+            self._commands[chr(i)] = ai.ALTER_STAT+f'{stat}:1'
+            self._commands[chr(i+32)] = ai.ALTER_STAT+f'{stat}:-1'
+        return {(0,i):{'text':t} for (i,t) in enumerate(f'''
+    Modify your stats:    (-/+)
+{stat_string}
+        
+        Points left:'''.split('\n'))}
     
-    def _get_screen_content(self):
-        content = {(21,2):{'text':str(self._ai.game_data.get_stat('Str')),
-                        'style':10},
-                (21,3):{'text':str(self._ai.game_data.get_stat('Dex')),
-                        'style':10},
-                (21,4):{'text':str(self._ai.game_data.get_stat('Int')),
-                        'style':10},
-                (21,5):{'text':str(self._ai.game_data.get_stat('Cre')),
-                        'style':10},
-                (21,6):{'text':str(self._ai.game_data.get_stat('Cun')),
-                        'style':10},
-                (21,7):{'text':str(self._ai.game_data.get_stat('Spi')),
-                        'style':10},
-                (21,8):{'text':str(self._ai.game_data.get_stat('Tra')),
-                        'style':10},
-               (21,10):{'text':'%2d' %self._ai.game_data.get_stat('stat_pool'),
-                        'style':10},
-                }
-        if self._ai.game_data.get_stat('stat_pool') == 0:
-            content[(4,12)] = {'text':'Press ENTER to begin your adventure!  ',
-                                'style':13}
+    @property
+    def _dynamic_screen_content(self):
+        content = {}
+        stat_column = 8+self._max_len+6
+        for i,stat in enumerate(self._stats,2):
+            if stat == self._stats[-1]:
+                i += 1
+            content[(stat_column,i)] = {'text':str(self._ai.get_stat(stat)),
+                                        'style':10}
+        final_row = len(self._stats)+4
+        if self._ai.check_triggers(self._stats[-1]):
+            content[(4,final_row)] = {
+                    'text':'Press ENTER to continue!','style':13}
             self._commands['\r'] = ai.GET_SCENE
         else:
-            content[(4,12)] = {'text':'You have to use all your extra points.'}
+            content[(4,final_row)] = {
+                    'text':'                        '}
             self._commands['\r'] = ai.SILENT_UNKNOWN
         return content
