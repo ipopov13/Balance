@@ -201,7 +201,7 @@ class StatSelectionDM(DataManager):
         self._stats = self._ai.player.next_stat_selection()
         stat_string = ''
         self._max_len = max([len(stat) for stat in self._stats])+3
-        for i,stat in enumerate(self._stats,ord('A')):
+        for i,stat in enumerate(self._stats[1:],ord('A')):
             stat_string += ('        {:<%d}({})-      +({})\n' \
                             %(self._max_len)).format(stat,chr(i+32),chr(i))
             self._commands[chr(i)] = ai.ALTER_STAT+f'{stat}:1'
@@ -216,11 +216,13 @@ class StatSelectionDM(DataManager):
     def _dynamic_screen_content(self):
         content = {}
         stat_column = 8+self._max_len+6
-        for i,stat in enumerate(self._stats,2):
-            if stat == self._stats[-1]:
-                i += 1
-            content[(stat_column,i)] = {'text':str(self._ai.player.get_stat(stat)),
-                                        'style':10}
+        for i,stat in enumerate(self._stats[1:],2):
+            content[(stat_column,i)] = \
+                {'text':str(self._ai.player.get_stat(stat)),
+                 'style':10}
+        content[(stat_column,i+2)] = \
+            {'text':str(self._ai.player.get_stat(self._stats[0])),
+             'style':10}
         final_row = len(self._stats)+4
         if self._ai.player.check_triggers(self._stats[-1]) \
             == self._ai.READY_TO_CONTINUE:

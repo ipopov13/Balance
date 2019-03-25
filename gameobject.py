@@ -101,7 +101,7 @@ class PlayableCharacter(Being):
             
     def check_triggers(self, stat):
         """
-        Returns any triggers for the querried stat.
+        Returns any activated triggers for the querried stat.
         
         Should probably be internal and called automatically on stat change!
         """
@@ -114,6 +114,10 @@ class PlayableCharacter(Being):
         
     @property
     def available_modifiers(self):
+        """
+        Return the number of character creation modifiers the player
+        needs to select
+        """
         available_mods = []
         for mod in self._modifiers:
             if self._modifiers[mod]['applied'] == 'AT_CHARACTER_CREATION' and \
@@ -123,21 +127,57 @@ class PlayableCharacter(Being):
         
     @property
     def available_stat_selections(self):
-        look for READY_TO_CONTINUE triggers
+        """
+        Return the number of character stat selections the player
+        needs to do
+        """
+        selections = []
+        for stat in self._stats:
+            if self._stats[stat]['trigger_on_min'] == 'READY_TO_CONTINUE' and \
+                self.get_stat[stat] > 0:
+                selections.append(stat)
+        return len(selections)
         
     def apply_modifier(self,modifier):
-        #modifier is 'modifierName:value'
+        modifier is 'modifierName:value'
         
     def apply_stat_change(self,change):
-        #change is 'stat:amount'
+        """
+        Change a stat
+        
+        Input is 'stat:amount'
+        """
+        stat,amount = change.split(':')
+        self.change_stat(stat=stat,amount=int(amount))
         
     def next_stat_selection(self):
-        Every character stat in the template that has the READY_TO_CONTINUE
-        trigger on it's min/max value triggers a stat modification screen
-        listing only the stats linked to it and itself, so that the player
-        can make adjustments.
-        returns a list of stat names, ending with the stat pool name for the list
-        [stat,stat,...,stat_pool]
+        """
+        Return a list of stat names ending with the stat pool name
+        
+        Every character stat pool in the template (having the
+        READY_TO_CONTINUE trigger on it's min value) triggers a stat
+        modification screen listing only the stats linked to it and
+        itself, so that the player can make adjustments. This method
+        returns a list of the stat names that depend on the pool,
+        starting with the name of the pool itself.
+        
+        If no pool is found the method raises StopIteration, as it is
+        not supposed to be called when all pools are already depleted.
+        """
+        # Look for a non-empty stat pool
+        pool = ''
+        for pool in self._stats:
+            if self._stats[pool]['trigger_on_min'] == 'READY_TO_CONTINUE' and \
+                self.get_stat[pool] > 0:
+                break
+        if pool:
+            stat_list = [pool]
+            for stat in self._stats:
+                if self._stats[stat]['paired_with'] == pool:
+                    stat_list.append(stat)
+            return stat_list
+        else:
+            raise StopIteration("No more stat selections available!")
         
     def next_modifier(self):
         Every character modification defined as applied AT_CHARACTER_CREATION
