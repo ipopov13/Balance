@@ -178,7 +178,7 @@ class ModifierSelectionDM(DataManager):
     
     @property
     def _screen_details(self):
-        modifier,mod_values = self._ai.next_modifier()
+        modifier,mod_values = self._ai.player.next_modifier()
         mod_string = ''
         for i,value in enumerate(mod_values,1):
             mod_string += f'        {i}) {value}\n'
@@ -198,7 +198,7 @@ class StatSelectionDM(DataManager):
     
     @property
     def _screen_details(self):
-        self._stats = self._ai.next_stat_selection()
+        self._stats = self._ai.player.next_stat_selection()
         stat_string = ''
         self._max_len = max([len(stat) for stat in self._stats])+3
         for i,stat in enumerate(self._stats,ord('A')):
@@ -219,10 +219,11 @@ class StatSelectionDM(DataManager):
         for i,stat in enumerate(self._stats,2):
             if stat == self._stats[-1]:
                 i += 1
-            content[(stat_column,i)] = {'text':str(self._ai.get_stat(stat)),
+            content[(stat_column,i)] = {'text':str(self._ai.player.get_stat(stat)),
                                         'style':10}
         final_row = len(self._stats)+4
-        if self._ai.check_triggers(self._stats[-1]):
+        if self._ai.player.check_triggers(self._stats[-1]) \
+            == self._ai.READY_TO_CONTINUE:
             content[(4,final_row)] = {
                     'text':'Press ENTER to continue!','style':13}
             self._commands['\r'] = ai.GET_SCENE

@@ -31,15 +31,41 @@ class GameObject:
                              'but {cls} does not have that subclass.')
 
 
-class Being(GameObject):
+class DataLoaderMeta(type):
+    def __new__(meta, name, bases, class_dict):
+        cls = type.__new__(meta, name, bases, class_dict)
+        if bases == (GameObject,):
+            cls.load_data()
+        return cls
+    
+
+class Being(GameObject,metaclass=DataLoaderMeta):
     """
     Covers all active actors in the game
     """
+    _modifiers = {}
+    
+    @classmethod
+    def load_data(cls):
+        modifiers = config.get_config(section='modifiers')
+        for modifier in modifiers:
+            cls._modifiers[modifier] = config.simplify(modifier)
+    
     def __init__(self):
         """
         Create a Being of the specified type. Specified in subclasses.
         """
         pass
+
+
+class PlayableCharacter(Being):
+        
+    def __init__(self):
+        self._stats = {}
+        self._current_modifiers = {}
+        stats = config.get_config(section='character_template')
+        for stat in stats:
+            self._stats[stat.name] = config.simplify(stat)
         
     def get_stat(self,stat=None):
         """Return the current level of a stat"""
@@ -48,29 +74,77 @@ class Being(GameObject):
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
             
+    def _stat_can_change(self,stat,amount):
+        return self._stats[stat]['min'] \
+           <= (self._stats[stat]['current'] + amount) \
+           <= self._stats[stat]['max']
+            
     def change_stat(self,stat=None,amount=None):
-        """Safely change the current level of a stat"""
+        """
+        Change the current level of a stat taking into account paired
+        stats and min/max levels
+        """
         if stat is None or amount is None:
             raise TypeError(f'Stat or amount not set: stat"{stat}",'
                             f'amount"{amount}".')
-        new_stat_level = self._stats[stat]['current'] + amount
-        if self._stats[stat]['min'] \
-           <= new_stat_level \
-           <= self._stats[stat]['max']:
+        if self._stat_can_change(stat,amount):
+            paired_stat = self._stats[stat]['paired_with']
+            if paired_stat:
+                if self._stat_can_change(paired_stat,-1*amount):
+                    self._stats[paired_stat]['current'] += -1*amount
+                else:
+                    return
             self._stats[stat]['current'] += amount
         else:
             raise ValueError(f'Stat would go out of bounds: stat:"{stat}",'
                              f'amount:"{amount}".')
-
-
-class PlayableCharacter(Being):
+            
+    def check_triggers(self, stat):
+        """
+        Returns any triggers for the querried stat.
         
-    def __init__(self):
-        self._stats = {}
-        stats = config.get_config(section='character_template')
-        for stat in stats:
-            self._stats[stat.name] = config.simplify(stat)
-        load available modifiers AT_START_OF_GAME!
+        Should probably be internal and called automatically on stat change!
+        """
+        if self.get_stat(stat=stat) == self._stats[stat]['min']:
+            return self._stats[stat]['trigger_on_min']
+        elif self.get_stat(stat=stat) == self._stats[stat]['max']:
+            return self._stats[stat]['trigger_on_max']
+        else:
+            return ''
+        
+    @property
+    def available_modifiers(self):
+        available_mods = []
+        for mod in self._modifiers:
+            if self._modifiers[mod]['applied'] == 'AT_CHARACTER_CREATION' and \
+                mod not in self._current_modifiers:
+                available_mods.append(mod)
+        return len(available_mods)
+        
+    @property
+    def available_stat_selections(self):
+        look for READY_TO_CONTINUE triggers
+        
+    def apply_modifier(self,modifier):
+        #modifier is 'modifierName:value'
+        
+    def apply_stat_change(self,change):
+        #change is 'stat:amount'
+        
+    def next_stat_selection(self):
+        Every character stat in the template that has the READY_TO_CONTINUE
+        trigger on it's min/max value triggers a stat modification screen
+        listing only the stats linked to it and itself, so that the player
+        can make adjustments.
+        returns a list of stat names, ending with the stat pool name for the list
+        [stat,stat,...,stat_pool]
+        
+    def next_modifier(self):
+        Every character modification defined as applied AT_CHARACTER_CREATION
+        triggers a selection screen. Only one value of the modification can be
+        selected. This is used for races, classes, etc.
+        returns the modifer.name and a list of its values
+        [modifier, [values]]
         
 
 class Item(GameObject):

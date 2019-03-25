@@ -72,34 +72,9 @@ class World:
         self._current_scene_key = None
         self._scenes = {}
         
-    def next_stat_selection(self):
-        Every character stat in the template that has the READY_TO_CONTINUE
-        trigger on it's min/max value triggers a stat modification screen
-        listing only the stats linked to it and itself, so that the player
-        can make adjustments.
-        returns a list of stat names, ending with the stat pool name for the list
-        [stat,stat,...,stat_pool]
-        
-    def next_modifier(self):
-        Every character modification defined as applied AT_CHARACTER_CREATION
-        triggers a selection screen. Only one value of the modification can be
-        selected. This is used for races, classes, etc.
-        returns the modifer.name and a list of its values
-        [modifier, [values]]
-        
     @property
-    def available_modifiers(self):
-        look for AT_CHARACTER_CREATION triggers
-        
-    @property
-    def available_stat_selections(self):
-        look for READY_TO_CONTINUE triggers
-        
-    def apply_modifier(self,modifier):
-        #modifier is 'modifierName:value'
-        
-    def apply_stat_change(self,change):
-        #change is 'stat:amount'
+    def player(self):
+        return self._controlled_being
     
     def start(self,*,race=None):
         """Initialize the world instance"""
@@ -172,29 +147,6 @@ class World:
                         if effective_value > themes[theme]:
                             themes[theme] = effective_value
         return themes
-        
-    def get_stat(self,stat):
-        """Return a stat of the player character"""
-        return self._controlled_being.get_stat(stat=stat)
-        
-    def change_stat(self,stat,amount,from_pool=True):
-        """Change the stats of the player character"""
-        ## If using pool check availability first
-        if from_pool:
-            try:
-                self._controlled_being.change_stat(stat='stat_pool',
-                                                   amount=-1*amount)
-            except ValueError:
-                return
-        try:
-            ## Try to change stat
-            self._controlled_being.change_stat(stat=stat,amount=amount)
-        except ValueError:
-            ## Reverse any changes made to pool
-            if from_pool:
-                self._controlled_being.change_stat(stat='stat_pool',
-                                                   amount=amount)
-            return
     
     @property
     def current_scene(self):

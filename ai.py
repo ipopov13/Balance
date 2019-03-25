@@ -28,6 +28,8 @@ Every functionality is expected to exist as an action that responds to
 """
 from world import World
 
+## Triggers
+READY_TO_CONTINUE = 'READY_TO_CONTINUE'
 ## Handled
 NEW_GAME = 'starter_new_game'
 QUIT_GAME = 'quit_game'
@@ -47,7 +49,7 @@ class AI:
     @classmethod
     def register_action(cls,action):
         if action.message in cls._action_mapping:
-            raise ValueError(f"Repeated handler message: '{handler.message}'!")
+            raise ValueError(f"Repeated action message: '{action.message}'!")
         cls._action_mapping[action.message] = action()
     
     def execute(self, command):
@@ -60,7 +62,8 @@ class AI:
         """
         command,subcommand = command.split(':',1)
         # Delay displaying scene if the player has stats to select
-        if command == GET_SCENE and self.game_data.available_stat_selections:
+        if command == GET_SCENE and \
+            self.player.available_stat_selections:
             result = GET_STAT_SELECTION
             refresh = True
             return (result, refresh)
@@ -68,25 +71,19 @@ class AI:
             raise ValueError(f"Unknown message to AI: '{command}'!")
         # Specify actions available at game start
         if AI._action_mapping[command] == NEW_GAME:
-            subcommand = {'mods':self.game_data.available_modifiers,
-                          'stats':self.game_data.available_stat_selections}
+            subcommand = {'mods':self.player.available_modifiers,
+                          'stats':self.player.available_stat_selections}
         result = AI._action_mapping[command].execute(subcommand=subcommand)
         refresh = False
         # Enforce all modifiers has been selected
-        if self.game_data.available_modifiers:
+        if self.player.available_modifiers:
             result = GET_MODIFIER_SELECTION
             refresh = True
         return (result, refresh)
     
-    def next_stat_selection(self):
-        return self.game_data.next_stat_selection()
-    
-    def next_modifier(self):
-        return self.game_data.next_modifier()
-        
-    def get_stat(self,*,stat=None):
-        """Query the game data for the player stat"""
-        return self.game_data.get_stat(stat=stat)
+    @property
+    def player(self):
+        return self.game_data.player
 
 
 class ActionMeta(type):
@@ -138,7 +135,7 @@ class ChooseModifier(Action):
     message = SELECT_MODIFIER
     
     def execute(self,subcommand=None,**kwarg):
-        AI.game_data.apply_modifier(subcommand)
+        AI.player.apply_modifier(subcommand)
         return GET_STAT_SELECTION
     
     
@@ -146,7 +143,7 @@ class ChangeStat(Action):
     message = ALTER_STAT
     
     def execute(self,subcommand=None,**kwarg):
-        AI.game_data.apply_stat_change(subcommand)
+        AI.player.apply_stat_change(subcommand)
         return GET_STAT_SELECTION
     
     
