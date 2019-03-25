@@ -76,7 +76,7 @@ class World:
     def player(self):
         return self._controlled_being
     
-    def start(self,*,race=None):
+    def start(self):
         """Initialize the world instance"""
         self._generate_theme_peaks()
         self._set_starting_coords()

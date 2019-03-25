@@ -173,24 +173,18 @@ class AITest(unittest.TestCase):
         myAI = ai.AI()
         with self.assertRaises(ValueError):
             myAI.execute('asddafae')
-            
-    def test_starting_race(self):
-        with patch('world.World.start') as starter:
-            myAI = ai.AI()
-            myAI.execute(ai.CHOOSE_HUMAN_RACE)
-            starter.assert_called_once_with(race='human')
 
 
 class WorldTest(unittest.TestCase):
     
     def test_start_world(self):
-        with patch('gameobject.PlayableRace.get_instance') as getter:
+        with patch('gameobject.PlayableCharacter') as getter:
             race = 'human'
             world = World()
-            world.start(race=race)
             # test race call
-            getter.assert_called_once_with(id_=race)
+            getter.assert_called_once()
             # test world creation
+            world.start()
             assert world._theme_peaks != {}
             # test starting coordinates are set
             assert world._current_scene_key is not None
@@ -198,7 +192,7 @@ class WorldTest(unittest.TestCase):
             assert isinstance(world.current_scene, Scene)
             # test world reset at start()
             first_world = deepcopy(world._theme_peaks)
-            world.start(race=race)
+            world.start()
             assert first_world != world._theme_peaks
             # test that a single theme generates the correct number of peaks
             themes = config.get_config(section='themes')
@@ -213,29 +207,26 @@ class WorldTest(unittest.TestCase):
                         world._theme_peaks.values()]) == areas/dist**2
     
     def test_get_stat(self):
-        with patch('gameobject.PlayableRace.get_stat') as getter:
-            race = 'human'
+        with patch('gameobject.PlayableCharacter.get_stat') as getter:
             stat = 'Str'
             gd = World()
-            gd.start(race=race)
-            gd.get_stat(stat)
+            gd.start()
+            gd.player.get_stat(stat=stat)
             getter.assert_called_once_with(stat=stat)
     
     def test_change_stat(self):
-        with patch('gameobject.PlayableRace.change_stat') as changer:
-            race = 'human'
+        with patch('gameobject.PlayableCharacter.change_stat') as changer:
             stat = 'Str'
             amount = 10
             gd = World()
-            gd.start(race=race)
-            gd.change_stat(stat=stat,amount=amount,from_pool=False)
+            gd.start()
+            gd.player.change_stat(stat=stat,amount=amount)
             changer.assert_called_with(stat=stat,amount=amount)
             
     def test_calc_themes(self):
-        with patch('gameobject.PlayableRace.get_instance') as _:
-            race = 'human'
+        with patch('gameobject.PlayableCharacter') as _:
             world = World()
-            world.start(race=race)
+            world.start()
             assert list(world.current_scene._themes.keys()) == \
                                             [t.name for t in world._themes]
 
@@ -260,7 +251,7 @@ class SceneTest(unittest.TestCase):
 class TileTest(unittest.TestCase):
     pass
         
-class BeingTest(unittest.TestCase):
+class PlayableCharacterTest(unittest.TestCase):
         
     def test_get_stat(self):
         being = gameobject.PlayableCharacter()

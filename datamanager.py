@@ -117,7 +117,7 @@ class DataManager(metaclass=DMMeta):
         return DataManager._subclass_instances[next_dm]
     
     def _update_screen(self):
-        DataManager._screen.load_data(self._screen_content)
+        DataManager._screen.load_data(self._dynamic_screen_content)
         DataManager._screen.update_pixels()
     
     @property
@@ -182,7 +182,7 @@ class ModifierSelectionDM(DataManager):
         mod_string = ''
         for i,value in enumerate(mod_values,1):
             mod_string += f'        {i}) {value}\n'
-            self._commands[str(i)] = ai.SELECT_MODIFIER+modifier+value
+            self._commands[str(i)] = ai.SELECT_MODIFIER+value
         return {(0,i):{'text':t} for (i,t) in enumerate(f'''
     Choose a {modifier} for your character:
 {mod_string}'''.split('\n'))}
@@ -228,7 +228,7 @@ class StatSelectionDM(DataManager):
             == self._ai.READY_TO_CONTINUE:
             content[(4,final_row)] = {
                     'text':'Press ENTER to continue!','style':13}
-            self._commands['\r'] = ai.GET_SCENE
+            self._commands['\r'] = ai.NEW_GAME
         else:
             content[(4,final_row)] = {
                     'text':'                        '}

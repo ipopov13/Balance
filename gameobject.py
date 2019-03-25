@@ -49,7 +49,7 @@ class Being(GameObject,metaclass=DataLoaderMeta):
     def load_data(cls):
         modifiers = config.get_config(section='modifiers')
         for modifier in modifiers:
-            cls._modifiers[modifier] = config.simplify(modifier)
+            cls._modifiers[modifier.name] = config.simplify(modifier)
     
     def __init__(self):
         """
@@ -62,7 +62,7 @@ class PlayableCharacter(Being):
         
     def __init__(self):
         self._stats = {}
-        self._current_modifiers = {}
+        self._current_modifiers = []
         stats = config.get_config(section='character_template')
         for stat in stats:
             self._stats[stat.name] = config.simplify(stat)
@@ -113,19 +113,6 @@ class PlayableCharacter(Being):
             return ''
         
     @property
-    def available_modifiers(self):
-        """
-        Return the number of character creation modifiers the player
-        needs to select
-        """
-        available_mods = []
-        for mod in self._modifiers:
-            if self._modifiers[mod]['applied'] == 'AT_CHARACTER_CREATION' and \
-                mod not in self._current_modifiers:
-                available_mods.append(mod)
-        return len(available_mods)
-        
-    @property
     def available_stat_selections(self):
         """
         Return the number of character stat selections the player
@@ -137,18 +124,6 @@ class PlayableCharacter(Being):
                 self.get_stat[stat] > 0:
                 selections.append(stat)
         return len(selections)
-        
-    def apply_modifier(self,modifier):
-        modifier is 'modifierName:value'
-        
-    def apply_stat_change(self,change):
-        """
-        Change a stat
-        
-        Input is 'stat:amount'
-        """
-        stat,amount = change.split(':')
-        self.change_stat(stat=stat,amount=int(amount))
         
     def next_stat_selection(self):
         """
@@ -179,13 +154,60 @@ class PlayableCharacter(Being):
         else:
             raise StopIteration("No more stat selections available!")
         
-    def next_modifier(self):
-        Every character modification defined as applied AT_CHARACTER_CREATION
-        triggers a selection screen. Only one value of the modification can be
-        selected. This is used for races, classes, etc.
-        returns the modifer.name and a list of its values
-        [modifier, [values]]
+    def apply_stat_change(self,change):
+        """
+        Change a stat
         
+        Input is 'stat:amount'
+        """
+        stat,amount = change.split(':')
+        self.change_stat(stat=stat,amount=int(amount))
+        
+    @property
+    def available_modifiers(self):
+        """
+        Return the number of character creation modifiers the player
+        needs to select
+        """
+        available_mods = []
+        for mod in self._modifiers:
+            if self._modifiers[mod]['applied'] == 'AT_CHARACTER_CREATION' and \
+                mod not in self._current_modifiers:
+                available_mods.append(mod)
+        return len(available_mods)
+        
+    def next_modifier(self):
+        """
+        Every character modification defined with AT_CHARACTER_CREATION
+        triggers a selection screen. Only one value of the modification
+        can be selected. This is used for races, classes, etc.
+        
+        Returns the modifer.name and a list of its values
+        [modifier, [values]]
+        """
+        mod_and_values = []
+        for mod in self._modifiers:
+            if self._modifiers[mod]['applied'] == 'AT_CHARACTER_CREATION' and \
+                mod not in self._current_modifiers:
+                mod_and_values = [mod.name, []]
+                break
+        if not mod:
+            raise StopIteration("No more modifiers available!")
+        for value in self._modifiers:
+            if value.name.startswith(mod.name+':'):
+                mod_and_values[1].append(value)
+        return mod_and_values
+                
+    def apply_modifier(self,modifier):
+        """
+        Modifier is 'modifierName:value' as found in
+        character_modifiers.ini
+        """
+        if modifier not in self._modifiers:
+            raise ValueError(f"Unknown modifer ID:{modifier}")
+        for stat in self._modifiers[modifier]:
+            self.change_stat(stat=stat,amount=self._modifiers[modifier][stat])
+        self._current_modifiers.append(modifier)
 
 class Item(GameObject):
     pass

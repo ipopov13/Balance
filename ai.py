@@ -60,25 +60,19 @@ class AI:
         Refresh: Whether the DM called should be reinitialized. Used
         for repeating DMs like StatSelection and ModifierSelection
         """
-        command,subcommand = command.split(':',1)
-        # Delay displaying scene if the player has stats to select
-        if command == GET_SCENE and \
-            self.player.available_stat_selections:
-            result = GET_STAT_SELECTION
-            refresh = True
-            return (result, refresh)
+        if ':' in command:
+            command,subcommand = command.split(':',1)
+        else:
+            subcommand = ''
+        # Make sure the command is real
         if command not in AI._action_mapping:
             raise ValueError(f"Unknown message to AI: '{command}'!")
         # Specify actions available at game start
-        if AI._action_mapping[command] == NEW_GAME:
+        if command == NEW_GAME:
             subcommand = {'mods':self.player.available_modifiers,
                           'stats':self.player.available_stat_selections}
         result = AI._action_mapping[command].execute(subcommand=subcommand)
         refresh = False
-        # Enforce all modifiers has been selected
-        if self.player.available_modifiers:
-            result = GET_MODIFIER_SELECTION
-            refresh = True
         return (result, refresh)
     
     @property
