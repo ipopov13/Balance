@@ -17,9 +17,7 @@ from screen import Screen
 from screen import Pixel
 from assets import StaticScreens
 import ai
-from world import World
-from world import Scene
-from world import Tile
+import world
 import gameobject
 import config
 
@@ -120,7 +118,7 @@ class ScreenTest(unittest.TestCase):
             terrain = mock.Mock()
             terrain.char = 'a'
             terrain.style = 8
-            tile = Tile(terrain)
+            tile = world.Tile(terrain)
             scene = {(i,i):tile for i in range(10)}
             screen.attach_scene(x=0,y=0,scene=scene)
             assert len(list(screen._get_changed_pixels()))==10
@@ -167,21 +165,20 @@ class WorldTest(unittest.TestCase):
     
     def test_start_world(self):
         with patch('gameobject.PlayableCharacter') as getter:
-            race = 'human'
-            world = World()
+            my_world = world.World()
             # test race call
             getter.assert_called_once()
             # test world creation
-            world.start()
-            assert world._theme_peaks != {}
+            my_world.start()
+            assert my_world._theme_peaks != {}
             # test starting coordinates are set
-            assert world._current_scene_key is not None
+            assert my_world._current_scene_key is not None
             # test starting scene is created
-            assert isinstance(world.current_scene, Scene)
+            assert isinstance(my_world.current_scene, world.Scene)
             # test world reset at start()
-            first_world = deepcopy(world._theme_peaks)
-            world.start()
-            assert first_world != world._theme_peaks
+            first_world = deepcopy(my_world._theme_peaks)
+            my_world.start()
+            assert first_world != my_world._theme_peaks
             # test that a single theme generates the correct number of peaks
             themes = config.get_config(section='themes')
             for theme in themes:
@@ -192,53 +189,64 @@ class WorldTest(unittest.TestCase):
             areas = (1+settings.getboolean('is_globe')) \
                     * settings.getint('size')**2
             assert sum([list(v.keys()).count(theme.name) for v in 
-                        world._theme_peaks.values()]) == areas/dist**2
-    
-    def test_get_stat(self):
-        with patch('gameobject.PlayableCharacter.get_stat') as getter:
-            stat = 'Str'
-            gd = World()
-            gd.start()
-            gd.player.get_stat(stat=stat)
-            getter.assert_called_once_with(stat=stat)
-    
-    def test_change_stat(self):
-        with patch('gameobject.PlayableCharacter.change_stat') as changer:
-            stat = 'Str'
-            amount = 10
-            gd = World()
-            gd.start()
-            gd.player.change_stat(stat=stat,amount=amount)
-            changer.assert_called_with(stat=stat,amount=amount)
+                        my_world._theme_peaks.values()]) == areas/dist**2
             
     def test_calc_themes(self):
         with patch('gameobject.PlayableCharacter') as _:
-            world = World()
-            world.start()
-            assert list(world.current_scene._themes.keys()) == \
-                                            [t.name for t in world._themes]
+            my_world = world.World()
+            my_world.start()
+            assert list(my_world.current_scene._themes.keys()) == \
+                                            [t.name for t in my_world._themes]
 
 class SceneTest(unittest.TestCase):
     
     def test_refresh(self):
-        scene = Scene({'Nature':35})
+        scene = world.Scene({'Nature':35})
         assert scene.refresh() == 'refreshed'
     
     def test_insert_being(self):
         """Also tests Tile.being"""
-        scene = Scene({'Nature':35})
+        scene = world.Scene({'Nature':35})
         being = gameobject.PlayableCharacter()
         with self.assertRaises(ValueError):
             scene.insert_being()
         x = scene._width//2
         y = scene._height//2
-        scene.insert_being(being)
-        assert scene._tiles[(x,y)].being is being
+        scene.insert_being(coords=(x,y),being=being)
+        assert scene._beings[(x,y)] is being
         with self.assertRaises(ValueError):
             scene.insert_being(being,coords=(0,0))
+        assert scene._tiles[(x,y)].being is being
 
 class TileTest(unittest.TestCase):
-    pass
+    
+    def test_pixel(self):
+        terrain = mock.Mock()
+        terrain.char = 'a'
+        terrain.style = 8
+        tile = world.Tile(terrain)
+        pixel = mock.Mock()
+        with self.assertRaises(AttributeError):
+            tile.pixel = 1
+        tile.pixel = pixel
+        pixel.update.assert_called_once_with({'char':terrain.char,
+                                              'style':terrain.style})
+    
+    def test_char_and_style(self):
+        terrain = mock.Mock()
+        terrain.char = 'a'
+        terrain.style = 8
+        with self.assertRaises(AttributeError):
+            tile = world.Tile(1)
+        tile = world.Tile(terrain)
+        assert tile.char == terrain.char
+        assert tile.style == terrain.style
+        being = mock.Mock()
+        being.char = 'b'
+        being.style = 9
+        tile.being = being
+        assert tile.char == being.char
+        assert tile.style == being.style
         
 class PlayableCharacterTest(unittest.TestCase):
         

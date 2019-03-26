@@ -230,6 +230,9 @@ class Tile:
     """
     
     def __init__(self,terrain):
+        if not (hasattr(terrain,'char') and hasattr(terrain,'style')):
+            raise AttributeError("Bad terrain object supplied to tile:"
+                                 f" {terrain}.")
         self._terrain = terrain
         self._being = None
         self._pixel = None
@@ -251,24 +254,24 @@ class Tile:
     @pixel.setter
     def pixel(self,pixel):
         if not hasattr(pixel,'update'):
-            raise ValueError("Attached object cannot be updated!")
+            raise AttributeError("Attached object cannot be updated!")
         self._pixel = pixel
-        self._pixel.update(self._present())
+        self._pixel.update({'char':self.char,'style':self.style})
         
     @property
     def char(self):
         if self.being is not None:
             return self.being.char
-        else:
+        elif self._terrain is not None:
             return self._terrain.char
+        else:
+            return ' '
         
     @property
     def style(self):
         if self.being is not None:
             return self.being.style
-        else:
+        elif self._terrain is not None:
             return self._terrain.style
-    
-    def _present(self):
-        return {'char':self.char,
-                'style':self.style}
+        else:
+            return 0
