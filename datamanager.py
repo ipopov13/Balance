@@ -200,10 +200,11 @@ class StatSelectionDM(DataManager):
     def _screen_details(self):
         self._stats = self._ai.player.next_stat_selection()
         stat_string = ''
+        basic_line = '        {:<%d}({})-      +({})\n'
         self._max_len = max([len(stat) for stat in self._stats])+3
         for i,stat in enumerate(self._stats[1:],ord('A')):
-            stat_string += ('        {:<%d}({})-      +({})\n' \
-                            %(self._max_len)).format(stat,chr(i+32),chr(i))
+            line = basic_line %(self._max_len)
+            stat_string += line.format(stat.capitalize(),chr(i+32),chr(i))
             self._commands[chr(i)] = ai.ALTER_STAT+f':{stat}:1'
             self._commands[chr(i+32)] = ai.ALTER_STAT+f':{stat}:-1'
         return {(0,i):{'text':t} for (i,t) in enumerate(f'''
