@@ -58,12 +58,6 @@ class Screen:
             except KeyError:
                 raise ValueError("Invalid coordinates for attach_scene()!")
             
-    def update_pixels(self):
-        """Update all pixels"""
-        for pixel in self._pixels.values():
-            if pixel.is_active:
-                pixel.update()
-            
     def reset(self):
         """Clear the contents of the screen"""
         for pixel in self._pixels.values():
@@ -118,22 +112,19 @@ class Pixel:
         
     def attach(self,presentable):
         """Attach a presentable object to update from"""
-        if not hasattr(presentable,'present'):
-            raise TypeError('Pixel can only be attached to a '
-                            f'presentable object! Got {presentable}')
+        presentable.pixel = self
         self._presentable = presentable
     
     def reset(self):
         """Clear presentable"""
+        try:
+            self._presentable.pixel = None
+        except AttributeError:
+            pass
         self._presentable = None
         self.is_presented = True
         
-    def update(self):
-        """Get latest presentable data"""
-        if self._presentable is not None:
-            old_data = self._data.copy()
-            self._data = self._presentable.present()
-            if self._data != old_data:
-                self.is_presented = False
-        else:
-            raise IOError("Trying to update a pixel with no presentable!")
+    def update(self,visual):
+        """Receive latest presentable data"""
+        self._data = visual
+        self.is_presented = False

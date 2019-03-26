@@ -213,6 +213,9 @@ class Scene:
         else:
             self._tiles[coords].being = being
             self._beings[coords] = being
+            
+    def items(self):
+        return self._tiles.items()
     
 
 class Tile:
@@ -229,6 +232,7 @@ class Tile:
     def __init__(self,terrain):
         self._terrain = terrain
         self._being = None
+        self._pixel = None
         
     @property
     def being(self):
@@ -239,3 +243,32 @@ class Tile:
         if value is not None and self._being is not None:
             raise ValueError("Tile is already occupied!")
         self._being = value
+        
+    @property
+    def pixel(self):
+        return self._pixel
+    
+    @pixel.setter
+    def pixel(self,pixel):
+        if not hasattr(pixel,'update'):
+            raise ValueError("Attached object cannot be updated!")
+        self._pixel = pixel
+        self._pixel.update(self._present())
+        
+    @property
+    def char(self):
+        if self.being is not None:
+            return self.being.char
+        else:
+            return self._terrain.char
+        
+    @property
+    def style(self):
+        if self.being is not None:
+            return self.being.style
+        else:
+            return self._terrain.style
+    
+    def _present(self):
+        return {'char':self.char,
+                'style':self.style}

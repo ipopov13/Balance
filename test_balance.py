@@ -73,11 +73,9 @@ class ScreenTest(unittest.TestCase):
             obj = mock.Mock()
             obj.present.return_value = {'char':'a','style':8}
             screen.attach(x=0,y=0,presentable=obj)
-            screen.update_pixels()
             screen.present()
             console.text.assert_called_once_with(0,0,'a',8)
             console.text.reset_mock()
-            screen.update_pixels()
             screen.present()
             console.text.assert_not_called()
             screen.load_data(StaticScreens.tester)
@@ -106,7 +104,6 @@ class ScreenTest(unittest.TestCase):
             obj = mock.Mock()
             screen.attach(x=0,y=0,presentable=obj)
             assert screen._pixels[(0,0)].is_active
-            screen.update_pixels()
             obj.present.assert_called_once()
             screen.reset()
             assert not screen._pixels[(0,0)].is_active
@@ -125,7 +122,6 @@ class ScreenTest(unittest.TestCase):
             tile.present.return_value = 0
             scene = {(i,i):tile for i in range(10)}
             screen.attach_scene(x=0,y=0,scene=scene)
-            screen.update_pixels()
             assert len(list(screen._get_changed_pixels()))==10
         
     def test_raise_on_bad_input(self):
@@ -146,24 +142,15 @@ class ScreenTest(unittest.TestCase):
 
 class PixelTest(unittest.TestCase):
     
-    def test_update_raises_on_no_presentable(self):
-        p = Pixel()
-        with self.assertRaises(IOError):
-            p.update()
-    
     def test_attach_raises_on_nonpresentable(self):
         p = Pixel()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(AttributeError):
             p.attach('a')
     
     def test_attach_and_update_from_object(self):
         test_data = {'char':'s','style':3}
         p = Pixel()
-        obj = mock.Mock()
-        p.attach(obj)
-        obj.present.return_value = test_data
-        p.update()
-        obj.present.assert_called_once()
+        p.update(test_data)
         assert p.data == ['s',3]
 
 
@@ -255,18 +242,18 @@ class PlayableCharacterTest(unittest.TestCase):
         
     def test_get_stat(self):
         being = gameobject.PlayableCharacter()
-        assert being.get_stat(stat='Strength') == 5
+        assert being.get_stat(stat='strength') == 5
         
     def test_change_stat(self):
         being = gameobject.PlayableCharacter()
-        being.change_stat(stat='Strength',amount=4)
-        assert being.get_stat(stat='Strength') == 9
+        being.change_stat(stat='strength',amount=4)
+        assert being.get_stat(stat='strength') == 9
         with self.assertRaises(ValueError):
-            being.change_stat(stat='Strength',amount=4)
-        being.change_stat(stat='Strength',amount=-3)
-        assert being.get_stat(stat='Strength') == 6
+            being.change_stat(stat='strength',amount=4)
+        being.change_stat(stat='strength',amount=-3)
+        assert being.get_stat(stat='strength') == 6
         with self.assertRaises(ValueError):
-            being.change_stat(stat='Strength',amount=-8)
+            being.change_stat(stat='strength',amount=-8)
 
 class TerrainsTest(unittest.TestCase):
 

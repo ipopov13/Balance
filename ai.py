@@ -51,6 +51,9 @@ class AI:
         if action.message in cls._action_mapping:
             raise ValueError(f"Repeated action message: '{action.message}'!")
         cls._action_mapping[action.message] = action()
+        
+    def __init__(self):
+        self.game_data.start()
     
     def execute(self, command):
         """

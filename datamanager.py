@@ -106,7 +106,7 @@ class DataManager(metaclass=DMMeta):
         ## Handle commands
         refresh = False
         while next_dm == self.id_ and not refresh:
-            self._update_screen()
+            DataManager._screen.load_data(self._dynamic_screen_content)
             DataManager._screen.present()
             command =  DataManager._screen.get_command()
             message = self._commands.get(command,
@@ -115,10 +115,6 @@ class DataManager(metaclass=DMMeta):
             if next_dm == ai.SILENT_UNKNOWN:
                 next_dm = self.id_
         return DataManager._subclass_instances[next_dm]
-    
-    def _update_screen(self):
-        DataManager._screen.load_data(self._dynamic_screen_content)
-        DataManager._screen.update_pixels()
     
     @property
     def _dynamic_screen_content(self):
@@ -137,9 +133,9 @@ class DataManager(metaclass=DMMeta):
     def _screen_details(self):
         """
         Concrete DMs should override this to implement their
-        screen initialization procedure, adding static session specific
-        data from DataManager._ai.game_data on top of the template, as
-        well as attaching world.current_scene to screen pixels!
+        screen initialization procedure by returning static session
+        specific data to lay on top of the template, as well as
+        attaching objects like the current scene to screen pixels!
         """
         return {}
     
@@ -152,6 +148,8 @@ class SceneDM(DataManager):
     
     @property
     def _screen_details(self):
+        self._screen.attach_scene(x=1,y=1,
+                                  scene=self._ai.game_data.current_scene)
         return {}
     
     @property

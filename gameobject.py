@@ -60,7 +60,10 @@ class Being(GameObject,metaclass=DataLoaderMeta):
 
 class PlayableCharacter(Being):
         
-    def __init__(self):
+    def __init__(self,npc=False):
+        if not npc:
+            self.char = '@'
+            self.style = 7
         self._stats = {}
         self._current_modifiers = []
         stats = config.get_config(section='character_template')
