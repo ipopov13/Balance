@@ -31,15 +31,15 @@ from world import World
 ## Triggers
 READY_TO_CONTINUE = 'READY_TO_CONTINUE'
 ## Handled
-NEW_GAME = 'starter_new_game'
+NEW_GAME = 'begin new game'
 QUIT_GAME = 'quit_game'
 SILENT_UNKNOWN = 'silently do nothing'
 GET_MODIFIER_SELECTION = 'get modifier selection'
 ## Unhandled
 STARTER_LOAD_GAME = 'starter_load_game'
 GET_SCENE = 'get scene view'
-SELECT_MODIFIER = 'selected modifier:'
-ALTER_STAT = 'alter stat:'
+SELECT_MODIFIER = 'selected modifier'
+ALTER_STAT = 'alter stat'
 GET_STAT_SELECTION = 'get stat selection'
 
 class AI:
@@ -67,13 +67,9 @@ class AI:
         # Make sure the command is real
         if command not in AI._action_mapping:
             raise ValueError(f"Unknown message to AI: '{command}'!")
-        # Specify actions available at game start
-        if command == NEW_GAME:
-            subcommand = {'mods':self.player.available_modifiers,
-                          'stats':self.player.available_stat_selections}
-        result = AI._action_mapping[command].execute(subcommand=subcommand)
-        refresh = False
-        return (result, refresh)
+        result = AI._action_mapping[command].execute(subcommand=subcommand,
+                                                     world=self.game_data)
+        return result
     
     @property
     def player(self):
@@ -103,46 +99,54 @@ class Quit(Action):
     message = QUIT_GAME
     
     def execute(self,**kwarg):
-        return None
+        return (None, False)
         
 
 class DoNothing(Action):
     message = SILENT_UNKNOWN
     
     def execute(self,**kwarg):
-        return SILENT_UNKNOWN
+        return (SILENT_UNKNOWN, False)
         
 
-class StartNewGame(Action):
+class BeginGame(Action):
     message = NEW_GAME
     
-    def execute(self,subcommand={},**kwarg):
-        if subcommand['mods']:
-            return GET_MODIFIER_SELECTION
-        elif subcommand['stats']:
-            return GET_STAT_SELECTION
+    def execute(self,world=None,**kwarg):
+        if world.player.available_modifiers:
+            return (GET_MODIFIER_SELECTION, True)
+        elif world.player.available_stat_selections:
+            return (GET_STAT_SELECTION, True)
         else:
-            return GET_SCENE
+            return (GET_SCENE, False)
         
 
 class ChooseModifier(Action):
     message = SELECT_MODIFIER
     
-    def execute(self,subcommand=None,**kwarg):
-        AI.player.apply_modifier(subcommand)
-        return GET_STAT_SELECTION
+    def execute(self,subcommand=None,world=None,**kwarg):
+        world.player.apply_modifier(subcommand)
+        if world.player.available_modifiers:
+            return (GET_MODIFIER_SELECTION, True)
+        elif world.player.available_stat_selections:
+            return (GET_STAT_SELECTION, True)
+        else:
+            return (GET_SCENE, False)
     
     
 class ChangeStat(Action):
     message = ALTER_STAT
     
-    def execute(self,subcommand=None,**kwarg):
-        AI.player.apply_stat_change(subcommand)
-        return GET_STAT_SELECTION
+    def execute(self,subcommand=None,world=None,**kwarg):
+        try:
+            world.player.apply_stat_change(subcommand)
+        except ValueError:
+            pass
+        return (GET_STAT_SELECTION, False)
     
     
 class DisplayScene(Action):
     message = GET_SCENE
     
     def execute(self,**kwarg):
-        return GET_SCENE
+        return (GET_SCENE, True)

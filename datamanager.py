@@ -182,7 +182,7 @@ class ModifierSelectionDM(DataManager):
         mod_string = ''
         for i,value in enumerate(mod_values,1):
             mod_string += f'        {i}) {value}\n'
-            self._commands[str(i)] = ai.SELECT_MODIFIER+value
+            self._commands[str(i)] = ai.SELECT_MODIFIER+':'+value
         return {(0,i):{'text':t} for (i,t) in enumerate(f'''
     Choose a {modifier} for your character:
 {mod_string}'''.split('\n'))}
@@ -204,8 +204,8 @@ class StatSelectionDM(DataManager):
         for i,stat in enumerate(self._stats[1:],ord('A')):
             stat_string += ('        {:<%d}({})-      +({})\n' \
                             %(self._max_len)).format(stat,chr(i+32),chr(i))
-            self._commands[chr(i)] = ai.ALTER_STAT+f'{stat}:1'
-            self._commands[chr(i+32)] = ai.ALTER_STAT+f'{stat}:-1'
+            self._commands[chr(i)] = ai.ALTER_STAT+f':{stat}:1'
+            self._commands[chr(i+32)] = ai.ALTER_STAT+f':{stat}:-1'
         return {(0,i):{'text':t} for (i,t) in enumerate(f'''
     Modify your stats:    (-/+)
 {stat_string}
@@ -218,14 +218,14 @@ class StatSelectionDM(DataManager):
         stat_column = 8+self._max_len+6
         for i,stat in enumerate(self._stats[1:],2):
             content[(stat_column,i)] = \
-                {'text':str(self._ai.player.get_stat(stat)),
+                {'text':f'{self._ai.player.get_stat(stat):>2}',
                  'style':10}
-        content[(stat_column,i+2)] = \
-            {'text':str(self._ai.player.get_stat(self._stats[0])),
+        content[(stat_column,i+3)] = \
+            {'text':f'{self._ai.player.get_stat(self._stats[0])}',
              'style':10}
         final_row = len(self._stats)+4
-        if self._ai.player.check_triggers(self._stats[-1]) \
-            == self._ai.READY_TO_CONTINUE:
+        if self._ai.player.check_triggers(self._stats[0]) \
+            == ai.READY_TO_CONTINUE:
             content[(4,final_row)] = {
                     'text':'Press ENTER to continue!','style':13}
             self._commands['\r'] = ai.NEW_GAME

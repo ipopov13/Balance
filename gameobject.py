@@ -121,7 +121,7 @@ class PlayableCharacter(Being):
         selections = []
         for stat in self._stats:
             if self._stats[stat]['trigger_on_min'] == 'READY_TO_CONTINUE' and \
-                self.get_stat[stat] > 0:
+                self.get_stat(stat) > 0:
                 selections.append(stat)
         return len(selections)
         
@@ -143,7 +143,7 @@ class PlayableCharacter(Being):
         pool = ''
         for pool in self._stats:
             if self._stats[pool]['trigger_on_min'] == 'READY_TO_CONTINUE' and \
-                self.get_stat[pool] > 0:
+                self.get_stat(pool) > 0:
                 break
         if pool:
             stat_list = [pool]
@@ -189,12 +189,12 @@ class PlayableCharacter(Being):
         for mod in self._modifiers:
             if self._modifiers[mod]['applied'] == 'AT_CHARACTER_CREATION' and \
                 mod not in self._current_modifiers:
-                mod_and_values = [mod.name, []]
+                mod_and_values = [mod, []]
                 break
         if not mod:
             raise StopIteration("No more modifiers available!")
         for value in self._modifiers:
-            if value.name.startswith(mod.name+':'):
+            if value.startswith(mod+':'):
                 mod_and_values[1].append(value)
         return mod_and_values
                 
@@ -206,8 +206,10 @@ class PlayableCharacter(Being):
         if modifier not in self._modifiers:
             raise ValueError(f"Unknown modifer ID:{modifier}")
         for stat in self._modifiers[modifier]:
-            self.change_stat(stat=stat,amount=self._modifiers[modifier][stat])
-        self._current_modifiers.append(modifier)
+            if stat in self._stats:
+                self.change_stat(stat=stat,
+                                 amount=self._modifiers[modifier][stat])
+        self._current_modifiers.append(modifier.split(':')[0])
 
 class Item(GameObject):
     pass
