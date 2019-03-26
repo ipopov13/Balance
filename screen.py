@@ -84,9 +84,13 @@ class Screen:
             
     def get_command(self):
         """Return a command from the console"""
-        a=msvcrt.getch()
-        #self._console.text(30,10,f'#{a.decode()}#')
-        return a.decode()
+        while True:
+            a=msvcrt.getch()
+            #self._console.text(30,10,f'#{a.decode()}#')
+            try:
+                return a.decode()
+            except UnicodeDecodeError:
+                pass
                 
     def _get_changed_pixels(self):
         for coords,pixel in self._pixels.items():

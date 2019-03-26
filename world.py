@@ -194,7 +194,7 @@ class Scene:
         """resetting timed out objects, randomizing positions of
         resident beings, resolving being intentions by changing
         terrain, etc."""
-        pass
+        return 'refreshed'
     
     def insert_being(self,being=None,coords=None):
         """

@@ -217,10 +217,10 @@ class StatSelectionDM(DataManager):
         stat_column = 8+self._max_len+6
         for i,stat in enumerate(self._stats[1:],2):
             content[(stat_column,i)] = \
-                {'text':f'{self._ai.player.get_stat(stat):>2}',
+                {'text':f'{self._ai.player.get_stat(stat):>3}',
                  'style':10}
         content[(stat_column,i+3)] = \
-            {'text':f'{self._ai.player.get_stat(self._stats[0])}',
+            {'text':f'{self._ai.player.get_stat(self._stats[0]):>3}',
              'style':10}
         final_row = len(self._stats)+4
         if self._ai.player.check_triggers(self._stats[0]) \

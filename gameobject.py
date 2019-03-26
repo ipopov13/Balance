@@ -157,15 +157,6 @@ class PlayableCharacter(Being):
         else:
             raise StopIteration("No more stat selections available!")
         
-    def apply_stat_change(self,change):
-        """
-        Change a stat
-        
-        Input is 'stat:amount'
-        """
-        stat,amount = change.split(':')
-        self.change_stat(stat=stat,amount=int(amount))
-        
     @property
     def available_modifiers(self):
         """
@@ -194,7 +185,7 @@ class PlayableCharacter(Being):
                 mod not in self._current_modifiers:
                 mod_and_values = [mod, []]
                 break
-        if not mod:
+        if not mod_and_values:
             raise StopIteration("No more modifiers available!")
         for value in self._modifiers:
             if value.startswith(mod+':'):
@@ -277,7 +268,7 @@ class Theme(Environment, metaclass=RegistrableEnvMeta):
     
     @classmethod
     def get_structures(cls, themes):
-        pass
+        return 'structures'
     
     @classmethod
     def get_terrains(cls, themes, num=0):

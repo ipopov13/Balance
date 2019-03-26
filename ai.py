@@ -35,12 +35,12 @@ NEW_GAME = 'begin new game'
 QUIT_GAME = 'quit_game'
 SILENT_UNKNOWN = 'silently do nothing'
 GET_MODIFIER_SELECTION = 'get modifier selection'
-## Unhandled
-STARTER_LOAD_GAME = 'starter_load_game'
 GET_SCENE = 'get scene view'
 SELECT_MODIFIER = 'selected modifier'
 ALTER_STAT = 'alter stat'
 GET_STAT_SELECTION = 'get stat selection'
+## Unhandled
+STARTER_LOAD_GAME = 'starter_load_game'
 
 class AI:
     game_data = World()
@@ -141,8 +141,10 @@ class ChangeStat(Action):
     message = ALTER_STAT
     
     def execute(self,subcommand=None,world=None,**kwarg):
+        stat,amount = subcommand.split(':')
+        amount = int(amount)
         try:
-            world.player.apply_stat_change(subcommand)
+            world.player.change_stat(stat,amount)
         except ValueError:
             pass
         return (GET_STAT_SELECTION, False)

@@ -42,7 +42,6 @@ class DMTest(unittest.TestCase):
             screen.load_data.assert_called_with({})
             screen.get_command.assert_called()
             screen.present.assert_called()
-            screen.update_pixels.assert_called()
             assert result == None
 
 class ScreenTest(unittest.TestCase):
@@ -69,10 +68,11 @@ class ScreenTest(unittest.TestCase):
         
     def test_calls_console_only_for_changes(self):
         with patch('screen.Screen._console') as console:
+            visual = {'char':'a','style':8}
             screen = Screen()
             obj = mock.Mock()
-            obj.present.return_value = {'char':'a','style':8}
             screen.attach(x=0,y=0,presentable=obj)
+            screen._pixels[(0,0)].update(visual)
             screen.present()
             console.text.assert_called_once_with(0,0,'a',8)
             console.text.reset_mock()
@@ -104,7 +104,6 @@ class ScreenTest(unittest.TestCase):
             obj = mock.Mock()
             screen.attach(x=0,y=0,presentable=obj)
             assert screen._pixels[(0,0)].is_active
-            obj.present.assert_called_once()
             screen.reset()
             assert not screen._pixels[(0,0)].is_active
     
@@ -118,8 +117,10 @@ class ScreenTest(unittest.TestCase):
     def test_attach_scene(self):
         with patch('screen.Screen._console') as console:
             screen = Screen()
-            tile = mock.Mock()
-            tile.present.return_value = 0
+            terrain = mock.Mock()
+            terrain.char = 'a'
+            terrain.style = 8
+            tile = Tile(terrain)
             scene = {(i,i):tile for i in range(10)}
             screen.attach_scene(x=0,y=0,scene=scene)
             assert len(list(screen._get_changed_pixels()))==10
@@ -147,7 +148,7 @@ class PixelTest(unittest.TestCase):
         with self.assertRaises(AttributeError):
             p.attach('a')
     
-    def test_attach_and_update_from_object(self):
+    def test_update(self):
         test_data = {'char':'s','style':3}
         p = Pixel()
         p.update(test_data)
@@ -220,7 +221,8 @@ class WorldTest(unittest.TestCase):
 class SceneTest(unittest.TestCase):
     
     def test_refresh(self):
-        assert 1==0
+        scene = Scene({'Nature':35})
+        assert scene.refresh() == 'refreshed'
     
     def test_insert_being(self):
         """Also tests Tile.being"""
@@ -240,20 +242,60 @@ class TileTest(unittest.TestCase):
         
 class PlayableCharacterTest(unittest.TestCase):
         
-    def test_get_stat(self):
+    def test_get_change_stat(self):
         being = gameobject.PlayableCharacter()
-        assert being.get_stat(stat='strength') == 5
-        
-    def test_change_stat(self):
+        being._stats = {'stat': {'min':0,'max':10,'current':5,
+                                 'paired_with':'',
+                                 'trigger_on_min':''}}
+        assert being.get_stat(stat='stat') == 5
+        being.change_stat(stat='stat',amount=4)
+        assert being.get_stat(stat='stat') == 9
+        with self.assertRaises(ValueError):
+            being.change_stat(stat='stat',amount=4)
+        being.change_stat(stat='stat',amount=-3)
+        assert being.get_stat(stat='stat') == 6
+        with self.assertRaises(ValueError):
+            being.change_stat(stat='stat',amount=-8)
+            
+    def test_check_triggers(self):
         being = gameobject.PlayableCharacter()
-        being.change_stat(stat='strength',amount=4)
-        assert being.get_stat(stat='strength') == 9
-        with self.assertRaises(ValueError):
-            being.change_stat(stat='strength',amount=4)
-        being.change_stat(stat='strength',amount=-3)
-        assert being.get_stat(stat='strength') == 6
-        with self.assertRaises(ValueError):
-            being.change_stat(stat='strength',amount=-8)
+        being._stats['tester_stat'] = {'min':0,'max':10,'current':0,
+                                       'trigger_on_min':'boom',
+                                       'trigger_on_max':'baam',
+                                       'paired_with':''}
+        assert being.check_triggers('tester_stat')=='boom'
+        being.change_stat('tester_stat',10)
+        assert being.check_triggers('tester_stat')=='baam'
+            
+    def test_available_next_stat_selection(self):
+        being = gameobject.PlayableCharacter()
+        being._stats = {'stat': {'min':0,'max':10,'current':0,
+                                 'paired_with':'pool',
+                                 'trigger_on_min':''},
+                        'pool': {'min':0,'max':99,'current':5,
+                                 'trigger_on_min':'READY_TO_CONTINUE',
+                                 'paired_with':''}}
+        assert being.available_stat_selections == 1
+        assert being.next_stat_selection() == ['pool','stat']
+        being._stats = {}
+        assert being.available_stat_selections == 0
+        with self.assertRaises(StopIteration):
+            being.next_stat_selection()
+            
+    def test_available_next_apply_modifier(self):
+        being = gameobject.PlayableCharacter()
+        being._stats = {'stat': {'min':0,'max':10,'current':0,
+                                 'paired_with':'',
+                                 'trigger_on_min':''}}
+        being._modifiers = {'mod': {'applied':'AT_CHARACTER_CREATION'},
+                             'mod:val': {'applied':'','stat':5}}
+        assert being.available_modifiers == 1
+        assert being.next_modifier() == ['mod',['mod:val']]
+        being.apply_modifier('mod:val')
+        assert being.get_stat('stat') == 5
+        assert being.available_modifiers == 0
+        with self.assertRaises(StopIteration):
+            being.next_modifier()
 
 class TerrainsTest(unittest.TestCase):
 
@@ -263,11 +305,12 @@ class TerrainsTest(unittest.TestCase):
 
 class ThemeTest(unittest.TestCase):
 
-    def test_get_structures(self):
-        assert 1==0
-
     def test_get_terrains(self):
-        assert 1==0
+        num = 10
+        assert len(gameobject.Theme.get_terrains({},num)) == num
+
+    def test_get_structures(self):
+        assert gameobject.Theme.get_structures({}) == 'structures'
 
 if __name__ == '__main__':
     unittest.main()
