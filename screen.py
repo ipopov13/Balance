@@ -18,8 +18,8 @@ class Screen:
     _console = Console.getconsole()
     
     def __init__(self):
-        self._x_limit = 79
-        self._y_limit = 25
+        self._x_limit = 80
+        self._y_limit = 24
         self._pixels = {(x,y):Pixel() for x in range(self._x_limit) \
                                     for y in range(self._y_limit)}
         self._text = {}
