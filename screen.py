@@ -18,10 +18,11 @@ class Screen:
     _console = Console.getconsole()
     
     def __init__(self):
-        self._x_limit = 80
-        self._y_limit = 24
-        self._pixels = {(x,y):Pixel() for x in range(self._x_limit) \
-                                    for y in range(self._y_limit)}
+        settings = config.get_settings(key='screen')
+        self._width = settings.getint('width')
+        self._height = settings.getint('height')
+        self._pixels = {(x,y):Pixel() for x in range(self._width) \
+                                    for y in range(self._height)}
         self._text = {}
         self._presented_text = {}
         settings = config.get_settings()
@@ -34,14 +35,14 @@ class Screen:
             if not (0 <= text.get('style',0) <= 255):
                 raise ValueError("Styles can only be in the range 0-255!"
                                  f" Got '{text['style']}'")
-            if len(text['text']) > self._x_limit:
+            if len(text['text']) > self._width:
                 raise ValueError("A Screen object cannot have "
-                                 f"more than {self._x_limit} columns!")
-            if len(text['text'])+coords[0] > self._x_limit:
+                                 f"more than {self._width} columns!")
+            if len(text['text'])+coords[0] > self._width:
                 raise ValueError("Template string will run off screen!")
-            if coords[1] > self._y_limit:
+            if coords[1] > self._height:
                 raise ValueError("A Screen object cannot have "
-                                 f"more than {self._y_limit} rows!")
+                                 f"more than {self._height} rows!")
             self._text[coords] = text
                     
     def attach(self,*,x=None,y=None,presentable=None):

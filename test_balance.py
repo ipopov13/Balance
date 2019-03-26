@@ -126,15 +126,15 @@ class ScreenTest(unittest.TestCase):
     def test_raise_on_bad_input(self):
         screen = Screen()
         screen.load_data({(x,x+1):{'text':''} \
-                              for x in range(screen._y_limit)})
+                              for x in range(screen._height)})
         assert isinstance(screen,Screen)
         with self.assertRaises(ValueError):
             screen.load_data({(x,x+1):{'text':''} \
-                                  for x in range(screen._y_limit+1)})
-        screen.load_data({(0,0):{'text':'a'*screen._x_limit}})
+                                  for x in range(screen._height+1)})
+        screen.load_data({(0,0):{'text':'a'*screen._width}})
         assert isinstance(screen,Screen)
         with self.assertRaises(ValueError):
-            screen.load_data({(0,0):{'text':'a'*(screen._x_limit+1)}})
+            screen.load_data({(0,0):{'text':'a'*(screen._width+1)}})
         with self.assertRaises(ValueError):
             screen.load_data({(0,0):{'text':'a','style':260}})
         
