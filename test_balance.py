@@ -197,12 +197,60 @@ class WorldTest(unittest.TestCase):
             my_world.start()
             assert list(my_world.current_scene._themes.keys()) == \
                                             [t.name for t in my_world._themes]
+                                            
+    def test_move_player(self):
+        with patch('gameobject.PlayableCharacter') as pc:
+            with patch('world.Scene.move_being') as scene_mb:
+                with patch('world.Scene.hand_over_to') as scene_ho:
+                    d = '1'
+                    pc.return_value = mock.Mock()
+                    scene_mb.return_value = world.SUCCESSFUL
+                    my_world = world.World()
+                    my_world.start()
+                    my_world._scenes = {(0,0):my_world.current_scene}
+                    my_world._current_scene_key = (0,0)
+                    my_world.move_player(direction=d)
+                    scene_mb.assert_called_once_with(being=pc.return_value,
+                                                     direction=d)
+                    assert my_world._current_scene_key == (0,0)
+                    scene_mb.return_value = world.GOING_EAST
+                    my_world.move_player(direction=d)
+                    scene_ho.assert_called_once_with(my_world.current_scene)
+                    assert my_world._current_scene_key == (1,0)
+                    scene_mb.return_value = world.GOING_WEST
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == (0,0)
+                    scene_mb.return_value = world.GOING_SOUTH
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == (0,1)
+                    scene_mb.return_value = world.GOING_NORTH
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == (0,0)
+                    my_world._settings['is_globe'] = False
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == (0,0)
+                    scene_mb.return_value = world.GOING_WEST
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == (0,0)
+                    my_world._settings['is_globe'] = True
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == \
+                        (my_world._columns-1,0)
+                    scene_mb.return_value = world.GOING_EAST
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == (0,0)
+                    scene_mb.return_value = world.GOING_NORTH
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == \
+                        (my_world._columns//2,0)
+                    my_world.move_player(direction=d)
+                    assert my_world._current_scene_key == (0,0)
+                
 
 class SceneTest(unittest.TestCase):
     
-    def test_refresh(self):
-        scene = world.Scene({'Nature':35})
-        assert scene.refresh() == 'refreshed'
+    def test_hand_over_to(self):
+        assert 1==0
     
     def test_insert_being(self):
         """Also tests Tile.being"""
@@ -210,13 +258,62 @@ class SceneTest(unittest.TestCase):
         being = gameobject.PlayableCharacter()
         with self.assertRaises(ValueError):
             scene.insert_being()
+        with self.assertRaises(ValueError):
+            scene.insert_being(being,coords=(scene._width,scene._height))
+        with self.assertRaises(ValueError):
+            scene.insert_being(being,coords=(0,-1))
+        with self.assertRaises(ValueError):
+            scene.insert_being(being,coords=(-1,0))
         x = scene._width//2
         y = scene._height//2
         scene.insert_being(coords=(x,y),being=being)
-        assert scene._beings[(x,y)] is being
+        assert being in scene._beings
         with self.assertRaises(ValueError):
             scene.insert_being(being,coords=(0,0))
         assert scene._tiles[(x,y)].being is being
+        
+    def test_move_being(self):
+        scene = world.Scene({'Nature':35})
+        being = gameobject.PlayableCharacter()
+        scene.insert_being(coords=(0,0),being=being)
+        result = scene.move_being(being=being,direction='5')
+        assert scene._beings[being]==(0,0)
+        assert result == world.SUCCESSFUL
+        result = scene.move_being(being=being,direction='2')
+        assert scene._beings[being]==(0,1)
+        assert result == world.SUCCESSFUL
+        assert scene._tiles[(0,0)].being is None
+        assert scene._tiles[(0,1)].being is being
+        scene.move_being(being=being,direction='3')
+        assert scene._beings[being]==(1,2)
+        scene.move_being(being=being,direction='4')
+        assert scene._beings[being]==(0,2)
+        scene.move_being(being=being,direction='6')
+        assert scene._beings[being]==(1,2)
+        scene.move_being(being=being,direction='7')
+        assert scene._beings[being]==(0,1)
+        scene.move_being(being=being,direction='8')
+        assert scene._beings[being]==(0,0)
+        scene.move_being(being=being,direction='2')
+        scene.move_being(being=being,direction='9')
+        assert scene._beings[being]==(1,0)
+        result = scene.move_being(being=being,direction='8')
+        assert scene._beings[being]==(1,0)
+        assert result == world.GOING_NORTH
+        scene.move_being(being=being,direction='4')
+        result = scene.move_being(being=being,direction='4')
+        assert scene._beings[being]==(0,0)
+        assert result == world.GOING_WEST
+        scene._beings = {}
+        scene.insert_being(coords=(scene._width-1,scene._height-1),
+                           being=being)
+        result = scene.move_being(being=being,direction='2')
+        assert scene._beings[being]==(scene._width-1,scene._height-1)
+        assert result == world.GOING_SOUTH
+        result = scene.move_being(being=being,direction='6')
+        assert scene._beings[being]==(scene._width-1,scene._height-1)
+        assert result == world.GOING_EAST
+        
 
 class TileTest(unittest.TestCase):
     

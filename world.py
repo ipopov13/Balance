@@ -24,6 +24,13 @@ import random
 import gameobject
 import config
 
+# Movement constants
+SUCCESSFUL = 'SUCCESSFUL'
+GOING_NORTH = 'GOING_NORTH'
+GOING_SOUTH = 'GOING_SOUTH'
+GOING_EAST = 'GOING_EAST'
+GOING_WEST = 'GOING_WEST'
+
 class World:
     """
     Holds all scenes in a (coords):scene dict,
@@ -65,10 +72,10 @@ class World:
         self._controlled_being = gameobject.PlayableCharacter()
         self._theme_peaks = {}
         self._themes = config.get_config(section='themes')
-        self._settings = config.get_settings(key='world')
-        self._rows = self._settings.getint('size')
+        self._settings = config.simplify(config.get_settings(key='world'))
+        self._rows = self._settings['size']
         self._columns = self._rows * (2 if \
-                                self._settings.getboolean('is_globe') else 1)
+                                self._settings['is_globe'] else 1)
         self._current_scene_key = None
         self._scenes = {}
         
@@ -87,12 +94,9 @@ class World:
     def _ready_scene(self,coords=None):
         if coords is None:
             coords = self._current_scene_key
-        if coords in self._scenes:
-            self._current_scene_key = coords
-        else:
+        if coords not in self._scenes:
             themes = self._calculate_themes(coords)
             self._scenes[coords] = Scene(themes)
-        self._scenes[coords].refresh()
         
     def _set_starting_coords(self):
         for theme in self._themes:
@@ -151,6 +155,39 @@ class World:
     @property
     def current_scene(self):
         return self._scenes[self._current_scene_key]
+    
+    def _change_coords(self,direction=None):
+        directions = {GOING_SOUTH:(0,1),GOING_WEST:(-1,0),
+                      GOING_EAST:(1,0),GOING_NORTH:(0,-1),}
+        x,y = self._current_scene_key
+        x = x + directions[direction][0]
+        y = y + directions[direction][1]
+        if not self._settings['is_globe']:
+            x = max(0,x)
+            x = min(x,self._columns)
+            y = max(0,y)
+            y = min(y,self._rows)
+        else:
+            if y == -1:
+                y = 0
+                x += self._columns//2
+            elif y == self._rows:
+                y = self._rows-1
+                x += self._columns//2
+            if x == -1:
+                x = self._columns-1
+            elif x >= self._columns:
+                x -= self._columns
+        return (x,y)
+    
+    def move_player(self,direction):
+        move = self.current_scene.move_being(direction=direction,
+                                             being=self.player)
+        if move is not SUCCESSFUL:
+            new_coords = self._change_coords(direction=move)
+            self._ready_scene(new_coords)
+            self.current_scene.hand_over_to(self._scenes[new_coords])
+            self._current_scene_key = new_coords
         
         
 class Scene:
@@ -190,12 +227,6 @@ class Scene:
                     terrain = random.randint(0,len(terrains)-1)
                     self._tiles[(x,y)] = Tile(terrains.pop(terrain))
     
-    def refresh(self):
-        """resetting timed out objects, randomizing positions of
-        resident beings, resolving being intentions by changing
-        terrain, etc."""
-        return 'refreshed'
-    
     def insert_being(self,being=None,coords=None):
         """
         Place being as close to coords as possible based on
@@ -203,19 +234,67 @@ class Scene:
         """
         if being is None:
             raise ValueError("No being passed to scene!")
-        if being in self._beings.values():
+        if being in self._beings:
             raise ValueError(f"Duplicate being in scene! {being}")
         if coords is None:
             x = self._width//2
             y = self._height//2
             self._tiles[(x,y)].being = being
-            self._beings[(x,y)] = being
+            self._beings[being] = (x,y)
         else:
-            self._tiles[coords].being = being
-            self._beings[coords] = being
+            if self._are_valid(coords):
+                self._tiles[coords].being = being
+                self._beings[being] = coords
+            else:
+                raise ValueError("Invalid coords for being insertion:"
+                                 f" {coords}")
+                
+    def _are_valid(self,coords):
+        x,y = coords
+        return 0<=x<self._width and 0<=y<self._height
             
     def items(self):
         return self._tiles.items()
+    
+    def _change_coords(self,*,coords=None,direction=None):
+        directions = {'1':(-1,1),'2':(0,1),'3':(1,1),'4':(-1,0),'5':(0,0),
+                      '6':(1,0),'7':(-1,-1),'8':(0,-1),'9':(1,-1),}
+        x,y = coords
+        x = x + directions[direction][0]
+        y = y + directions[direction][1]
+        return (x,y)
+    
+    def _compass(self,coords):
+        x,y = coords
+        if x<0 and y>=0:
+            return GOING_WEST
+        elif x>=0 and y<0:
+            return GOING_NORTH
+        elif x<0 and y<0:
+            return GOING_NORTH
+        elif x>=self._width:
+            return GOING_EAST
+        elif y>=self._height:
+            return GOING_SOUTH
+    
+    def move_being(self,*,being=None,direction=None):
+        """
+        Reassign being coordinates and tile
+        
+        Returns success or a direction for the World to handle
+        """
+        old_coords = self._beings[being]
+        new_coords = self._change_coords(coords=old_coords,direction=direction)
+        if self._are_valid(new_coords):
+            self._beings[being] = new_coords
+            self._tiles[old_coords].being = None
+            self._tiles[new_coords].being = being
+            return SUCCESSFUL
+        else:
+            return self._compass(new_coords)
+        
+    def hand_over_to(self,new_scene):
+        pass
     
 
 class Tile:
@@ -246,6 +325,10 @@ class Tile:
         if value is not None and self._being is not None:
             raise ValueError("Tile is already occupied!")
         self._being = value
+        try:
+            self._pixel.update({'char':self.char,'style':self.style})
+        except AttributeError:
+            pass
         
     @property
     def pixel(self):

@@ -39,6 +39,7 @@ GET_SCENE = 'get scene view'
 SELECT_MODIFIER = 'selected modifier'
 ALTER_STAT = 'alter stat'
 GET_STAT_SELECTION = 'get stat selection'
+MOVE = 'the player moves'
 ## Unhandled
 STARTER_LOAD_GAME = 'starter_load_game'
 
@@ -110,6 +111,14 @@ class DoNothing(Action):
     
     def execute(self,**kwarg):
         return (SILENT_UNKNOWN, False)
+        
+
+class Move(Action):
+    message = MOVE
+    
+    def execute(self,subcommand=None,**kwarg):
+        AI.game_data.move_player(subcommand)
+        return (GET_SCENE, False)
         
 
 class BeginGame(Action):

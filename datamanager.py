@@ -144,7 +144,8 @@ class SceneDM(DataManager):
     id_ = ai.GET_SCENE
     _screen_template = StaticScreens.scene
     _is_starter_instance = False
-    _commands = {UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
+    _commands = {'1':ai.MOVE+':'+'1',
+                 UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
     
     @property
     def _screen_details(self):
