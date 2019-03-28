@@ -12,7 +12,7 @@ from copy import deepcopy
 
 #from module import function/object
 from balance import Balance
-from datamanager import DataManager
+from screen import Screen
 from terminal import Terminal
 from terminal import Pixel
 from assets import StaticScreens
@@ -25,18 +25,18 @@ import constants as const
 class BalanceTest(unittest.TestCase):
     
     def test_main_loop_runs_and_breaks(self):
-        with patch('datamanager.DataManager.take_control') as myDM:
-            myDM.return_value = None
+        with patch('screen.Screen.take_control') as myScreen:
+            myScreen.return_value = None
             game = Balance()
             game.run()
-            myDM.assert_called_once()
+            myScreen.assert_called_once()
                 
-class DMTest(unittest.TestCase):
+class ScreenTest(unittest.TestCase):
     
-    def test_dm_activity_loop(self):
-        with patch('datamanager.DataManager._terminal') as screen:
+    def test_screen_activity_loop(self):
+        with patch('screen.Screen._terminal') as screen:
             screen.get_command.return_value = 'q'
-            dm = DataManager.get_starting_dm()
+            dm = Screen.get_starting_screen()
             result = dm.take_control()
             screen.load_data.assert_called_with({})
             screen.get_command.assert_called()

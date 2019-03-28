@@ -44,16 +44,16 @@ class Balance:
     
     def __init__(self):
         ## Delay import until game has been selected
-        from datamanager import DataManager
+        from screen import Screen
         
-        self._dm = DataManager.get_starting_dm()
+        self._screen = Screen.get_starting_screen()
             
     def run(self):
         """
         Call DMs to action in sequence until no DM is available.
         """
-        while self._dm is not None:
-            self._dm = self._dm.take_control()
+        while self._screen is not None:
+            self._screen = self._screen.take_control()
 
 
 if __name__ == '__main__':

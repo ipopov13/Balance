@@ -43,7 +43,7 @@ from assets import StaticScreens
 import constants as const
 
 
-class DMMeta(type):
+class ScreenMeta(type):
     def __new__(meta, name, bases, class_dict):
         cls = type.__new__(meta, name, bases, class_dict)
         if bases != ():
@@ -70,7 +70,7 @@ class DMMeta(type):
         return cls
 
 
-class DataManager(metaclass=DMMeta):
+class Screen(metaclass=ScreenMeta):
     _terminal = Terminal()
     _ai = ai.AI()
     _subclass_instances = {None:None}
@@ -83,8 +83,8 @@ class DataManager(metaclass=DMMeta):
     _is_starter_instance = False
     
     @classmethod
-    def get_starting_dm(cls):
-        """Return the DM registered as the starter one"""
+    def get_starting_screen(cls):
+        """Return the Screen registered as the starter one"""
         for instance in cls._subclass_instances.values():
             if instance is not None and instance._is_starter_instance:
                 return instance
@@ -97,24 +97,24 @@ class DataManager(metaclass=DMMeta):
         pass
         
     def take_control(self):
-        """The DM activity loop"""
-        next_dm = self.id_
+        """The Screen activity loop"""
+        next_screen = self.id_
         ## Templating the screen
         self._terminal.reset()
-        DataManager._terminal.load_data(self._screen_template)
-        DataManager._terminal.load_data(self._screen_details)
+        Screen._terminal.load_data(self._screen_template)
+        Screen._terminal.load_data(self._screen_details)
         ## Handle commands
         refresh = False
-        while next_dm == self.id_ and not refresh:
-            DataManager._terminal.load_data(self._dynamic_screen_content)
-            DataManager._terminal.present()
-            command =  DataManager._terminal.get_command()
+        while next_screen == self.id_ and not refresh:
+            Screen._terminal.load_data(self._dynamic_screen_content)
+            Screen._terminal.present()
+            command =  Screen._terminal.get_command()
             message = self._commands.get(command,
                                          self._commands[const.UNKNOWN_COMMAND])
-            next_dm,refresh = self._ai.execute(message)
-            if next_dm == const.SILENT_UNKNOWN:
-                next_dm = self.id_
-        return DataManager._subclass_instances[next_dm]
+            next_screen,refresh = self._ai.execute(message)
+            if next_screen == const.SILENT_UNKNOWN:
+                next_screen = self.id_
+        return Screen._subclass_instances[next_screen]
     
     @property
     def _dynamic_screen_content(self):
@@ -140,7 +140,7 @@ class DataManager(metaclass=DMMeta):
         return {}
     
     
-class SceneDM(DataManager):
+class Scene(Screen):
     id_ = const.GET_SCENE
     _screen_template = StaticScreens.scene
     _is_starter_instance = False
@@ -166,7 +166,7 @@ class SceneDM(DataManager):
         return {}
     
     
-class StarterDM(DataManager):
+class Menu(Screen):
     id_ = const.GET_MENU
     _screen_template = StaticScreens.starter
     _is_starter_instance = True
@@ -176,7 +176,7 @@ class StarterDM(DataManager):
                  const.UNKNOWN_COMMAND:const.SILENT_UNKNOWN}
     
     
-class ModifierSelectionDM(DataManager):
+class ModifierSelection(Screen):
     id_ = const.GET_MODIFIER_SELECTION
     _screen_template = {}
     _is_starter_instance = False
@@ -195,7 +195,7 @@ class ModifierSelectionDM(DataManager):
 {mod_string}'''.split('\n'))}
     
     
-class StatSelectionDM(DataManager):
+class StatDistribution(Screen):
     id_ = const.GET_STAT_SELECTION
     _screen_template = {}
     _is_starter_instance = False
