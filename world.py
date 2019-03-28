@@ -248,7 +248,6 @@ class Scene:
             if self._are_valid(coords):
                 self._tiles[coords].being = being
                 self._beings[being] = coords
-                print(f'inserted at {coords}')
             else:
                 raise ValueError("Invalid coords for being insertion:"
                                  f" {coords}")
@@ -282,10 +281,18 @@ class Scene:
             coords = self._beings.pop(being)
         except KeyError:
             raise ValueError(f"Unknown being to remove:{being}")
-        if direction is not None:
-            modify coords accordingly for world travel
         self._tiles[coords].being = None
-        return coords
+        x,y = coords
+        if direction is not None:
+            if x == 0 and direction == const.GOING_WEST:
+                x = self._width-1
+            elif x == self._width-1 and direction == const.GOING_EAST:
+                x = 0
+            if y == 0 and direction == const.GOING_NORTH:
+                y = self._height-1
+            elif y == self._height-1 and direction == const.GOING_SOUTH:
+                y = 0
+        return (x,y)
                 
     def _are_valid(self,coords):
         x,y = coords

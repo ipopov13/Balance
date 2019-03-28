@@ -219,7 +219,8 @@ class WorldTest(unittest.TestCase):
                 assert my_world._current_scene_key == (0,0)
                 scene.move_being.return_value = const.GOING_EAST
                 my_world.move_player(direction=d)
-                scene.remove_being.assert_called_once_with(pc.return_value)
+                scene.remove_being.assert_called_once_with(pc.return_value,
+                                                    direction=const.GOING_EAST)
                 assert my_world._current_scene_key == (1,0)
                 scene.move_being.return_value = const.GOING_WEST
                 my_world.move_player(direction=d)
@@ -256,11 +257,23 @@ class SceneTest(unittest.TestCase):
     def test_remove_being(self):
         scene = world.Scene({'Nature':35})
         being = gameobject.PlayableCharacter()
-        x = scene._width//2
-        y = scene._height//2
+        x = scene._width-1
+        y = scene._height-1
         scene.insert_being(coords=(x,y),being=being)
         being_spot = scene.remove_being(being)
         assert being_spot == (x,y)
+        scene.insert_being(coords=(x,y),being=being)
+        being_spot = scene.remove_being(being,direction=const.GOING_EAST)
+        assert being_spot == (0,y)
+        scene.insert_being(coords=(x,y),being=being)
+        being_spot = scene.remove_being(being,direction=const.GOING_SOUTH)
+        assert being_spot == (x,0)
+        scene.insert_being(coords=(0,0),being=being)
+        being_spot = scene.remove_being(being,direction=const.GOING_WEST)
+        assert being_spot == (x,0)
+        scene.insert_being(coords=(0,0),being=being)
+        being_spot = scene.remove_being(being,direction=const.GOING_NORTH)
+        assert being_spot == (0,y)
     
     def test_insert_being(self):
         """Also tests Tile.being"""
