@@ -157,7 +157,7 @@ class Scene(Screen):
     
     @property
     def _screen_details(self):
-        self._screen.attach_scene(x=1,y=1,
+        self._terminal.attach_scene(x=1,y=1,
                                   scene=self._ai.game_data.current_scene)
         return {}
     
