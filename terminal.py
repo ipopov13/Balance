@@ -13,11 +13,11 @@ import config
 import constants as const
 
 
-class Screen:
+class Terminal:
     _console = Console.getconsole()
     
     def __init__(self):
-        settings = config.get_settings(key='screen')
+        settings = config.get_settings(key='terminal')
         self._width = settings.getint('width')
         self._height = settings.getint('height')
         self._pixels = {(x,y):Pixel() for x in range(self._width) \
@@ -25,7 +25,7 @@ class Screen:
         self._text = {}
         self._presented_text = {}
         settings = config.get_settings()
-        Screen._console.title(settings['name'])
+        Terminal._console.title(settings['name'])
         
     def load_data(self,template):
         """Load a styled text dictionary from assets"""
@@ -35,12 +35,12 @@ class Screen:
                 raise ValueError("Styles can only be in the range 0-255!"
                                  f" Got '{text['style']}'")
             if len(text['text']) > self._width:
-                raise ValueError("A Screen object cannot have "
+                raise ValueError("A Terminal object cannot have "
                                  f"more than {self._width} columns!")
             if len(text['text'])+coords[0] > self._width:
                 raise ValueError("Template string will run off screen!")
             if coords[1] > self._height:
-                raise ValueError("A Screen object cannot have "
+                raise ValueError("A Terminal object cannot have "
                                  f"more than {self._height} rows!")
             self._text[coords] = text
                     
@@ -56,10 +56,11 @@ class Screen:
             try:
                 self._pixels[(x+x1,y+y1)].attach(presentable)
             except KeyError:
-                raise ValueError("Invalid coordinates for attach_scene()!")
+                raise ValueError("Invalid coordinates for attach_scene:"
+                                 f"{(x+x1,y+y1)}")
             
     def reset(self):
-        """Clear the contents of the screen"""
+        """Clear the contents of the terminal"""
         for pixel in self._pixels.values():
             pixel.reset()
         self._text = {}

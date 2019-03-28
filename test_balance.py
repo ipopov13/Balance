@@ -13,8 +13,8 @@ from copy import deepcopy
 #from module import function/object
 from balance import Balance
 from datamanager import DataManager
-from screen import Screen
-from screen import Pixel
+from terminal import Terminal
+from terminal import Pixel
 from assets import StaticScreens
 import ai
 import world
@@ -34,7 +34,7 @@ class BalanceTest(unittest.TestCase):
 class DMTest(unittest.TestCase):
     
     def test_dm_activity_loop(self):
-        with patch('datamanager.DataManager._screen') as screen:
+        with patch('datamanager.DataManager._terminal') as screen:
             screen.get_command.return_value = 'q'
             dm = DataManager.get_starting_dm()
             result = dm.take_control()
@@ -43,17 +43,17 @@ class DMTest(unittest.TestCase):
             screen.present.assert_called()
             assert result == None
 
-class ScreenTest(unittest.TestCase):
+class TerminalTest(unittest.TestCase):
     
     def test_load_data(self):
-        with patch('screen.Screen._console') as console:
-            screen = Screen()
+        with patch('terminal.Terminal._console') as console:
+            screen = Terminal()
             screen.load_data(StaticScreens.tester)
             assert screen._text == StaticScreens.tester
         
     def test_present(self):
-        with patch('screen.Screen._console') as console:
-            screen = Screen()
+        with patch('terminal.Terminal._console') as console:
+            screen = Terminal()
             screen.load_data(StaticScreens.tester)
             screen.present()
             console.text.assert_called_once_with(0, 0,'test',125)
@@ -61,14 +61,14 @@ class ScreenTest(unittest.TestCase):
     def test_get_command(self):
         with patch('msvcrt.getch') as char_input:
             char_input.return_value = b'test'
-            screen = Screen()
+            screen = Terminal()
             command = screen.get_command()
             assert command == 'test'
         
     def test_calls_console_only_for_changes(self):
-        with patch('screen.Screen._console') as console:
+        with patch('terminal.Terminal._console') as console:
             visual = {'char':'a','style':8}
-            screen = Screen()
+            screen = Terminal()
             obj = mock.Mock()
             screen.attach(x=0,y=0,presentable=obj)
             screen._pixels[(0,0)].update(visual)
@@ -88,8 +88,8 @@ class ScreenTest(unittest.TestCase):
             console.text.assert_called_once_with(0, 0,'test2',126)
         
     def test_does_not_call_console_when_no_changes(self):
-        with patch('screen.Screen._console') as console:
-            screen = Screen()
+        with patch('terminal.Terminal._console') as console:
+            screen = Terminal()
             screen.load_data(StaticScreens.tester)
             screen.present()
             console.reset_mock()
@@ -98,8 +98,8 @@ class ScreenTest(unittest.TestCase):
             console.text.assert_not_called()
     
     def test_attach_update_clear(self):
-        with patch('screen.Screen._console') as console:
-            screen = Screen()
+        with patch('terminal.Terminal._console') as console:
+            screen = Terminal()
             obj = mock.Mock()
             screen.attach(x=0,y=0,presentable=obj)
             assert screen._pixels[(0,0)].is_active
@@ -107,15 +107,15 @@ class ScreenTest(unittest.TestCase):
             assert not screen._pixels[(0,0)].is_active
     
     def test_attach_raises_on_bad_coords(self):
-        with patch('screen.Screen._console') as console:
-            screen = Screen()
+        with patch('terminal.Terminal._console') as console:
+            screen = Terminal()
             obj = mock.Mock()
             with self.assertRaises(ValueError):
                 screen.attach(x=0,presentable=obj)
     
     def test_attach_scene(self):
-        with patch('screen.Screen._console') as console:
-            screen = Screen()
+        with patch('terminal.Terminal._console') as console:
+            screen = Terminal()
             terrain = mock.Mock()
             terrain.char = 'a'
             terrain.style = 8
@@ -126,15 +126,15 @@ class ScreenTest(unittest.TestCase):
             assert len(list(screen._get_changed_pixels()))==10
         
     def test_raise_on_bad_input(self):
-        screen = Screen()
+        screen = Terminal()
         screen.load_data({(x,x+1):{'text':''} \
                               for x in range(screen._height)})
-        assert isinstance(screen,Screen)
+        assert isinstance(screen,Terminal)
         with self.assertRaises(ValueError):
             screen.load_data({(x,x+1):{'text':''} \
                                   for x in range(screen._height+1)})
         screen.load_data({(0,0):{'text':'a'*screen._width}})
-        assert isinstance(screen,Screen)
+        assert isinstance(screen,Terminal)
         with self.assertRaises(ValueError):
             screen.load_data({(0,0):{'text':'a'*(screen._width+1)}})
         with self.assertRaises(ValueError):

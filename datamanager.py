@@ -38,7 +38,7 @@ Requirements for testing (already covered in the abstract base class):
 @author: IvanPopov
 """
 import ai
-from screen import Screen
+from terminal import Terminal
 from assets import StaticScreens
 import constants as const
 
@@ -71,7 +71,7 @@ class DMMeta(type):
 
 
 class DataManager(metaclass=DMMeta):
-    _screen = Screen()
+    _terminal = Terminal()
     _ai = ai.AI()
     _subclass_instances = {None:None}
     _starters = 0
@@ -100,15 +100,15 @@ class DataManager(metaclass=DMMeta):
         """The DM activity loop"""
         next_dm = self.id_
         ## Templating the screen
-        self._screen.reset()
-        DataManager._screen.load_data(self._screen_template)
-        DataManager._screen.load_data(self._screen_details)
+        self._terminal.reset()
+        DataManager._terminal.load_data(self._screen_template)
+        DataManager._terminal.load_data(self._screen_details)
         ## Handle commands
         refresh = False
         while next_dm == self.id_ and not refresh:
-            DataManager._screen.load_data(self._dynamic_screen_content)
-            DataManager._screen.present()
-            command =  DataManager._screen.get_command()
+            DataManager._terminal.load_data(self._dynamic_screen_content)
+            DataManager._terminal.present()
+            command =  DataManager._terminal.get_command()
             message = self._commands.get(command,
                                          self._commands[const.UNKNOWN_COMMAND])
             next_dm,refresh = self._ai.execute(message)
