@@ -2,7 +2,7 @@
 """
 Created on Wed Feb  6 10:41:01 2019
 
-AI module for the Balance rogue-like RPG.
+AI module for the Balance rogue-like RPG platform.
 
 The AI inits a dictionary of messages:actions (messages are unique).
 The AI loads/creates the game data when handling commands from the
@@ -27,21 +27,8 @@ Every functionality is expected to exist as an action that responds to
 @author: IvanPopov
 """
 from world import World
+import constants as const
 
-## Triggers
-READY_TO_CONTINUE = 'READY_TO_CONTINUE'
-## Handled
-NEW_GAME = 'begin new game'
-QUIT_GAME = 'quit_game'
-SILENT_UNKNOWN = 'silently do nothing'
-GET_MODIFIER_SELECTION = 'get modifier selection'
-GET_SCENE = 'get scene view'
-SELECT_MODIFIER = 'selected modifier'
-ALTER_STAT = 'alter stat'
-GET_STAT_SELECTION = 'get stat selection'
-MOVE = 'the player moves'
-## Unhandled
-STARTER_LOAD_GAME = 'starter_load_game'
 
 class AI:
     game_data = World()
@@ -100,54 +87,54 @@ class Action(metaclass=ActionMeta):
         
 
 class Quit(Action):
-    message = QUIT_GAME
+    message = const.QUIT_GAME
     
     def execute(self,**kwarg):
         return (None, False)
         
 
 class DoNothing(Action):
-    message = SILENT_UNKNOWN
+    message = const.SILENT_UNKNOWN
     
     def execute(self,**kwarg):
-        return (SILENT_UNKNOWN, False)
+        return (const.SILENT_UNKNOWN, False)
         
 
 class Move(Action):
-    message = MOVE
+    message = const.MOVE
     
     def execute(self,subcommand=None,**kwarg):
-        AI.game_data.move_player(subcommand)
-        return (GET_SCENE, False)
+        refresh = AI.game_data.move_player(subcommand)
+        return (const.GET_SCENE, refresh)
         
 
 class BeginGame(Action):
-    message = NEW_GAME
+    message = const.NEW_GAME
     
     def execute(self,world=None,**kwarg):
         if world.player.available_modifiers:
-            return (GET_MODIFIER_SELECTION, True)
+            return (const.GET_MODIFIER_SELECTION, True)
         elif world.player.available_stat_selections:
-            return (GET_STAT_SELECTION, True)
+            return (const.GET_STAT_SELECTION, True)
         else:
-            return (GET_SCENE, False)
+            return (const.GET_SCENE, False)
         
 
 class ChooseModifier(Action):
-    message = SELECT_MODIFIER
+    message = const.SELECT_MODIFIER
     
     def execute(self,subcommand=None,world=None,**kwarg):
         world.player.apply_modifier(subcommand)
         if world.player.available_modifiers:
-            return (GET_MODIFIER_SELECTION, True)
+            return (const.GET_MODIFIER_SELECTION, True)
         elif world.player.available_stat_selections:
-            return (GET_STAT_SELECTION, True)
+            return (const.GET_STAT_SELECTION, True)
         else:
-            return (GET_SCENE, False)
+            return (const.GET_SCENE, False)
     
     
 class ChangeStat(Action):
-    message = ALTER_STAT
+    message = const.ALTER_STAT
     
     def execute(self,subcommand=None,world=None,**kwarg):
         stat,amount = subcommand.split(':')
@@ -156,11 +143,11 @@ class ChangeStat(Action):
             world.player.change_stat(stat,amount)
         except ValueError:
             pass
-        return (GET_STAT_SELECTION, False)
+        return (const.GET_STAT_SELECTION, False)
     
     
 class DisplayScene(Action):
-    message = GET_SCENE
+    message = const.GET_SCENE
     
     def execute(self,**kwarg):
-        return (GET_SCENE, True)
+        return (const.GET_SCENE, True)

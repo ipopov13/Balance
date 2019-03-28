@@ -12,6 +12,7 @@ Each subfamily has a metaclass that handles automatic registration of
 @author: IvanPopov
 """
 import config
+import constants as const
 
 
 class GameObject:
@@ -62,8 +63,8 @@ class PlayableCharacter(Being):
         
     def __init__(self,npc=False):
         if not npc:
-            self.char = '@'
-            self.style = 7
+            self.char = const.PLAYER
+            self.style = const.DEFAULT_PLAYER_STYLE
         self._stats = {}
         self._current_modifiers = []
         stats = config.get_config(section='character_template')
@@ -123,8 +124,8 @@ class PlayableCharacter(Being):
         """
         selections = []
         for stat in self._stats:
-            if self._stats[stat]['trigger_on_min'] == 'READY_TO_CONTINUE' and \
-                self.get_stat(stat) > 0:
+            if self._stats[stat]['trigger_on_min'] == const.READY_TO_CONTINUE \
+                and self.get_stat(stat) > 0:
                 selections.append(stat)
         return len(selections)
         
@@ -145,8 +146,8 @@ class PlayableCharacter(Being):
         # Look for a non-empty stat pool
         pool = ''
         for pool in self._stats:
-            if self._stats[pool]['trigger_on_min'] == 'READY_TO_CONTINUE' and \
-                self.get_stat(pool) > 0:
+            if self._stats[pool]['trigger_on_min'] == const.READY_TO_CONTINUE \
+                and self.get_stat(pool) > 0:
                 break
         if pool:
             stat_list = [pool]
@@ -165,8 +166,8 @@ class PlayableCharacter(Being):
         """
         available_mods = []
         for mod in self._modifiers:
-            if self._modifiers[mod]['applied'] == 'AT_CHARACTER_CREATION' and \
-                mod not in self._current_modifiers:
+            if self._modifiers[mod]['applied'] == const.AT_CHARACTER_CREATION \
+                and mod not in self._current_modifiers:
                 available_mods.append(mod)
         return len(available_mods)
         
@@ -181,8 +182,8 @@ class PlayableCharacter(Being):
         """
         mod_and_values = []
         for mod in self._modifiers:
-            if self._modifiers[mod]['applied'] == 'AT_CHARACTER_CREATION' and \
-                mod not in self._current_modifiers:
+            if self._modifiers[mod]['applied'] == const.AT_CHARACTER_CREATION \
+                and mod not in self._current_modifiers:
                 mod_and_values = [mod, []]
                 break
         if not mod_and_values:

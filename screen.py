@@ -10,9 +10,8 @@ import Console
 import msvcrt
 from copy import deepcopy
 import config
+import constants as const
 
-DEFAULT_STYLE = 7
-DEFAULT_CHAR = ' '
 
 class Screen:
     _console = Console.getconsole()
@@ -53,7 +52,7 @@ class Screen:
             raise ValueError("Invalid coordinates for attach()!")
     
     def attach_scene(self,*,x=None,y=None,scene=None):
-        for (x1,y1),presentable in scene.items():
+        for (x1,y1),presentable in scene.tiles():
             try:
                 self._pixels[(x+x1,y+y1)].attach(presentable)
             except KeyError:
@@ -79,8 +78,9 @@ class Screen:
             self._console.text(*coords,*pixel.data)
         for coords,text in self._text.items():
             if self._presented_text.get(coords,None) != self._text[coords]:
-                self._console.text(*coords,text['text'],text.get('style',
-                                                             DEFAULT_STYLE))
+                self._console.text(*coords,
+                                   text['text'],
+                                   text.get('style',const.DEFAULT_PIXEL_STYLE))
         self._presented_text = deepcopy(self._text)
             
     def get_command(self):
@@ -103,8 +103,8 @@ class Pixel:
     
     def __init__(self):
         self.is_presented = True
-        self._data = {'char':DEFAULT_CHAR,
-                      'style':DEFAULT_STYLE}
+        self._data = {'char':const.DEFAULT_PIXEL_CHAR,
+                      'style':const.DEFAULT_PIXEL_STYLE}
         self._presentable = None
        
     @property

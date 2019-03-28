@@ -23,13 +23,7 @@ import random
 
 import gameobject
 import config
-
-# Movement constants
-SUCCESSFUL = 'SUCCESSFUL'
-GOING_NORTH = 'GOING_NORTH'
-GOING_SOUTH = 'GOING_SOUTH'
-GOING_EAST = 'GOING_EAST'
-GOING_WEST = 'GOING_WEST'
+import constants as const
 
 class World:
     """
@@ -109,7 +103,7 @@ class World:
     def _generate_theme_peaks(self):
         self._theme_peaks = defaultdict(lambda:{})
         for theme in self._themes:
-            if theme['distribution'] != 'peaks':
+            if theme['distribution'] != const.PEAKS:
                 continue
             peak_distance = min(self._rows,
                                 theme.getint('average_peak_distance'))
@@ -131,7 +125,7 @@ class World:
         theme_gradients = {}
         for theme in self._themes:
             themes[theme.name] = 0
-            if theme['distribution'] != 'peaks':
+            if theme['distribution'] != const.PEAKS:
                 themes[theme.name] = theme.getint('peak_maximum') - \
                                                 theme.getint('peak_maximum') \
                                                 / int(self._rows/2) \
@@ -157,8 +151,8 @@ class World:
         return self._scenes[self._current_scene_key]
     
     def _change_coords(self,direction=None):
-        directions = {GOING_SOUTH:(0,1),GOING_WEST:(-1,0),
-                      GOING_EAST:(1,0),GOING_NORTH:(0,-1),}
+        directions = {const.GOING_SOUTH:(0,1),const.GOING_WEST:(-1,0),
+                      const.GOING_EAST:(1,0),const.GOING_NORTH:(0,-1),}
         x,y = self._current_scene_key
         x = x + directions[direction][0]
         y = y + directions[direction][1]
@@ -181,13 +175,22 @@ class World:
         return (x,y)
     
     def move_player(self,direction):
+        """Change the position of the player in the scene & world"""
         move = self.current_scene.move_being(direction=direction,
                                              being=self.player)
-        if move is not SUCCESSFUL:
+        if move is not const.SUCCESSFUL:
             new_coords = self._change_coords(direction=move)
+            if new_coords == self._current_scene_key:
+                return False
             self._ready_scene(new_coords)
-            self.current_scene.hand_over_to(self._scenes[new_coords])
+            player_position = self.current_scene.remove_being(self.player,
+                                                              direction=move)
             self._current_scene_key = new_coords
+            self.current_scene.insert_being(being=self.player,
+                                            coords=player_position)
+            return True
+        else:
+            return False
         
         
 class Scene:
@@ -245,37 +248,10 @@ class Scene:
             if self._are_valid(coords):
                 self._tiles[coords].being = being
                 self._beings[being] = coords
+                print(f'inserted at {coords}')
             else:
                 raise ValueError("Invalid coords for being insertion:"
                                  f" {coords}")
-                
-    def _are_valid(self,coords):
-        x,y = coords
-        return 0<=x<self._width and 0<=y<self._height
-            
-    def items(self):
-        return self._tiles.items()
-    
-    def _change_coords(self,*,coords=None,direction=None):
-        directions = {'1':(-1,1),'2':(0,1),'3':(1,1),'4':(-1,0),'5':(0,0),
-                      '6':(1,0),'7':(-1,-1),'8':(0,-1),'9':(1,-1),}
-        x,y = coords
-        x = x + directions[direction][0]
-        y = y + directions[direction][1]
-        return (x,y)
-    
-    def _compass(self,coords):
-        x,y = coords
-        if x<0 and y>=0:
-            return GOING_WEST
-        elif x>=0 and y<0:
-            return GOING_NORTH
-        elif x<0 and y<0:
-            return GOING_NORTH
-        elif x>=self._width:
-            return GOING_EAST
-        elif y>=self._height:
-            return GOING_SOUTH
     
     def move_being(self,*,being=None,direction=None):
         """
@@ -289,12 +265,56 @@ class Scene:
             self._beings[being] = new_coords
             self._tiles[old_coords].being = None
             self._tiles[new_coords].being = being
-            return SUCCESSFUL
+            return const.SUCCESSFUL
         else:
             return self._compass(new_coords)
+                
+    def remove_being(self,being=None,direction=None):
+        """
+        Remove a being and returns its last position
         
-    def hand_over_to(self,new_scene):
-        pass
+        If a travel direction is given modify the position for correct
+        insertion into the next scene.
+        """
+        if being is None:
+            raise ValueError("Cannot call remove_being with no being!")
+        try:
+            coords = self._beings.pop(being)
+        except KeyError:
+            raise ValueError(f"Unknown being to remove:{being}")
+        if direction is not None:
+            modify coords accordingly for world travel
+        self._tiles[coords].being = None
+        return coords
+                
+    def _are_valid(self,coords):
+        x,y = coords
+        return 0<=x<self._width and 0<=y<self._height
+            
+    def tiles(self):
+        return self._tiles.items()
+    
+    def _change_coords(self,*,coords=None,direction=None):
+        directions = {const.GO_SW:(-1,1), const.GO_S:(0,1), const.GO_SE:(1,1),
+                      const.GO_W: (-1,0), const.STAY:(0,0), const.GO_E: (1,0),
+                      const.GO_NW:(-1,-1),const.GO_N:(0,-1),const.GO_NE:(1,-1)}
+        x,y = coords
+        x = x + directions[direction][0]
+        y = y + directions[direction][1]
+        return (x,y)
+    
+    def _compass(self,coords):
+        x,y = coords
+        if x<0 and y>=0:
+            return const.GOING_WEST
+        elif x>=0 and y<0:
+            return const.GOING_NORTH
+        elif x<0 and y<0:
+            return const.GOING_NORTH
+        elif x>=self._width:
+            return const.GOING_EAST
+        elif y>=self._height:
+            return const.GOING_SOUTH
     
 
 class Tile:
@@ -348,7 +368,7 @@ class Tile:
         elif self._terrain is not None:
             return self._terrain.char
         else:
-            return ' '
+            raise ValueError("Tile has no terrain to present!")
         
     @property
     def style(self):
@@ -357,4 +377,4 @@ class Tile:
         elif self._terrain is not None:
             return self._terrain.style
         else:
-            return 0
+            raise ValueError("Tile has no terrain to present!")

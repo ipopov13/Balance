@@ -40,8 +40,8 @@ Requirements for testing (already covered in the abstract base class):
 import ai
 from screen import Screen
 from assets import StaticScreens
+import constants as const
 
-UNKNOWN_COMMAND = 'unknown command'
 
 class DMMeta(type):
     def __new__(meta, name, bases, class_dict):
@@ -59,7 +59,7 @@ class DMMeta(type):
             if cls._screen_template == bases[0]._screen_template:
                 raise ValueError('You must define a screen template for the '
                                  f'{name} class!')
-            if UNKNOWN_COMMAND not in cls._commands:
+            if const.UNKNOWN_COMMAND not in cls._commands:
                 raise ValueError(f'{name} must implement the UNKNOWN_COMMAND!')
             if cls._is_starter_instance == True:
                 bases[0]._starters += 1
@@ -110,9 +110,9 @@ class DataManager(metaclass=DMMeta):
             DataManager._screen.present()
             command =  DataManager._screen.get_command()
             message = self._commands.get(command,
-                                         self._commands[UNKNOWN_COMMAND])
+                                         self._commands[const.UNKNOWN_COMMAND])
             next_dm,refresh = self._ai.execute(message)
-            if next_dm == ai.SILENT_UNKNOWN:
+            if next_dm == const.SILENT_UNKNOWN:
                 next_dm = self.id_
         return DataManager._subclass_instances[next_dm]
     
@@ -141,11 +141,19 @@ class DataManager(metaclass=DMMeta):
     
     
 class SceneDM(DataManager):
-    id_ = ai.GET_SCENE
+    id_ = const.GET_SCENE
     _screen_template = StaticScreens.scene
     _is_starter_instance = False
-    _commands = {'1':ai.MOVE+':'+'1',
-                 UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
+    _commands = {const.GO_E:const.MOVE+':'+const.GO_E,
+                 const.GO_S:const.MOVE+':'+const.GO_S,
+                 const.GO_W:const.MOVE+':'+const.GO_W,
+                 const.GO_N:const.MOVE+':'+const.GO_N,
+                 const.GO_NE:const.MOVE+':'+const.GO_NE,
+                 const.GO_SE:const.MOVE+':'+const.GO_SE,
+                 const.GO_SW:const.MOVE+':'+const.GO_SW,
+                 const.GO_NW:const.MOVE+':'+const.GO_NW,
+                 const.STAY:const.MOVE+':'+const.STAY,
+                 const.UNKNOWN_COMMAND:const.SILENT_UNKNOWN}
     
     @property
     def _screen_details(self):
@@ -159,21 +167,21 @@ class SceneDM(DataManager):
     
     
 class StarterDM(DataManager):
-    id_ = 'starter'
+    id_ = const.GET_MENU
     _screen_template = StaticScreens.starter
     _is_starter_instance = True
-    _commands = {'n':ai.NEW_GAME,
-                     'l':ai.STARTER_LOAD_GAME,
-                     'q':ai.QUIT_GAME,
-                     UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
+    _commands = {const.N_KEY:const.NEW_GAME,
+                 const.L_KEY:const.LOAD_GAME,
+                 const.Q_KEY:const.QUIT_GAME,
+                 const.UNKNOWN_COMMAND:const.SILENT_UNKNOWN}
     
     
 class ModifierSelectionDM(DataManager):
-    id_ = ai.GET_MODIFIER_SELECTION
+    id_ = const.GET_MODIFIER_SELECTION
     _screen_template = {}
     _is_starter_instance = False
-    _commands = {'q':ai.QUIT_GAME,
-                 UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
+    _commands = {const.Q_KEY:const.QUIT_GAME,
+                 const.UNKNOWN_COMMAND:const.SILENT_UNKNOWN}
     
     @property
     def _screen_details(self):
@@ -181,19 +189,19 @@ class ModifierSelectionDM(DataManager):
         mod_string = ''
         for i,value in enumerate(mod_values,1):
             mod_string += f'        {i}) {value}\n'
-            self._commands[str(i)] = ai.SELECT_MODIFIER+':'+value
+            self._commands[str(i)] = const.SELECT_MODIFIER+':'+value
         return {(0,i):{'text':t} for (i,t) in enumerate(f'''
     Choose a {modifier} for your character:
 {mod_string}'''.split('\n'))}
     
     
 class StatSelectionDM(DataManager):
-    id_ = ai.GET_STAT_SELECTION
+    id_ = const.GET_STAT_SELECTION
     _screen_template = {}
     _is_starter_instance = False
-    _commands = {'q':ai.QUIT_GAME,
-                 '\r':ai.SILENT_UNKNOWN,
-                 UNKNOWN_COMMAND:ai.SILENT_UNKNOWN}
+    _commands = {const.Q_KEY:const.QUIT_GAME,
+                 const.RETURN_KEY:const.SILENT_UNKNOWN,
+                 const.UNKNOWN_COMMAND:const.SILENT_UNKNOWN}
     
     @property
     def _screen_details(self):
@@ -204,8 +212,8 @@ class StatSelectionDM(DataManager):
         for i,stat in enumerate(self._stats[1:],ord('A')):
             line = basic_line %(self._max_len)
             stat_string += line.format(stat.capitalize(),chr(i+32),chr(i))
-            self._commands[chr(i)] = ai.ALTER_STAT+f':{stat}:1'
-            self._commands[chr(i+32)] = ai.ALTER_STAT+f':{stat}:-1'
+            self._commands[chr(i)] = const.ALTER_STAT+f':{stat}:1'
+            self._commands[chr(i+32)] = const.ALTER_STAT+f':{stat}:-1'
         return {(0,i):{'text':t} for (i,t) in enumerate(f'''
     Modify your stats:    (-/+)
 {stat_string}
@@ -225,12 +233,12 @@ class StatSelectionDM(DataManager):
              'style':10}
         final_row = len(self._stats)+4
         if self._ai.player.check_triggers(self._stats[0]) \
-            == ai.READY_TO_CONTINUE:
+            == const.READY_TO_CONTINUE:
             content[(4,final_row)] = {
                     'text':'Press ENTER to continue!','style':13}
-            self._commands['\r'] = ai.NEW_GAME
+            self._commands[const.RETURN_KEY] = const.NEW_GAME
         else:
             content[(4,final_row)] = {
                     'text':'                        '}
-            self._commands['\r'] = ai.SILENT_UNKNOWN
+            self._commands[const.RETURN_KEY] = const.SILENT_UNKNOWN
         return content
