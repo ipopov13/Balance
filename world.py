@@ -109,8 +109,8 @@ class World:
                                 theme.getint('average_peak_distance'))
             peak_min = theme.getint('peak_minimum')
             peak_max = theme.getint('peak_maximum')
-            for x in range(0,self._rows,peak_distance):
-                for y in range(0,self._columns,peak_distance):
+            for x in range(0,self._columns,peak_distance):
+                for y in range(0,self._rows,peak_distance):
                     spot = random.randint(0,peak_distance**2-1)
                     actual_x = x + (spot % peak_distance)
                     actual_y = y + (spot // peak_distance)
@@ -156,6 +156,7 @@ class World:
         x,y = self._current_scene_key
         x = x + directions[direction][0]
         y = y + directions[direction][1]
+        keep_scene_y = False
         if not self._settings['is_globe']:
             x = max(0,x)
             x = min(x,self._columns)
@@ -165,26 +166,34 @@ class World:
             if y == -1:
                 y = 0
                 x += self._columns//2
+                keep_scene_y = True
             elif y == self._rows:
                 y = self._rows-1
                 x += self._columns//2
+                keep_scene_y = True
             if x == -1:
                 x = self._columns-1
             elif x >= self._columns:
                 x -= self._columns
-        return (x,y)
+        return ((x,y), keep_scene_y)
     
     def move_player(self,direction):
-        """Change the position of the player in the scene & world"""
+        """
+        Change the position of the player in the scene & world
+        
+        Returns True if the scene changed and needs refreshing
+        """
         move = self.current_scene.move_being(direction=direction,
                                              being=self.player)
         if move is not const.SUCCESSFUL:
-            new_coords = self._change_coords(direction=move)
+            new_coords,keep_scene_y = self._change_coords(direction=move)
             if new_coords == self._current_scene_key:
                 return False
             self._ready_scene(new_coords)
-            player_position = self.current_scene.remove_being(self.player,
-                                                              direction=move)
+            player_position = \
+                self.current_scene.remove_being(self.player,
+                                                direction=move,
+                                                keep_y=keep_scene_y)
             self._current_scene_key = new_coords
             self.current_scene.insert_being(being=self.player,
                                             coords=player_position)
@@ -268,7 +277,7 @@ class Scene:
         else:
             return self._compass(new_coords)
                 
-    def remove_being(self,being=None,direction=None):
+    def remove_being(self,being=None,direction=None,keep_y=False):
         """
         Remove a being and returns its last position
         
@@ -288,9 +297,10 @@ class Scene:
                 x = self._width-1
             elif x == self._width-1 and direction == const.GOING_EAST:
                 x = 0
-            if y == 0 and direction == const.GOING_NORTH:
+            if y == 0 and direction == const.GOING_NORTH and not keep_y:
                 y = self._height-1
-            elif y == self._height-1 and direction == const.GOING_SOUTH:
+            elif y == self._height-1 and direction == const.GOING_SOUTH \
+                and not keep_y:
                 y = 0
         return (x,y)
                 

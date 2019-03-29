@@ -173,6 +173,11 @@ class WorldTest(unittest.TestCase):
             # test world creation
             my_world.start()
             assert my_world._theme_peaks != {}
+            pairs = list(my_world._theme_peaks.keys())
+            assert max([i[0] for i in pairs])<=my_world._columns
+            assert max([i[1] for i in pairs])<=my_world._rows
+            assert min([i[0] for i in pairs])>=0
+            assert min([i[1] for i in pairs])>=0
             # test starting coordinates are set
             assert my_world._current_scene_key is not None
             # test starting scene is created
@@ -186,7 +191,7 @@ class WorldTest(unittest.TestCase):
             for theme in themes:
                 if theme['distribution'] == const.PEAKS:
                     break
-            dist = theme.getint('average_peak_distance')
+            dist = min(my_world._rows, theme.getint('average_peak_distance'))
             settings = config.get_settings(key='world')
             areas = (1+settings.getboolean('is_globe')) \
                     * settings.getint('size')**2
@@ -220,7 +225,8 @@ class WorldTest(unittest.TestCase):
                 scene.move_being.return_value = const.GOING_EAST
                 my_world.move_player(direction=d)
                 scene.remove_being.assert_called_once_with(pc.return_value,
-                                                    direction=const.GOING_EAST)
+                                    direction=scene.move_being.return_value,
+                                    keep_y=False)
                 assert my_world._current_scene_key == (1,0)
                 scene.move_being.return_value = const.GOING_WEST
                 my_world.move_player(direction=d)
@@ -244,10 +250,14 @@ class WorldTest(unittest.TestCase):
                 scene.move_being.return_value = const.GOING_EAST
                 my_world.move_player(direction=d)
                 assert my_world._current_scene_key == (0,0)
+                scene.remove_being.reset_mock()
                 scene.move_being.return_value = const.GOING_NORTH
                 my_world.move_player(direction=d)
                 assert my_world._current_scene_key == \
                     (my_world._columns//2,0)
+                scene.remove_being.assert_called_once_with(pc.return_value,
+                                    direction=scene.move_being.return_value,
+                                    keep_y=True)
                 my_world.move_player(direction=d)
                 assert my_world._current_scene_key == (0,0)
                 

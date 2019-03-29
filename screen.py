@@ -163,7 +163,7 @@ class Scene(Screen):
     def _screen_details(self):
         self._terminal.attach_scene(x=20,y=2,
                                     scene=self._ai.game_data.current_scene)
-        content = config.read_content(key=const.GET_SCENE)
+        content = {(0,0):{'text':f'{self._ai.game_data._current_scene_key}'}}#config.get_config(key=const.GET_SCENE)
         return content
     
     @property
