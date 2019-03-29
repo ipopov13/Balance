@@ -2,38 +2,41 @@
 """
 Created on Mon Feb 11 14:51:49 2019
 
-DataManager classes for the Balance rogue-like RPG
+Screen classes for the Balance rogue-like RPG framework.
 
-This family of classes creates the screens of the game and passes
- player commands to the AI. DMs are singletons. At subclass definition
- they are entered into a dictionary in the abstract parent class and
- are returned from there whenever they are needed.
- 
-Order of DM actions:
-0) The DM refreshes its screen and presents it in the console, getting
-    a player command back.
-1) The DM translates the raw command into a message.
-2) The DM calls AI.execute(message) for a full update of the game data
-3) The AI sends back 0 or a DM ID if screens have changed.
-4) if a DM ID was returned the active DM returns the respective subclass
-    instance, otherwise it repeats the loop.
-    
+This family of classes creates the screens of the game and translates
+ player commands into messages understandable for the AI. Screens are
+ singletons. At subclass definition they are entered into a dictionary
+ in the abstract parent class and are returned from there whenever
+ they are needed.
+
+Order of Screen actions:
+0) The Screen refreshes its terminal and presents it, getting
+a player command back.
+1) The Screen translates the raw command into a message.
+2) The Screen calls AI.execute(message) for a full update of the game data
+3) if a Screen ID was returned or the AI requested a refresh the active
+    Screen returns the respective subclass ID (its own, if a refresh is
+    needed) to be called by the main loop.
+4) if the same ID is returned the Screen gets another command from the
+ terminal and the process repeats.
+
 Requirements for subclassing (enforced through the metaclass):
-    DMs have a unique id_
-        have a dictionary mapping keyboard hits to messages defined in
-          the ai module
-        always have the UNKNOWN_COMMAND in their _commands dictionary,
-          also mapping to a unique message constant in the ai module,
-          thatis handled by a dedicated handler (different screens can
-          have different reactions to an unknown command)
-        can set their _is_starter_instance to True, but only ONE
-          subclass can do that!
-    
+1) Screens have a unique id_
+2) have a dictionary mapping keyboard hits to messages defined in
+    the AI module
+3) always have the UNKNOWN_COMMAND in their _commands dictionary,
+    also mapping to a unique message constant in the ai module,
+    (different screens can have different reactions to an unknown
+    command)
+4) can set their _is_starter_instance to True, but only ONE
+    subclass can do that!
+
 Requirements for testing (already covered in the abstract base class):
-    DMs refresh the screen using the console
-        receive a command from the console
-        call AI.execute()
-        return a DM instance if the AI sent it in response
+1) Screens refresh the screen using the console
+2) receive a command from the console
+3) call AI.execute()
+4) return a Screen ID if the AI sent it in response
 
 @author: IvanPopov
 """
@@ -41,6 +44,7 @@ import ai
 from terminal import Terminal
 from assets import StaticScreens
 import constants as const
+import config
 
 
 class ScreenMeta(type):
@@ -119,9 +123,9 @@ class Screen(metaclass=ScreenMeta):
     @property
     def _dynamic_screen_content(self):
         """
-        Concrete DMs should override this to implement their dynamic
-        screen data presentation by extracting text from
-        DataManager._ai.game_data. This method should return a
+        Concrete Screens should override this to implement their
+        dynamic screen data presentation by extracting text from
+        Screen._ai.game_data. This method should return a
         dictionary of (x,y):{'text':..., 'style':...},
         where (x,y) are coords of the beginning of the text,
         text is a single line string, and style is an integer in the
@@ -132,10 +136,10 @@ class Screen(metaclass=ScreenMeta):
     @property
     def _screen_details(self):
         """
-        Concrete DMs should override this to implement their
+        Concrete Screens should override this to implement their
         screen initialization procedure by returning static session
         specific data to lay on top of the template, as well as
-        attaching objects like the current scene to screen pixels!
+        attaching objects like the current scene to terminal pixels!
         """
         return {}
     
@@ -157,9 +161,10 @@ class Scene(Screen):
     
     @property
     def _screen_details(self):
-        self._terminal.attach_scene(x=1,y=1,
-                                  scene=self._ai.game_data.current_scene)
-        return {}
+        self._terminal.attach_scene(x=20,y=2,
+                                    scene=self._ai.game_data.current_scene)
+        content = config.read_content(key=const.GET_SCENE)
+        return content
     
     @property
     def _dynamic_screen_content(self):

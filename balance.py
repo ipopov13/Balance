@@ -5,7 +5,7 @@ Created on Fri Feb  8 10:06:51 2019
 Main instance for the Balance rogue-like RPG
  
 Requirements:
-    Calls take_control() of the current DM.
+    Calls take_control() of the current Screen.
 
 @author: IvanPopov
 """

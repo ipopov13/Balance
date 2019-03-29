@@ -2,27 +2,27 @@
 """
 Created on Wed Feb  6 10:41:01 2019
 
-AI module for the Balance rogue-like RPG platform.
+AI module for the Balance rogue-like RPG framework.
 
 The AI inits a dictionary of messages:actions (messages are unique).
 The AI loads/creates the game data when handling commands from the
- starting DM.
-The AI gets the message sent by the DM and updates the controlled being
- object.
-Then it calls the action associated with the respective command.
+Menu screen.
+The AI gets the message sent by the current Screen and calls the action
+associated with the respective command.
 The action changes the game data accordingly. It also increments the
- controlled object's timer property if the action takes time, and
- returns a DM ID or None if the game has ended.
+controlled object's timer property if the action takes time, and
+returns a Screen ID or None if the game has ended, and a boolean refresh
+argument to pass back to the Screen.
 The AI checks if all active objects are at the same point in time. If
- not, it picks the next one to act, decides on its action and sends it
- to an action.
+not, it picks the next one to act, decides on its action and sends it
+to an action.
 This repeats until all active objects have their timer properties equal
- (everyone has acted).
-In the end of a turn the AI returns the final DM ID or None.
- 
+(everyone has acted).
+In the end of a turn the AI returns the final Screen ID or None, plus
+the refresh argument.
 Every functionality is expected to exist as an action that responds to
- specific messages by modifying the game state passed in the game_data
- variable and then returning the next DM ID.
+specific messages by modifying the game state passed in the game_data
+variable and then returning the next Screen ID and refresh.
         
 @author: IvanPopov
 """

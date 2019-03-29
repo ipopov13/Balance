@@ -2,7 +2,7 @@
 """
 Created on Fri Mar  8 09:11:30 2019
 
-Screen class for the Balance rogue-like RPG.
+Terminal class for the Balance rogue-like RPG framework.
 
 @author: IvanPopov
 """
