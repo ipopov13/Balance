@@ -17,11 +17,17 @@ Contains all string constants for the game: triggers, dm call, action
 
 ## Stat triggers
 READY_TO_CONTINUE = 'READY_TO_CONTINUE'
+## Stat governed areas
+GOVERN_TIME = 'GOVERN_TIME'
 ## Modifier "applied" values
 AT_CHARACTER_CREATION = 'AT_CHARACTER_CREATION'
 ## Screen constants
 DEFAULT_PIXEL_STYLE = 7
 DEFAULT_PIXEL_CHAR = ' '
+## Scene.ini properties
+NUMBER_VISUAL = 'number'
+GAUGE_VISUAL = 'gauge'
+MODULO_GAUGE_VISUAL = 'modulo_gauge'
 ## Theme distributions
 PEAKS = 'peaks'
 POLES = 'poles'

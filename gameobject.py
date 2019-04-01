@@ -70,11 +70,23 @@ class PlayableCharacter(Being):
         stats = config.get_config(section='character_template')
         for stat in stats:
             self._stats[stat.name] = config.simplify(stat)
+            
+    def move_time(self):
+        for stat in self._stats:
+            if self._stats[stat]['governs'] == const.GOVERN_TIME:
+                self.change_stat(stat=stat,amount=1)
         
     def get_stat(self,stat=None):
         """Return the current level of a stat"""
         try:
             return self._stats[stat]['current']
+        except KeyError:
+            raise ValueError(f'Bad stat identifier: "{stat}".')
+            
+    def get_max_stat(self,stat=None):
+        """Return the maximum level of a stat"""
+        try:
+            return self._stats[stat]['max']
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
             

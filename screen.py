@@ -120,6 +120,67 @@ class Screen(metaclass=ScreenMeta):
                 next_screen = self.id_
         return Screen._subclass_instances[next_screen]
     
+    def _format_number(self,vis):
+        content = {}
+        x,y = [int(x) for x in vis['scene_pos'].split(',')]
+        content[(x,y)] = {'text':vis['label'], 
+                          'style':vis.getint('label_style')}
+        space_left = vis.getint('total_length') - len(vis['label'])
+        value_text = str(self._ai.player.get_stat(vis.name))[:space_left]
+        content[(x+len(vis['label']),y)] = \
+            {'text':value_text.rjust(space_left,' '),
+             'style':vis.getint('value_style')}
+        return content
+        
+    def _format_gauge(self,vis):
+        content = {}
+        x,y = [int(coord) for coord in vis['scene_pos'].split(',')]
+        total_length = vis.getint('total_length')
+        # Set up the gauge brackets
+        content[(x,y)] = {'text':'['}
+        content[(x+total_length-1,y)] = {'text':']'}
+        # Define values and breakpoint index
+        value = self._ai.player.get_stat(vis.name)
+        max_value = self._ai.player.get_max_stat(vis.name)
+        breaks = [int(style) for style in vis['breakpoints'].split(',') if style]
+        divisor = vis.getint('divisor')
+        if breaks:
+            bracket = len([bp for bp in breaks if bp<value])
+        elif divisor:
+            bracket = (value // divisor) % 2
+            value = value % divisor
+            max_value = divisor-1
+        else:
+            bracket = 0
+        # Preload properties
+        fill = [int(style) for style in \
+                vis['gauge_fills'].split(',')][bracket]
+        # Get the gauge measurement
+        fill_length = round(value / max_value * (total_length-2))
+        # Define the overlay text (marker, status or none)
+        overlay = ''
+        if vis['markers']:
+            # Adjust marker position
+            overlay = ' '*(fill_length-1) + vis['markers'][bracket]
+        elif vis['statuses']:
+            # Fix status length if too long. -2 for the brackets
+            overlay = vis['statuses'].split(',')[bracket][:total_length-2]
+        m_style = 0
+        if overlay:
+           m_style = [int(style) for style in \
+                      vis['marker_styles'].split(',')][bracket]
+        # Define gauge contents
+        # Split the whole gauge into single character labels
+        # for minimal refreshing
+        for x_ in range(x+1,x+1+total_length-2):
+            if vis.getboolean('perma_fill'):
+                fill_ = fill
+            else:
+                fill_ = fill if x_<=x+fill_length else 0
+            content[(x_,y)] = {'text':overlay[x_-x-1:x_-x] or ' ',
+                               'style':fill_+m_style}
+        return content
+    
     @property
     def _dynamic_screen_content(self):
         """
@@ -164,12 +225,32 @@ class Scene(Screen):
         self._terminal.attach_scene(x=20,y=2,
                                     scene=self._ai.game_data.current_scene)
         content = {(0,0):{'text':f'{self._ai.game_data._current_scene_key}'}}
-#        content = config.get_config(key=const.GET_SCENE)
+        visuals = config.get_config(section='scene')
+        # Integrate the visuals
+        for vis in visuals:
+            if vis['type'] == const.NUMBER_VISUAL:
+                content.update(self._format_number(vis))
+            elif vis['type'] == const.GAUGE_VISUAL \
+                or vis['type'] == const.MODULO_GAUGE_VISUAL:
+                content.update(self._format_gauge(vis))
+            else:
+                raise ValueError (f"Unknown visual type:{vis['type']}")
         return content
     
     @property
     def _dynamic_screen_content(self):
-        return {}
+        content = {}
+        visuals = config.get_config(section='scene')
+        # Integrate the visuals
+        for vis in visuals:
+            if vis['type'] == const.NUMBER_VISUAL:
+                content.update(self._format_number(vis))
+            elif vis['type'] == const.GAUGE_VISUAL \
+                or vis['type'] == const.MODULO_GAUGE_VISUAL:
+                content.update(self._format_gauge(vis))
+            else:
+                raise ValueError (f"Unknown visual type:{vis['type']}")
+        return content
     
     
 class Menu(Screen):

@@ -380,6 +380,13 @@ class TileTest(unittest.TestCase):
         
 class PlayableCharacterTest(unittest.TestCase):
         
+    def test_get_max_stat(self):
+        being = gameobject.PlayableCharacter()
+        being._stats = {'stat': {'min':0,'max':10,'current':5,
+                                 'paired_with':'',
+                                 'trigger_on_min':''}}
+        assert being.get_max_stat('stat') == 10
+        
     def test_get_change_stat(self):
         being = gameobject.PlayableCharacter()
         being._stats = {'stat': {'min':0,'max':10,'current':5,

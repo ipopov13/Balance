@@ -58,8 +58,9 @@ class AI:
         # Make sure the command is real
         if command not in AI._action_mapping:
             raise ValueError(f"Unknown message to AI: '{command}'!")
-        result = AI._action_mapping[command].execute(subcommand=subcommand,
-                                                     world=self.game_data)
+        result = AI._action_mapping[command].execute(
+                subcommand=subcommand,
+                player=self.game_data.player)
         return result
     
     @property
@@ -103,18 +104,19 @@ class DoNothing(Action):
 class Move(Action):
     message = const.MOVE
     
-    def execute(self,subcommand=None,**kwarg):
+    def execute(self,subcommand=None,player=None,**kwarg):
         refresh = AI.game_data.move_player(subcommand)
+        player.move_time()
         return (const.GET_SCENE, refresh)
         
 
 class BeginGame(Action):
     message = const.NEW_GAME
     
-    def execute(self,world=None,**kwarg):
-        if world.player.available_modifiers:
+    def execute(self,player=None,**kwarg):
+        if player.available_modifiers:
             return (const.GET_MODIFIER_SELECTION, True)
-        elif world.player.available_stat_selections:
+        elif player.available_stat_selections:
             return (const.GET_STAT_SELECTION, True)
         else:
             return (const.GET_SCENE, False)
@@ -123,11 +125,11 @@ class BeginGame(Action):
 class ChooseModifier(Action):
     message = const.SELECT_MODIFIER
     
-    def execute(self,subcommand=None,world=None,**kwarg):
-        world.player.apply_modifier(subcommand)
-        if world.player.available_modifiers:
+    def execute(self,subcommand=None,player=None,**kwarg):
+        player.apply_modifier(subcommand)
+        if player.available_modifiers:
             return (const.GET_MODIFIER_SELECTION, True)
-        elif world.player.available_stat_selections:
+        elif player.available_stat_selections:
             return (const.GET_STAT_SELECTION, True)
         else:
             return (const.GET_SCENE, False)
@@ -136,11 +138,11 @@ class ChooseModifier(Action):
 class ChangeStat(Action):
     message = const.ALTER_STAT
     
-    def execute(self,subcommand=None,world=None,**kwarg):
+    def execute(self,subcommand=None,player=None,**kwarg):
         stat,amount = subcommand.split(':')
         amount = int(amount)
         try:
-            world.player.change_stat(stat,amount)
+            player.change_stat(stat,amount)
         except ValueError:
             pass
         return (const.GET_STAT_SELECTION, False)
