@@ -363,7 +363,7 @@ class Tile:
             raise ValueError("Tile is already occupied!")
         self._being = value
         try:
-            self._pixel.update({'char':self.char,'style':self.style})
+            self._pixel.update(self.data)
         except AttributeError:
             pass
         
@@ -376,7 +376,11 @@ class Tile:
         if not hasattr(pixel,'update'):
             raise AttributeError("Attached object cannot be updated!")
         self._pixel = pixel
-        self._pixel.update({'char':self.char,'style':self.style})
+        self._pixel.update(self.data)
+        
+    @property
+    def data(self):
+        return {'text':self.char,'style':self.style}
         
     @property
     def char(self):

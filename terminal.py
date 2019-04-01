@@ -20,8 +20,7 @@ class Terminal:
         settings = config.get_settings(key='terminal')
         self._width = settings.getint('width')
         self._height = settings.getint('height')
-        self._pixels = {(x,y):Pixel() for x in range(self._width) \
-                                    for y in range(self._height)}
+        self._pixels = {}
         self._text = {}
         self._presented_text = {}
         settings = config.get_settings()
@@ -43,21 +42,16 @@ class Terminal:
                 raise ValueError("A Terminal object cannot have "
                                  f"more than {self._height} rows!")
             self._text[coords] = text
-                    
-    def attach(self,*,x=None,y=None,presentable=None):
-        """Set pixel presentable"""
-        try:
-            self._pixels[(x,y)].attach(presentable)
-        except KeyError:
-            raise ValueError("Invalid coordinates for attach()!")
     
     def attach_scene(self,*,x=None,y=None,scene=None):
         for (x1,y1),presentable in scene.tiles():
-            try:
-                self._pixels[(x+x1,y+y1)].attach(presentable)
-            except KeyError:
-                raise ValueError("Invalid coordinates for attach_scene:"
-                                 f"{(x+x1,y+y1)}")
+            if x is None or y is None or \
+                x < 0 or y < 0 or \
+                x+x1>= self._width or y+y1>=self._height:
+                raise ValueError("Invalid coordinates for attach_scene"
+                                 f"{(x,y)}, scene is out of bounds.")
+            self._pixels.setdefault((x+x1,y+y1), Pixel(self)) \
+                        .attach(presentable)
             
     def reset(self):
         """Clear the contents of the terminal"""
@@ -74,9 +68,6 @@ class Terminal:
         Additionally store that information in order to implement minimum
         change needed.
         """
-        for coords,pixel in self._get_changed_pixels():
-            pixel.is_presented = True
-            self._console.text(*coords,*pixel.data)
         for coords,text in self._text.items():
             if self._presented_text.get(coords,None) != self._text[coords]:
                 self._console.text(*coords,
@@ -88,36 +79,39 @@ class Terminal:
         """Return a command from the console"""
         while True:
             a=msvcrt.getch()
-            #self._console.text(30,10,f'#{a.decode()}#')
             try:
                 return a.decode()
             except UnicodeDecodeError:
                 pass
                 
-    def _get_changed_pixels(self):
-        for coords,pixel in self._pixels.items():
-            if pixel.is_active and not pixel.is_presented:
-                yield (coords,pixel)
+    def update(self,pixel):
+        """Receive data from pixel"""
+        pixel_found = False
+        for coords in self._pixels:
+            if self._pixels[coords] == pixel:
+                pixel_found = True
+                break
+        if pixel_found:
+            self.load_data({coords:pixel.data})
+        else:
+            raise ValueError("Unknown pixel updating the terminal!")
     
     
 class Pixel:
     
-    def __init__(self):
-        self.is_presented = True
-        self._data = {'char':const.DEFAULT_PIXEL_CHAR,
+    def __init__(self, terminal):
+        self._terminal = terminal
+        self.data = {'text':const.DEFAULT_PIXEL_CHAR,
                       'style':const.DEFAULT_PIXEL_STYLE}
         self._presentable = None
-       
-    @property
-    def data(self):
-        return [self._data['char'], self._data['style']]
-       
-    @property
-    def is_active(self):
-        return self._presentable is not None
         
     def attach(self,presentable):
-        """Attach a presentable object to update from"""
+        """
+        Attach a presentable object to update from
+        
+        NOTE: The presentable should call the pixel.update method
+        on attaching!
+        """
         presentable.pixel = self
         self._presentable = presentable
     
@@ -131,6 +125,6 @@ class Pixel:
         self.is_presented = True
         
     def update(self,visual):
-        """Receive latest presentable data"""
-        self._data = visual
-        self.is_presented = False
+        """Translate latest visual data to the terminal"""
+        self.data = visual
+        self._terminal.update(self)

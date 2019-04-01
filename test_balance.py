@@ -67,16 +67,7 @@ class TerminalTest(unittest.TestCase):
         
     def test_calls_console_only_for_changes(self):
         with patch('terminal.Terminal._console') as console:
-            visual = {'char':'a','style':8}
             screen = Terminal()
-            obj = mock.Mock()
-            screen.attach(x=0,y=0,presentable=obj)
-            screen._pixels[(0,0)].update(visual)
-            screen.present()
-            console.text.assert_called_once_with(0,0,'a',8)
-            console.text.reset_mock()
-            screen.present()
-            console.text.assert_not_called()
             screen.load_data(StaticScreens.tester)
             screen.present()
             console.text.assert_called_once_with(0, 0,'test',125)
@@ -97,21 +88,22 @@ class TerminalTest(unittest.TestCase):
             screen.present()
             console.text.assert_not_called()
     
-    def test_attach_update_clear(self):
-        with patch('terminal.Terminal._console') as console:
-            screen = Terminal()
-            obj = mock.Mock()
-            screen.attach(x=0,y=0,presentable=obj)
-            assert screen._pixels[(0,0)].is_active
-            screen.reset()
-            assert not screen._pixels[(0,0)].is_active
-    
     def test_attach_raises_on_bad_coords(self):
         with patch('terminal.Terminal._console') as console:
             screen = Terminal()
-            obj = mock.Mock()
+            scene = world.Scene({'Nature':35})
             with self.assertRaises(ValueError):
-                screen.attach(x=0,presentable=obj)
+                screen.attach_scene(x=0,scene=scene)
+            with self.assertRaises(ValueError):
+                screen.attach_scene(y=0,scene=scene)
+            with self.assertRaises(ValueError):
+                screen.attach_scene(x=screen._width,y=0,scene=scene)
+            with self.assertRaises(ValueError):
+                screen.attach_scene(x=0,y=screen._height,scene=scene)
+            with self.assertRaises(ValueError):
+                screen.attach_scene(x=-1,y=0,scene=scene)
+            with self.assertRaises(ValueError):
+                screen.attach_scene(x=0,y=-1,scene=scene)
     
     def test_attach_scene(self):
         with patch('terminal.Terminal._console') as console:
@@ -123,7 +115,7 @@ class TerminalTest(unittest.TestCase):
             scene = mock.Mock()
             scene.tiles.return_value = {(i,i):tile for i in range(10)}.items()
             screen.attach_scene(x=0,y=0,scene=scene)
-            assert len(list(screen._get_changed_pixels()))==10
+            assert len(screen._text)==10
         
     def test_raise_on_bad_input(self):
         screen = Terminal()
@@ -144,15 +136,16 @@ class TerminalTest(unittest.TestCase):
 class PixelTest(unittest.TestCase):
     
     def test_attach_raises_on_nonpresentable(self):
-        p = Pixel()
+        p = Pixel(0)
         with self.assertRaises(AttributeError):
             p.attach('a')
     
     def test_update(self):
-        test_data = {'char':'s','style':3}
-        p = Pixel()
+        terminal = mock.Mock()
+        test_data = {'text':'s','style':3}
+        p = Pixel(terminal)
         p.update(test_data)
-        assert p.data == ['s',3]
+        terminal.update.assert_called_once_with(p)
 
 
 class AITest(unittest.TestCase):
@@ -359,7 +352,7 @@ class TileTest(unittest.TestCase):
         with self.assertRaises(AttributeError):
             tile.pixel = 1
         tile.pixel = pixel
-        pixel.update.assert_called_once_with({'char':terrain.char,
+        pixel.update.assert_called_once_with({'text':terrain.char,
                                               'style':terrain.style})
     
     def test_char_and_style(self):
