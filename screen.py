@@ -166,10 +166,10 @@ class Screen(metaclass=ScreenMeta):
             # Fix status length if too long. -2 for the brackets
             overlay = vis['statuses'].split(',')[bracket][:total_length-2]
             overlay = overlay.center(total_length-2, ' ')
-        m_style = 0
+        overlay_style = 0
         if overlay:
-           m_style = [int(style) for style in \
-                      vis['marker_styles'].split(',')][bracket]
+           overlay_style = [int(style) for style in \
+                      vis['overlay_styles'].split(',')][bracket]
         # Define gauge contents
         # Split the whole gauge into single character labels
         # for minimal refreshing
@@ -179,7 +179,7 @@ class Screen(metaclass=ScreenMeta):
             else:
                 fill_ = fill if x_<=x+fill_length else 0
             content[(x_,y)] = {'text':overlay[x_-x-1:x_-x] or ' ',
-                               'style':fill_+m_style}
+                               'style':fill_+overlay_style}
         return content
     
     @property

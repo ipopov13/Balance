@@ -255,11 +255,6 @@ class Terrain(Environment, metaclass=RegistrableEnvMeta):
                 char  = terrain['char']
                 type_  = terrain['type']
                 style = terrain.getint('style')
-                spawned_creature = terrain['spawned_creature']
-                tire_move = terrain.getint('tire_move')
-                tire_stay = terrain.getint('tire_stay')
-                creates_context = terrain.getboolean('creates_context')
-                passable_for_types = eval(terrain['passable_for_types'])
                 single_char_id  = terrain['id']
                 asset  = terrain['asset']
 
