@@ -165,6 +165,7 @@ class Screen(metaclass=ScreenMeta):
         elif vis['statuses']:
             # Fix status length if too long. -2 for the brackets
             overlay = vis['statuses'].split(',')[bracket][:total_length-2]
+            overlay = overlay.center(total_length-2, ' ')
         m_style = 0
         if overlay:
            m_style = [int(style) for style in \
