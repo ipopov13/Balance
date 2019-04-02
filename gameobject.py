@@ -16,13 +16,13 @@ import constants as const
 
 
 class GameObject:
-    
+
     @classmethod
     def register_subclass(cls,subcls):
         if subcls.id_ in cls._subs:
             raise ValueError('Subclass id repeats twice: {subcls.id_}!')
         cls._subs[subcls.id_] = subcls
-    
+
     @classmethod
     def get_instance(cls,id_=None):
         try:
@@ -38,20 +38,20 @@ class DataLoaderMeta(type):
         if bases == (GameObject,):
             cls.load_data()
         return cls
-    
+
 
 class Being(GameObject,metaclass=DataLoaderMeta):
     """
     Covers all active actors in the game
     """
     _modifiers = {}
-    
+
     @classmethod
     def load_data(cls):
         modifiers = config.get_config(section='modifiers')
         for modifier in modifiers:
             cls._modifiers[modifier.name] = config.simplify(modifier)
-    
+
     def __init__(self):
         """
         Create a Being of the specified type. Specified in subclasses.
@@ -60,7 +60,7 @@ class Being(GameObject,metaclass=DataLoaderMeta):
 
 
 class PlayableCharacter(Being):
-        
+
     def __init__(self,npc=False):
         if not npc:
             self.char = const.PLAYER
@@ -70,31 +70,31 @@ class PlayableCharacter(Being):
         stats = config.get_config(section='character_template')
         for stat in stats:
             self._stats[stat.name] = config.simplify(stat)
-            
+
     def move_time(self):
         for stat in self._stats:
             if self._stats[stat]['governs'] == const.GOVERN_TIME:
                 self.change_stat(stat=stat,amount=1)
-        
+
     def get_stat(self,stat=None):
         """Return the current level of a stat"""
         try:
             return self._stats[stat]['current']
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
-            
+
     def get_max_stat(self,stat=None):
         """Return the maximum level of a stat"""
         try:
             return self._stats[stat]['max']
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
-            
+
     def _stat_can_change(self,stat,amount):
         return self._stats[stat]['min'] \
            <= (self._stats[stat]['current'] + amount) \
            <= self._stats[stat]['max']
-            
+
     def change_stat(self,stat=None,amount=None):
         """
         Change the current level of a stat taking into account paired
@@ -114,11 +114,11 @@ class PlayableCharacter(Being):
         else:
             raise ValueError(f'Stat would go out of bounds: stat:"{stat}",'
                              f'amount:"{amount}".')
-            
+
     def check_triggers(self, stat):
         """
         Returns any activated triggers for the querried stat.
-        
+
         Should probably be internal and called automatically on stat change!
         """
         if self.get_stat(stat=stat) == self._stats[stat]['min']:
@@ -127,7 +127,7 @@ class PlayableCharacter(Being):
             return self._stats[stat]['trigger_on_max']
         else:
             return ''
-        
+
     @property
     def available_stat_selections(self):
         """
@@ -140,18 +140,18 @@ class PlayableCharacter(Being):
                 and self.get_stat(stat) > 0:
                 selections.append(stat)
         return len(selections)
-        
+
     def next_stat_selection(self):
         """
         Return a list of stat names ending with the stat pool name
-        
+
         Every character stat pool in the template (having the
         READY_TO_CONTINUE trigger on it's min value) triggers a stat
         modification screen listing only the stats linked to it and
         itself, so that the player can make adjustments. This method
         returns a list of the stat names that depend on the pool,
         starting with the name of the pool itself.
-        
+
         If no pool is found the method raises StopIteration, as it is
         not supposed to be called when all pools are already depleted.
         """
@@ -169,7 +169,7 @@ class PlayableCharacter(Being):
             return stat_list
         else:
             raise StopIteration("No more stat selections available!")
-        
+
     @property
     def available_modifiers(self):
         """
@@ -182,13 +182,13 @@ class PlayableCharacter(Being):
                 and mod not in self._current_modifiers:
                 available_mods.append(mod)
         return len(available_mods)
-        
+
     def next_modifier(self):
         """
         Every character modification defined with AT_CHARACTER_CREATION
         triggers a selection screen. Only one value of the modification
         can be selected. This is used for races, classes, etc.
-        
+
         Returns the modifer.name and a list of its values
         [modifier, [values]]
         """
@@ -204,7 +204,7 @@ class PlayableCharacter(Being):
             if value.startswith(mod+':'):
                 mod_and_values[1].append(value)
         return mod_and_values
-                
+
     def apply_modifier(self,modifier):
         """
         Modifier is 'modifierName:value' as found in
@@ -234,11 +234,11 @@ class RegistrableEnvMeta(type):
         else:
             cls.load_subs()
         return cls
-    
+
 
 class Effect(Environment, metaclass=RegistrableEnvMeta):
     _subs = {}
-    
+
     @classmethod
     def load_subs(cls):
         pass
@@ -246,22 +246,22 @@ class Effect(Environment, metaclass=RegistrableEnvMeta):
 
 class Terrain(Environment, metaclass=RegistrableEnvMeta):
     _subs = {}
-    
+
     @classmethod
     def load_subs(cls):
         for terrain in config.get_config(section='terrains'):
             class NewTerrain(cls):
                 id_ = terrain.name
-                char  = terrain['char']
-                type_  = terrain['type']
+                char = terrain['char']
+                type_ = terrain['type']
                 style = terrain.getint('style')
-                single_char_id  = terrain['id']
-                asset  = terrain['asset']
+                single_char_id = terrain['id']
+                asset = terrain['asset']
 
 
 class Theme(Environment, metaclass=RegistrableEnvMeta):
     _subs = {}
-    
+
     @classmethod
     def load_subs(cls):
         pass
@@ -274,11 +274,11 @@ class Theme(Environment, metaclass=RegistrableEnvMeta):
 #                    modifiers = eval(theme['modifiers'])
 #                    mod_thresholds = eval(theme['mod_thresholds'])
 #                    terrains = eval(theme['terrains'])
-    
+
     @classmethod
     def get_structures(cls, themes):
         return 'structures'
-    
+
     @classmethod
     def get_terrains(cls, themes, num=0):
         return [Terrain.get_instance(id_='dirt')]*num

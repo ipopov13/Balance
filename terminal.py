@@ -95,6 +95,10 @@ class Terminal:
             self.load_data({coords:pixel.data})
         else:
             raise ValueError("Unknown pixel updating the terminal!")
+            
+    def stop_console(self):
+        """Kill the console"""
+        self._console.clo
     
     
 class Pixel:
