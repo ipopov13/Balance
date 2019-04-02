@@ -264,15 +264,16 @@ class Theme(Environment, metaclass=RegistrableEnvMeta):
     
     @classmethod
     def load_subs(cls):
-        for theme in config.get_config(section='themes'):
-            if theme['terrains']:
-                class NewTheme(cls):
-                    id_ = theme.name
-                    theme_breakpoints = eval(theme['theme_level_breakpoints'])
-                    terrain_distribution = eval(theme['terrain_distribution'])
-                    modifiers = eval(theme['modifiers'])
-                    mod_thresholds = eval(theme['mod_thresholds'])
-                    terrains = eval(theme['terrains'])
+        pass
+#        for theme in config.get_config(section='themes'):
+#            if theme['terrains']:
+#                class NewTheme(cls):
+#                    id_ = theme.name
+#                    theme_breakpoints = eval(theme['theme_level_breakpoints'])
+#                    terrain_distribution = eval(theme['terrain_distribution'])
+#                    modifiers = eval(theme['modifiers'])
+#                    mod_thresholds = eval(theme['mod_thresholds'])
+#                    terrains = eval(theme['terrains'])
     
     @classmethod
     def get_structures(cls, themes):

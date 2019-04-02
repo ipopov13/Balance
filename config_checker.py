@@ -54,12 +54,18 @@ Requirements checked:
         DEFAULT has all the keys
         each terrain has a style, ID, char & type
         all IDs are unique!
-        all char/style combinations are unique!
+        each terrain with an asset key has the value equal to the terrain name
     Themes:
         DEFAULT has all the keys
         any peak distances are less than world size!
-        terrain_distributions use only existing terrain types from terrains.ini
-        terrains lists use only existing terrain IDs from terrains.ini
+    Terrain distributions:
+        Each name starts with an existing theme name +':'
+        Each section has a major_theme range, terrains and distribution defined
+        All terrains are csv lists of existing terrain names
+        All distributions are three digits, digits only, and not 000
+        Any other keys reference existing themes DIFFERENT FROM THE MAJOR ONE,
+        All values are correct ranges within the themes' min-max values
+        
         
 @author: IvanPopov
 """
