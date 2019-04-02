@@ -16,15 +16,18 @@ import constants as const
 
 
 class GameObject:
+    """The abstract parent of all game objects."""
 
     @classmethod
-    def register_subclass(cls,subcls):
+    def register_subclass(cls, subcls):
+        """Register a subclass in the mapping"""
         if subcls.id_ in cls._subs:
             raise ValueError('Subclass id repeats twice: {subcls.id_}!')
         cls._subs[subcls.id_] = subcls
 
     @classmethod
-    def get_instance(cls,id_=None):
+    def get_instance(cls, id_=None):
+        """Return an instance of the called subclass"""
         try:
             return cls._subs[id_]()
         except KeyError:
@@ -33,14 +36,15 @@ class GameObject:
 
 
 class DataLoaderMeta(type):
-    def __new__(meta, name, bases, class_dict):
-        cls = type.__new__(meta, name, bases, class_dict)
+    """Metaclass for loading data from ini at class definition"""
+    def __new__(mcs, name, bases, class_dict):
+        cls = type.__new__(mcs, name, bases, class_dict)
         if bases == (GameObject,):
             cls.load_data()
         return cls
 
 
-class Being(GameObject,metaclass=DataLoaderMeta):
+class Being(GameObject, metaclass=DataLoaderMeta):
     """
     Covers all active actors in the game
     """
@@ -48,20 +52,16 @@ class Being(GameObject,metaclass=DataLoaderMeta):
 
     @classmethod
     def load_data(cls):
+        """Load the modifier data for constructing beings"""
         modifiers = config.get_config(section='modifiers')
         for modifier in modifiers:
             cls._modifiers[modifier.name] = config.simplify(modifier)
 
-    def __init__(self):
-        """
-        Create a Being of the specified type. Specified in subclasses.
-        """
-        pass
-
 
 class PlayableCharacter(Being):
+    """An active game object"""
 
-    def __init__(self,npc=False):
+    def __init__(self, npc=False):
         if not npc:
             self.char = const.PLAYER
             self.style = const.DEFAULT_PLAYER_STYLE
@@ -72,30 +72,31 @@ class PlayableCharacter(Being):
             self._stats[stat.name] = config.simplify(stat)
 
     def move_time(self):
+        """Increase the time stat of the being, if any"""
         for stat in self._stats:
             if self._stats[stat]['governs'] == const.GOVERN_TIME:
-                self.change_stat(stat=stat,amount=1)
+                self.change_stat(stat=stat, amount=1)
 
-    def get_stat(self,stat=None):
+    def get_stat(self, stat=None):
         """Return the current level of a stat"""
         try:
             return self._stats[stat]['current']
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
 
-    def get_max_stat(self,stat=None):
+    def get_max_stat(self, stat=None):
         """Return the maximum level of a stat"""
         try:
             return self._stats[stat]['max']
         except KeyError:
             raise ValueError(f'Bad stat identifier: "{stat}".')
 
-    def _stat_can_change(self,stat,amount):
+    def _stat_can_change(self, stat, amount):
         return self._stats[stat]['min'] \
            <= (self._stats[stat]['current'] + amount) \
            <= self._stats[stat]['max']
 
-    def change_stat(self,stat=None,amount=None):
+    def change_stat(self, stat=None, amount=None):
         """
         Change the current level of a stat taking into account paired
         stats and min/max levels
@@ -103,10 +104,10 @@ class PlayableCharacter(Being):
         if stat is None or amount is None:
             raise TypeError(f'Stat or amount not set: stat"{stat}",'
                             f'amount"{amount}".')
-        if self._stat_can_change(stat,amount):
+        if self._stat_can_change(stat, amount):
             paired_stat = self._stats[stat]['paired_with']
             if paired_stat:
-                if self._stat_can_change(paired_stat,-1*amount):
+                if self._stat_can_change(paired_stat, -1*amount):
                     self._stats[paired_stat]['current'] += -1*amount
                 else:
                     return
@@ -121,12 +122,12 @@ class PlayableCharacter(Being):
 
         Should probably be internal and called automatically on stat change!
         """
+        trigger = ''
         if self.get_stat(stat=stat) == self._stats[stat]['min']:
-            return self._stats[stat]['trigger_on_min']
+            trigger = self._stats[stat]['trigger_on_min']
         elif self.get_stat(stat=stat) == self._stats[stat]['max']:
-            return self._stats[stat]['trigger_on_max']
-        else:
-            return ''
+            trigger = self._stats[stat]['trigger_on_max']
+        return trigger
 
     @property
     def available_stat_selections(self):
@@ -197,15 +198,15 @@ class PlayableCharacter(Being):
             if self._modifiers[mod]['applied'] == const.AT_CHARACTER_CREATION \
                 and mod not in self._current_modifiers:
                 mod_and_values = [mod, []]
+                for value in self._modifiers:
+                    if value.startswith(mod+':'):
+                        mod_and_values[1].append(value)
                 break
         if not mod_and_values:
             raise StopIteration("No more modifiers available!")
-        for value in self._modifiers:
-            if value.startswith(mod+':'):
-                mod_and_values[1].append(value)
         return mod_and_values
 
-    def apply_modifier(self,modifier):
+    def apply_modifier(self, modifier):
         """
         Modifier is 'modifierName:value' as found in
         character_modifiers.ini
@@ -219,16 +220,19 @@ class PlayableCharacter(Being):
         self._current_modifiers.append(modifier.split(':')[0])
 
 class Item(GameObject):
+    """Movable passive objects in the game"""
     pass
 
 
 class Environment(GameObject):
+    """Unmovable passive objects in the game"""
     pass
 
 
 class RegistrableEnvMeta(type):
-    def __new__(meta, name, bases, class_dict):
-        cls = type.__new__(meta, name, bases, class_dict)
+    """Registation metaclass for environments"""
+    def __new__(mcs, name, bases, class_dict):
+        cls = type.__new__(mcs, name, bases, class_dict)
         if bases != (Environment,):
             bases[-1].register_subclass(cls)
         else:
@@ -237,6 +241,7 @@ class RegistrableEnvMeta(type):
 
 
 class Effect(Environment, metaclass=RegistrableEnvMeta):
+    """Non-physical environment"""
     _subs = {}
 
     @classmethod
@@ -245,6 +250,7 @@ class Effect(Environment, metaclass=RegistrableEnvMeta):
 
 
 class Terrain(Environment, metaclass=RegistrableEnvMeta):
+    """Physical environment"""
     _subs = {}
 
     @classmethod
@@ -282,3 +288,4 @@ class Theme(Environment, metaclass=RegistrableEnvMeta):
     @classmethod
     def get_terrains(cls, themes, num=0):
         return [Terrain.get_instance(id_='dirt')]*num
+    
