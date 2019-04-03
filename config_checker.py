@@ -60,10 +60,10 @@ Requirements checked:
         any peak distances are less than world size!
     Terrain distributions:
         Each name starts with an existing theme name +':'
-        Each section has a major_theme range, terrains and distribution defined
+        Each section has terrains and distribution defined
         All terrains are csv lists of existing terrain names
         All distributions are three digits, digits only, and not 000
-        Any other keys reference existing themes DIFFERENT FROM THE MAJOR ONE,
+        Any other keys reference existing themes
         All values are correct ranges within the themes' min-max values
         
         

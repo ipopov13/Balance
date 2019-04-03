@@ -422,11 +422,13 @@ class PlayableCharacterTest(unittest.TestCase):
             
     def test_available_next_apply_modifier(self):
         being = gameobject.PlayableCharacter()
-        being._stats = {'stat': {'min':0,'max':10,'current':0,
-                                 'paired_with':'',
-                                 'trigger_on_min':''}}
-        being._modifiers = {'mod': {'applied':'AT_CHARACTER_CREATION'},
-                             'mod:val': {'applied':'','stat':5}}
+        being._stats = {
+                'stat': {'min':0,'max':10,'current':0,
+                         'paired_with':'',
+                         'trigger_on_min':''}}
+        gameobject.PlayableCharacter._modifiers = {
+                'mod': {'applied':'AT_CHARACTER_CREATION'},
+                'mod:val': {'applied':'','stat':5}}
         assert being.available_modifiers == 1
         assert being.next_modifier() == ['mod',['mod:val']]
         being.apply_modifier('mod:val')
@@ -441,14 +443,13 @@ class TerrainsTest(unittest.TestCase):
         assert len(gameobject.Terrain._subs) == \
                len(config.get_config(section='terrains'))
 
-class ThemeTest(unittest.TestCase):
-
     def test_get_terrains(self):
         num = 10
-        assert len(gameobject.Theme.get_terrains({},num)) == num
+        assert len(gameobject.Terrain.generate_terrains({'Nature':10},num)) \
+            == num
 
     def test_get_structures(self):
-        assert gameobject.Theme.get_structures({}) == 'structures'
+        assert gameobject.Terrain.get_structures({}) == 'structures'
 
 if __name__ == '__main__':
     unittest.main()

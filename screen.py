@@ -76,7 +76,7 @@ class ScreenMeta(type):
 
 class Screen(metaclass=ScreenMeta):
     _terminal = Terminal()
-    _ai = ai.AI()
+    _ai = None
     _subclass_instances = {None:None}
     _starters = 0
     
@@ -102,6 +102,8 @@ class Screen(metaclass=ScreenMeta):
         
     def take_control(self):
         """The Screen activity loop"""
+        if Screen._ai is None:
+            Screen._ai = ai.AI()
         next_screen = self.id_
         ## Templating the screen
         self._terminal.reset()

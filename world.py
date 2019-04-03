@@ -223,10 +223,10 @@ class Scene:
         settings = config.get_settings(key='scene')
         self._width = settings.getint('width')
         self._height = settings.getint('height')
-        structures = gameobject.Theme.get_structures(themes)
+        structures = gameobject.Terrain.get_structures(themes)
         self._set_structures(structures)
         empty_spots = self._width*self._height - len(self._tiles)
-        terrains = gameobject.Theme.get_terrains(themes,num=empty_spots)
+        terrains = gameobject.Terrain.generate_terrains(themes,num=empty_spots)
         self._lay_terrains(terrains)
         
     def _set_structures(self,structures):

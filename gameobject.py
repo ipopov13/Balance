@@ -11,6 +11,7 @@ Each subfamily has a metaclass that handles automatic registration of
 
 @author: IvanPopov
 """
+import random
 import config
 import constants as const
 
@@ -39,12 +40,11 @@ class DataLoaderMeta(type):
     """Metaclass for loading data from ini at class definition"""
     def __new__(mcs, name, bases, class_dict):
         cls = type.__new__(mcs, name, bases, class_dict)
-        if bases == (GameObject,):
-            cls.load_data()
+        cls.load_data()
         return cls
 
 
-class Being(GameObject, metaclass=DataLoaderMeta):
+class PlayableCharacter(GameObject, metaclass=DataLoaderMeta):
     """
     Covers all active actors in the game
     """
@@ -56,10 +56,6 @@ class Being(GameObject, metaclass=DataLoaderMeta):
         modifiers = config.get_config(section='modifiers')
         for modifier in modifiers:
             cls._modifiers[modifier.name] = config.simplify(modifier)
-
-
-class PlayableCharacter(Being):
-    """An active game object"""
 
     def __init__(self, npc=False):
         if not npc:
@@ -178,8 +174,9 @@ class PlayableCharacter(Being):
         needs to select
         """
         available_mods = []
-        for mod in self._modifiers:
-            if self._modifiers[mod]['applied'] == const.AT_CHARACTER_CREATION \
+        for mod in PlayableCharacter._modifiers:
+            if PlayableCharacter._modifiers[mod]['applied'] == \
+                const.AT_CHARACTER_CREATION \
                 and mod not in self._current_modifiers:
                 available_mods.append(mod)
         return len(available_mods)
@@ -194,11 +191,12 @@ class PlayableCharacter(Being):
         [modifier, [values]]
         """
         mod_and_values = []
-        for mod in self._modifiers:
-            if self._modifiers[mod]['applied'] == const.AT_CHARACTER_CREATION \
+        for mod in PlayableCharacter._modifiers:
+            if PlayableCharacter._modifiers[mod]['applied'] \
+                == const.AT_CHARACTER_CREATION \
                 and mod not in self._current_modifiers:
                 mod_and_values = [mod, []]
-                for value in self._modifiers:
+                for value in PlayableCharacter._modifiers:
                     if value.startswith(mod+':'):
                         mod_and_values[1].append(value)
                 break
@@ -211,12 +209,13 @@ class PlayableCharacter(Being):
         Modifier is 'modifierName:value' as found in
         character_modifiers.ini
         """
-        if modifier not in self._modifiers:
+        if modifier not in PlayableCharacter._modifiers:
             raise ValueError(f"Unknown modifer ID:{modifier}")
-        for stat in self._modifiers[modifier]:
+        for stat in PlayableCharacter._modifiers[modifier]:
             if stat in self._stats:
-                self.change_stat(stat=stat,
-                                 amount=self._modifiers[modifier][stat])
+                self.change_stat(
+                    stat=stat,
+                    amount=PlayableCharacter._modifiers[modifier][stat])
         self._current_modifiers.append(modifier.split(':')[0])
 
 class Item(GameObject):
@@ -247,45 +246,141 @@ class Effect(Environment, metaclass=RegistrableEnvMeta):
     @classmethod
     def load_subs(cls):
         pass
-
-
-class Terrain(Environment, metaclass=RegistrableEnvMeta):
-    """Physical environment"""
+    
+    
+class Terrain(Environment, metaclass=DataLoaderMeta):
+    """Physical environment factory"""
     _subs = {}
+    _distributions = {}
+    _types = ['structure', 'additional', 'basic']
 
     @classmethod
-    def load_subs(cls):
+    def load_data(cls):
         for terrain in config.get_config(section='terrains'):
-            class NewTerrain(cls):
+            class NewTerrain:
                 id_ = terrain.name
                 char = terrain['char']
                 type_ = terrain['type']
                 style = terrain.getint('style')
                 single_char_id = terrain['id']
                 asset = terrain['asset']
-
-
-class Theme(Environment, metaclass=RegistrableEnvMeta):
-    _subs = {}
-
-    @classmethod
-    def load_subs(cls):
-        pass
-#        for theme in config.get_config(section='themes'):
-#            if theme['terrains']:
-#                class NewTheme(cls):
-#                    id_ = theme.name
-#                    theme_breakpoints = eval(theme['theme_level_breakpoints'])
-#                    terrain_distribution = eval(theme['terrain_distribution'])
-#                    modifiers = eval(theme['modifiers'])
-#                    mod_thresholds = eval(theme['mod_thresholds'])
-#                    terrains = eval(theme['terrains'])
-
+            cls._subs[terrain.name] = NewTerrain
+        for distribution in config.get_config(section='terrain_distribution'):
+            major_theme = distribution.name.split(':')[0]
+            cls._distributions.setdefault(major_theme, []).append(distribution)
+    
     @classmethod
     def get_structures(cls, themes):
         return 'structures'
 
     @classmethod
-    def get_terrains(cls, themes, num=0):
-        return [Terrain.get_instance(id_='dirt')]*num
+    def generate_terrains(cls, themes, num=0):
+        allowed_terrain = {}
+        modifiers = []
+        for theme in themes:
+            terrains, distribution, modifications = \
+                cls._define_area(pov=theme, context=themes)
+            if distribution:
+                allowed_terrain[theme] = \
+                    cls._pick_terrains(terrains=terrains,
+                                       distribution=distribution)
+            modifiers += modifications
+        # Calculate allotments using themes from the allowed list
+        theme_allocation = cls._allocate(values=themes,
+                                         keys=allowed_terrain.keys(),
+                                         num=num)
+        # Generate a list of allowed instances
+        result = cls._fill_allotments(allotments=theme_allocation,
+                                      allowed=allowed_terrain)
+        # Replace the needed fraction of terrains at random for each modifier
+        result = cls._modify(terrains=result, mods=modifiers)
+        # Create instances
+        result = cls._instantiate(result)
+        return result
+
+    @classmethod
+    def _define_area(cls, *, pov=None, context=None):
+        terrains = []
+        distribution = ''
+        mods = []
+        if pov in cls._distributions:
+            for distr in cls._distributions[pov]:
+                if cls._matches(distr=distr, context=context):
+                    distr_terrains = distr['terrains'].split(',')
+                    if distr['distribution']:
+                        terrains += distr_terrains
+                        distribution = max([distribution,
+                                            distr['distribution']])
+                    elif distr['fraction']:
+                        mods.append({'fraction':float(distr['fraction']),
+                                     'terrains':distr_terrains})
+        return (terrains, distribution, mods)
     
+    @classmethod
+    def _pick_terrains(cls, *, terrains=None, distribution=None):
+        picks = []
+        terrains = cls._stratify(terrains)
+        for type_, num in zip(cls._types, distribution):
+            for j in range(int(num)):
+                try:
+                    picks.append(random.choice(terrains[type_]))
+                except IndexError:
+                    pass
+        return picks
+    
+    @classmethod
+    def _allocate(cls, *, values=None, keys=None, num=None):
+        keys = list(keys)
+        total = sum([values[key] for key in keys])
+        allocation = {key:round(num * values[key]/total) for key in keys}
+        allocated = sum(allocation.values())
+        while allocated != num:
+            if allocated < num:
+                change = 1
+            else:
+                change = -1
+            allocation [random.choice(keys)] += change
+            allocated += change
+        return allocation
+    
+    @classmethod
+    def _fill_allotments(cls, *, allotments=None, allowed=None):
+        result = []
+        for theme, i in allotments.items():
+            for j in range(i):
+                result.append(random.choice(allowed[theme]))
+        return result
+    
+    @classmethod
+    def _modify(cls, *, terrains=None, mods=None):
+        for mod in mods:
+            num = round(len(terrains) * mod['fraction'])
+            for i in random.choices(range(len(terrains)), k=num):
+                terrains[i] = random.choice(mod['terrains'])
+        return terrains
+                
+        
+    @classmethod
+    def _matches(cls, *, distr=None, context=None):
+        matches = True
+        for theme in distr.keys():
+            if theme in context:
+                bounds = [int(x) for x in distr[theme].split('..')]
+                bounds[1] += 1
+                if context[theme] not in range(*bounds):
+                    matches = False
+                    break
+        return matches
+
+    @classmethod
+    def _stratify(cls, terrains):
+        type_dict = {}
+        for terrain in terrains:
+            type_dict.setdefault(cls._subs[terrain].type_, []).append(terrain)
+        return type_dict
+        
+    @classmethod
+    def _instantiate(cls, result):
+        for i, id_ in enumerate(result):
+            result[i] = cls._subs[id_]()
+        return result
