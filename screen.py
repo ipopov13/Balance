@@ -225,9 +225,9 @@ class Scene(Screen):
     
     @property
     def _screen_details(self):
+        content = {}
         self._terminal.attach_scene(x=20,y=2,
                                     scene=self._ai.game_data.current_scene)
-        content = {(0,0):{'text':f'{self._ai.game_data._current_scene_key}'}}
         visuals = config.get_config(section='scene')
         # Integrate the visuals
         for vis in visuals:

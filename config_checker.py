@@ -5,7 +5,7 @@ Created on Mon Apr  1 15:36:28 2019
 Config checker for the Balance rogue-like RPG framework.
 
 Define key value types at the start and then check all sections enmasse
-Section names must be unique
+Section names must be unique and all small caps!
 
 Requirements checked:
     
@@ -60,7 +60,7 @@ Requirements checked:
         any peak distances are less than world size!
     Terrain distributions:
         Each name starts with an existing theme name +':'
-        Each section has terrains and distribution defined
+        Each section has terrains and (distribution XOR fraction) defined
         All terrains are csv lists of existing terrain names
         All distributions are three digits, digits only, and not 000
         Any other keys reference existing themes

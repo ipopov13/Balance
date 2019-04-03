@@ -117,6 +117,20 @@ class World:
                     level = random.randint(peak_min,peak_max)
                     self._theme_peaks[(actual_x,actual_y)].update(
                                                             {theme.name:level})
+    
+    def _scale_themes(self, themes):
+        groups = {}
+        for theme in self._themes:
+            groups.setdefault(theme['group'], []).append(theme)
+        groups = [groups[g] for g in groups if g]
+        for group in groups:
+            group_total = sum([themes[t.name] for t in group])
+            if group_total > 100:
+                scaling_factor = group_total/100
+                for theme in group:
+                    themes[theme.name] = \
+                        round(themes[theme.name]/scaling_factor)
+        return themes
                     
     def _calculate_themes(self,coords):
         x0, y0 = coords
@@ -144,6 +158,7 @@ class World:
                         effective_value = value - dist*theme_gradients[theme]
                         if effective_value > themes[theme]:
                             themes[theme] = effective_value
+        themes = self._scale_themes(themes)
         return themes
     
     @property
