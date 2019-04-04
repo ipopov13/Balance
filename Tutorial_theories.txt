@@ -1,0 +1,40 @@
+Themes and terrain generation
+
+Additional Terrains are theme specific, but they should not be mixed so that there is a more specific atmosphere to areas dominated by the theme. Only one additional Terrain should be chosen for a given peak, creating forests, mountains, logging sites and mine complexes, etc. How to enforce these as the world does the peaks and the Terrain does generation?
+Each theme has peak_terrains as a list of the additional terrains that define its peaks. On peak generation one is picked at random and passed later as part of the theme dict (each main theme has one).
+Each terrain has a required theme level to be generated for each main theme, e.g.:
+[nature]
+grass:15
+bush:30
+peak_theme:50
+specials:95
+[chaos]
+dirt:15
+diseased_grass:15
+thorns:30
+peak_theme:50
+specials:95
+[order]
+dirt:15
+grass:15
+peak_theme:30 (stump?)
+specials:50
+After allotment the terrain probabilities are calculated for each theme and dice are rolled as many times as needed to fill the scene. Outcome is defined as the current level of the theme is divided by each terrain requirement to get the probabilities, and those are then ordered by minimum needed roll. The lists are concatenated across themes. A dice roll from 0 to the total sum of probabilities gives the chosen terrain as the last to have a min roll lower than the actual roll.
+Terrains are modified at the rolling step based on the modifier themes in the area:
+[temperature]
+basic:sand|>66
+additional:ice_block|<20
+basic:snow|<33
+[water]
+basic:swamp|>66
+basic:water|>80
+basic:dirt|<33
+[altitude]
+basic:rock|>45
+basic:[snow,ice]|>66
+These 3 are the second complementary group and change the chosen terrains to the specified one starting from the specified level and getting to 100% replacement at 100 or 0, depending on the sign used. Changes to one terrain type can be applied by several entries in the same modifier ordered by value, e.g. a mountain top with altitude of 100 would change 100% of basic terrains to ice or snow, but a 90 one would do ~80% rocks and then plaster on top of them 70% ice/snow. The modifier theme with the highest value is applied first, then the second highest, etc., so that all have a chance to have representation.
+For this second group relations (temp limited_by altitude limited_by water) and order of generation are complex:
+- altitute limits temperature, meaning that every spot with a value for altitude adjusts the max temp available so that the two sum up to 100 at most, with altitude (the theme with the alternative_to property) having precedence by being applied before temp (so snowy mountains at the equator are possible).
+- water limits altitude, so that where there is water the land is lower, down to sea level with 100 water and the ocean.
+The final order of application starts with the end of the limited_by chain as follows: 1) Water, as the root limiting theme is calculated based on its distribution model. 2) Altitude is calculated based on its own model, but then limited to 100-Water. 3) Temp is calculated based on its own model, but finally limited to 100-Altitude.
+A theme can be both part of a scaling group and a limitation chain. All limitation chains are applied first to get the maximum possible values of themes. After all themes have a value scaling is applied if needed (as scaling can only go down) to each group. Every theme can be part of only one scaling group and one limitation chain!
