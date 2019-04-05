@@ -25,8 +25,8 @@ The general format is:
 terrain1:terrain2[< or >]threshold for gradual change, and
 terrain1:terrain2&[< or >]threshold for complete change.
 
-Modifications delimited with the '|' (pipe) character have a probability to occur equal to (theme_value-threshold)/(100-threshold) for "greater than" (>) modifications, and (threshold-theme_value)/threshold for "less than" (<) modifications.
-Modifications delimited with the '&' (ampersand) character always occur (probability of 1). If more than one of those is available the one coming from the theme with the highest level is used.
+Modifications delimited with the < or > characters have a probability to occur equal to max(0,(theme_value-threshold)/(100-threshold)) for "greater than" (>) modifications, and max(0,(threshold-theme_value)/threshold) for "less than" (<) modifications.
+Modifications delimited with the '&' (ampersand) character followed by a '<'/'>' character always occur (probability of 1). If more than one of those is available the one coming from the theme with the highest level is used.
 
 For each terrain all available modifications from all themes are checked starting with the most probable one. When a modification occurs the process stops and the next terrain is picked and modified.
 
