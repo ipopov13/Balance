@@ -55,17 +55,26 @@ Requirements checked:
         each terrain has a style, ID, char & type
         all IDs are unique!
         each terrain with an asset key has the value equal to the terrain name
+        All keys (terrains) should be referenced in the terrain distribution or
+            theme files!
     Themes:
         DEFAULT has all the keys
         any peak distances are less than world size!
+        Only one group per theme
+        Groups should have more than one member
+        Only one limited_by per theme
+        limited_by should be a valid different theme
+        No circular limited_by chains are allowed: there should always be a
+            theme that is not limited on one end of the chain
     Terrain distributions:
-        Each name starts with an existing theme name +':'
-        Each section has terrains and (distribution XOR fraction) defined
-        All terrains are csv lists of existing terrain names
-        All distributions are three digits, digits only, and not 000
-        Any other keys reference existing themes
-        All values are correct ranges within the themes' min-max values
-        
+        All sections are valid theme names
+        All keys are valid terrain names
+        All values are either integers within the themes' min-max values, or
+            modifiers of "terrain2[&][<|>]threshold" where threshold is
+            an int within theme min-max range and terrain is a valid terrain
+            name
+        All modifications for the same terrain under a single theme must
+            have different thresholds or directions
         
 @author: IvanPopov
 """

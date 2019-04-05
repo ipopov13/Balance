@@ -1,40 +1,64 @@
-Themes and terrain generation
+Terrain distribution and modification
 
-Additional Terrains are theme specific, but they should not be mixed so that there is a more specific atmosphere to areas dominated by the theme. Only one additional Terrain should be chosen for a given peak, creating forests, mountains, logging sites and mine complexes, etc. How to enforce these as the world does the peaks and the Terrain does generation?
-Each theme has peak_terrains as a list of the additional terrains that define its peaks. On peak generation one is picked at random and passed later as part of the theme dict (each main theme has one).
-Each terrain has a required theme level to be generated for each main theme, e.g.:
+Each terrain has a required theme level to be generated, e.g.:
+
 [nature]
 grass:15
 bush:30
-peak_theme:50
+tree:50
 specials:95
+
+The terrain probabilities are calculated for each theme: current level of the theme is divided by each terrain requirement to get the probabilities. The lists for all themes are concatenated and a random roll from 0 to the total sum of probabilities gives the chosen terrain.
+Terrains are modified at the rolling step based on the modification entries for themes in the area, e.g.:
+
+[temperature]
+dirt:sand>66,snow<33 (Gradually change dirt to snow when temperature<33, or to sand when temperature>66)
+grass:sand>66,snow<33
+lost_shrine:vulcanic_fissure&>66 (Always change to vulcanic_fissure when temperature>66)
+graveyard:bottomless_sand_vortex&>66,frozen_graveyard&<33
+trading_outpost:sand_pits&>66
+druidic_grove:magical_oasis&>66,lichen_farm&<33
+tree:frozen_tree<33,ice_block<20
+rock:ice_block|<20
+
+The general format is:
+terrain1:terrain2[< or >]threshold for gradual change, and
+terrain1:terrain2&[< or >]threshold for complete change.
+
+Modifications delimited with the '|' (pipe) character have a probability to occur equal to (theme_value-threshold)/(100-threshold) for "greater than" (>) modifications, and (threshold-theme_value)/threshold for "less than" (<) modifications.
+Modifications delimited with the '&' (ampersand) character always occur (probability of 1). If more than one of those is available the one coming from the theme with the highest level is used.
+
+For each terrain all available modifications from all themes are checked starting with the most probable one. When a modification occurs the process stops and the next terrain is picked and modified.
+
+A theme can have both regular terrain definitions and modifications, e.g.:
+
 [chaos]
 dirt:15
-diseased_grass:15
 thorns:30
-peak_theme:50
+waste_pile:50
 specials:95
-[order]
-dirt:15
-grass:15
-peak_theme:30 (stump?)
-specials:50
-After allotment the terrain probabilities are calculated for each theme and dice are rolled as many times as needed to fill the scene. Outcome is defined as the current level of the theme is divided by each terrain requirement to get the probabilities, and those are then ordered by minimum needed roll. The lists are concatenated across themes. A dice roll from 0 to the total sum of probabilities gives the chosen terrain as the last to have a min roll lower than the actual roll.
-Terrains are modified at the rolling step based on the modifier themes in the area:
-[temperature]
-basic:sand|>66
-additional:ice_block|<20
-basic:snow|<33
-[water]
-basic:swamp|>66
-basic:water|>80
-basic:dirt|<33
-[altitude]
-basic:rock|>45
-basic:[snow,ice]|>66
-These 3 are the second complementary group and change the chosen terrains to the specified one starting from the specified level and getting to 100% replacement at 100 or 0, depending on the sign used. Changes to one terrain type can be applied by several entries in the same modifier ordered by value, e.g. a mountain top with altitude of 100 would change 100% of basic terrains to ice or snow, but a 90 one would do ~80% rocks and then plaster on top of them 70% ice/snow. The modifier theme with the highest value is applied first, then the second highest, etc., so that all have a chance to have representation.
-For this second group relations (temp limited_by altitude limited_by water) and order of generation are complex:
-- altitute limits temperature, meaning that every spot with a value for altitude adjusts the max temp available so that the two sum up to 100 at most, with altitude (the theme with the alternative_to property) having precedence by being applied before temp (so snowy mountains at the equator are possible).
-- water limits altitude, so that where there is water the land is lower, down to sea level with 100 water and the ocean.
-The final order of application starts with the end of the limited_by chain as follows: 1) Water, as the root limiting theme is calculated based on its distribution model. 2) Altitude is calculated based on its own model, but then limited to 100-Water. 3) Temp is calculated based on its own model, but finally limited to 100-Altitude.
-A theme can be both part of a scaling group and a limitation chain. All limitation chains are applied first to get the maximum possible values of themes. After all themes have a value scaling is applied if needed (as scaling can only go down) to each group. Every theme can be part of only one scaling group and one limitation chain!
+grass:diseased_grass|>15
+bush:thorns|>15
+tree:diseased_tree|>15
+water:dirty_water|>15
+
+This creates ways to make a mix of themes look unique and offer unique challenges.
+
+
+Theme distribution models
+Peaks/Poles...
+
+Theme interaction
+
+There are two ways to make themes interact with one another: scaling groups and limitation chains.
+A scaling group is defined using the "group" property in the themes.ini file. When you set the group of two or more themes to the same value they form a group. If the sum of the values of themes in a group is higher than 100 the whole group is scaled down to have a total sum of 100. This is the case with the three forces of Nature, Order and Chaos in the Balance game. There is not restriction to the number of themes in a group.
+A limitation chain is created when you define the "limited_by" property for a theme in the themes.ini file. The value should be the name of another theme. This creates a chain of length 2, of one limited and one limiting theme. If you then set a "limited_by" value for the limiting theme (which must be a different, third theme!) you get a chain of length 3, etc. Each limited theme can only have values between 0 and (100 minus its limiting theme level). This is the case with the 'temperature', 'altitude' and 'water' themes in the Balance game:
+- temperature is limited by altitude, meaning that every spot with a value for altitude adjusts the max temperature available so that the two sum up to 100 at most, with altitude having precedence by being calculated before temperature (so snowy mountains at the equator are possible).
+- altitude is limited by water, so that where there is water the land is lower, down to sea level with 100 water and the ocean.
+The order of calculating the actual values starts with the end of the limited_by chain as follows:
+
+ 1) Water, as the root limiting theme is calculated based on its distribution model.
+ 2) Altitude is calculated based on its own model, but then limited to 100-Water.
+ 3) Temp is calculated based on its own model, but finally limited to 100-Altitude.
+
+A theme can be both part of a scaling group and a limitation chain. All limitation chains are applied first to get the maximum possible values of themes. Once all themes have a value, scaling is applied to each group if needed.
