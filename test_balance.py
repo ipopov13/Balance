@@ -440,7 +440,7 @@ class PlayableCharacterTest(unittest.TestCase):
 class TerrainsTest(unittest.TestCase):
 
     def test_all_terrains_loaded(self):
-        assert len(gameobject.Terrain._subs) == \
+        assert len(gameobject.Terrain._terrains) == \
                len(config.get_config(section='terrains'))
 
     def test_get_terrains(self):

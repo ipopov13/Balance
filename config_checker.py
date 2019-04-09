@@ -11,7 +11,7 @@ Requirements checked:
     
     Settings:
         All keys in all sections are mandatory and with a fixed type
-    Modifiers:
+    Char Modifiers:
         DEFAULT has the basic 'available_to','description','applied' keys
         Each basic modifier has the 'available_to' and 'applied' keys and they
             have a value that is allowed
@@ -66,15 +66,21 @@ Requirements checked:
         limited_by should be a valid different theme
         No circular limited_by chains are allowed: there should always be a
             theme that is not limited on one end of the chain
-    Terrain distributions:
+    Terrain/structure distributions:
         All sections are valid theme names
-        All keys are valid terrain names
-        All values are either integers within the themes' min-max values, or
-            modifiers of "terrain2[&][<|>]threshold" where threshold is
-            an int within theme min-max range and terrain is a valid terrain
-            name
-        All modifications for the same terrain under a single theme must
+        All keys are valid terrain/structure names
+        All values are integers within the themes' min-max values
+    Terrain/structure modifiers:
+        All sections are valid theme names
+        All keys are valid terrain/structure names defined in the distribution
+            file (they can appear directly)
+        All values are modifiers of "new_ter[<|>]threshold" where threshold is
+            an int within theme min-max range and new_ter is a valid
+            terrain/structure name
+        All modifications for the same object under a single theme must
             have different thresholds or directions
+        All modifiers for objects must reference objects with direct
+            rolling entries in the respective distribution file
         
 @author: IvanPopov
 """

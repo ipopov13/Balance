@@ -1,54 +1,66 @@
-Terrain distribution and modification
+**Terrain and structure distribution**
 
-Each terrain has a required theme level to be generated, e.g.:
+Each theme that causes specific terrains to appear in the game has a distribution that specifies how likely these terrains are to appear relative to one another, e.g.:
 
+# From terrain_distribution.ini
 [nature]
 grass:15
 bush:30
 tree:50
-specials:95
 
-The terrain probabilities are calculated for each theme: current level of the theme is divided by each terrain requirement to get the probabilities. The lists for all themes are concatenated and a random roll from 0 to the total sum of probabilities gives the chosen terrain.
+The odds to generate a terrain for the current scene are defined after the distribution for the theme is scaled by the level of the theme for the current area. This way terrains of high-level themes have a higher probability of appearance than those of low- or zero-level themes. The scaled distributions for all themes are concatenated and a random roll from 0 to the total sum of odds gives the chosen terrain.
+
+Unlike terrains, structures cannot appear if the minimum requirement is not met:
+
+# From structure_distribution.ini
+[DEFAULT]
+max_structures:1
+
+[nature]
+beast_lair:66
+druidic_grove:66
+
+Here a beast's lair or a druidic grove will be created only if the Nature theme reaches 66. However, if the requirements are met a structure will always be created.
+By default only one structure per theme can be generated in an area, but this can be overridden if needed:
+
+[population]
+max_structures:15
+field:30
+house:45
+
+In this case the respective number of structures is generated and passed to the scene, which decides their placement. If there is not enough space for all of the created structures the scene will limit itself to those that fit.
+
+**Terrain and structure modification**
+
 Terrains are modified at the rolling step based on the modification entries for themes in the area, e.g.:
 
-[temperature]
-dirt:sand>66,snow<33 (Gradually change dirt to snow when temperature<33, or to sand when temperature>66)
-grass:sand>66,snow<33
-lost_shrine:vulcanic_fissure&>66 (Always change to vulcanic_fissure when temperature>66)
-graveyard:bottomless_sand_vortex&>66,frozen_graveyard&<33
-trading_outpost:sand_pits&>66
-druidic_grove:magical_oasis&>66,lichen_farm&<33
-tree:frozen_tree<33,ice_block<20
-rock:ice_block|<20
-
-The general format is:
-terrain1:terrain2[< or >]threshold for gradual change, and
-terrain1:terrain2&[< or >]threshold for complete change.
-
-Modifications delimited with the < or > characters have a probability to occur equal to max(0,(theme_value-threshold)/(100-threshold)) for "greater than" (>) modifications, and max(0,(threshold-theme_value)/threshold) for "less than" (<) modifications.
-Modifications delimited with the '&' (ampersand) character followed by a '<'/'>' character always occur (probability of 1). If more than one of those is available the one coming from the theme with the highest level is used.
-
-For each terrain all available modifications from all themes are checked starting with the most probable one. When a modification occurs the process stops and the next terrain is picked and modified.
-
-A theme can have both regular terrain definitions and modifications, e.g.:
-
+# From terrain_modifiers.ini
 [chaos]
-dirt:15
-thorns:30
-waste_pile:50
-specials:95
-grass:diseased_grass|>15
-bush:thorns|>15
-tree:diseased_tree|>15
-water:dirty_water|>15
+grass:diseased_grass>15  # Provide a chance to change grass terrain into diseased grass
+tree:diseased_tree>15
 
-This creates ways to make a mix of themes look unique and offer unique challenges.
+Modifications have a probability to occur equal to max(0,(theme_value-threshold)/(100-threshold)) for "greater than" (>) modifications, and max(0,(threshold-theme_value)/threshold) for "less than" (<) modifications.
+For each terrain all available modifications from all themes are checked starting with the most probable one. When a modification occurs the process stops and the next terrain is picked and modified. This creates ways to make mixed themes look unique and offer unique challenges.
 
+Structures can also be modified:
 
-Theme distribution models
+# From structure_modifiers.ini
+[chaos]
+lake:miasma>45
+
+Just like with distributions, a structure is always modified when the requirement is met. If there is more than one available modification for a structure (irrespective of the theme they come from) the one with the highest theme level requirement is applied. The only restriction is the max_number property of each structure that allows you to limit the number of times a specific structure appears. For example, the Population modifiers in Balance are as follows:
+
+[population]
+field:house>60
+house:mansion>75
+house:palace>90
+
+Here the palace structure has a max_number of 1. Otherwise this would generate unexpected scenes if all houses in a highly populated area are turned into palaces (unless that's what you actually want). In the case of more than one available modification if the first one reaches its limit then the next one is used (e.g. after creating one palace the next house will be made a mansion, and so on).
+
+**Theme distribution models**
 Peaks/Poles...
 
-Theme interaction
+**Theme interaction**
 
 There are two ways to make themes interact with one another: scaling groups and limitation chains.
 A scaling group is defined using the "group" property in the themes.ini file. When you set the group of two or more themes to the same value they form a group. If the sum of the values of themes in a group is higher than 100 the whole group is scaled down to have a total sum of 100. This is the case with the three forces of Nature, Order and Chaos in the Balance game. There is not restriction to the number of themes in a group.
