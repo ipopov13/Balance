@@ -52,14 +52,16 @@ Requirements checked:
         gauges with marker/statuses must have overlay styles
     Terrains:
         DEFAULT has all the keys
-        each terrain has a style, ID, char & type
+        each terrain has a style, ID, char
         all IDs are unique!
-        each terrain with an asset key has the value equal to the terrain name
-        All keys (terrains) should be referenced in the terrain distribution or
-            theme files!
+        All keys (terrains) should be referenced in the terrain distribution
+        All char/style combos must be unique!
+    Structures:
+        TODO
     Themes:
         DEFAULT has all the keys
-        any peak distances are less than world size!
+        any peak distances are factors of or equal to world size (for size 50
+            allowed values are 1,2,5,10,25,50)!
         Only one group per theme
         Groups should have more than one member
         Only one limited_by per theme
@@ -71,16 +73,10 @@ Requirements checked:
         All keys are valid terrain/structure names
         All values are integers within the themes' min-max values
     Terrain/structure modifiers:
-        All sections are valid theme names
+        All sections consist of valid theme names+':'+a signed int threshold
         All keys are valid terrain/structure names defined in the distribution
-            file (they can appear directly)
-        All values are modifiers of "new_ter[<|>]threshold" where threshold is
-            an int within theme min-max range and new_ter is a valid
-            terrain/structure name
-        All modifications for the same object under a single theme must
-            have different thresholds or directions
-        All modifiers for objects must reference objects with direct
-            rolling entries in the respective distribution file
+            file (they must appear directly)
+        All values are valid terrain/structure names defined in the ini files
         
 @author: IvanPopov
 """

@@ -39,28 +39,28 @@ class World:
     .current_scene property returning the current active scene
     Game load/save
     """
-    _game_list = {}
-    
-    @classmethod
-    def save(cls, game):
-        """Store the data to file using the controlled being name"""
-        filename = game._controlled_being.name+str(random.randint(100,999))
-        with open(f'{filename}.bal','wb') as outfile:
-            pickle.dump(outfile, game)
-    
-    @classmethod
-    def get_saved_games(cls):
-        """Return a list of found saved games and keep it"""
-        for f in glob('*.bal'):
-            with open(f,'rb') as infile:
-                game = pickle.load(infile)
-                cls._game_list[game._controlled_being.name] = game
-        return cls._game_list
-    
-    @classmethod
-    def load(cls, index):
-        """Return the GameData object at that index"""
-        return cls._game_list[index]
+#    _game_list = {}
+#    
+#    @classmethod
+#    def save(cls, game):
+#        """Store the data to file using the controlled being name"""
+#        filename = game._controlled_being.name+str(random.randint(100,999))
+#        with open(f'{filename}.bal','wb') as outfile:
+#            pickle.dump(outfile, game)
+#    
+#    @classmethod
+#    def get_saved_games(cls):
+#        """Return a list of found saved games and keep it"""
+#        for f in glob('*.bal'):
+#            with open(f,'rb') as infile:
+#                game = pickle.load(infile)
+#                cls._game_list[game._controlled_being.name] = game
+#        return cls._game_list
+#    
+#    @classmethod
+#    def load(cls, index):
+#        """Return the GameData object at that index"""
+#        return cls._game_list[index]
     
     def __init__(self):
         self._controlled_being = gameobject.PlayableCharacter()
@@ -109,11 +109,11 @@ class World:
                                 theme.getint('average_peak_distance'))
             peak_min = theme.getint('peak_minimum')
             peak_max = theme.getint('peak_maximum')
-            for x in range(0,self._columns,peak_distance):
-                for y in range(0,self._rows,peak_distance):
+            for x in range(0, self._columns // peak_distance):
+                for y in range(0, self._rows // peak_distance):
                     spot = random.randint(0,peak_distance**2-1)
-                    actual_x = x + (spot % peak_distance)
-                    actual_y = y + (spot // peak_distance)
+                    actual_x = x*peak_distance + (spot % peak_distance)
+                    actual_y = y*peak_distance + (spot // peak_distance)
                     level = random.randint(peak_min,peak_max)
                     self._theme_peaks[(actual_x,actual_y)].update(
                                                             {theme.name:level})
@@ -138,7 +138,7 @@ class World:
         themes = {}
         theme_gradients = {}
         for theme in self._themes:
-            themes[theme.name] = 0
+            themes[theme.name] = 1
             if theme['distribution'] != const.PEAKS:
                 themes[theme.name] = theme.getint('peak_maximum') - \
                                                 theme.getint('peak_maximum') \
@@ -238,21 +238,20 @@ class Scene:
         settings = config.get_settings(key='scene')
         self._width = settings.getint('width')
         self._height = settings.getint('height')
-        structures = gameobject.Terrain.get_structures(themes)
+        structures = gameobject.Terrain.get_structures(self._themes)
         self._set_structures(structures)
-        empty_spots = self._width*self._height - len(self._tiles)
-        terrains = gameobject.Terrain.generate_terrains(themes,num=empty_spots)
-        self._lay_terrains(terrains)
+        self.terrain_gen = gameobject.Terrain.terrain_generator(self._themes)
+        self._lay_terrains()
         
     def _set_structures(self,structures):
         pass
     
-    def _lay_terrains(self,terrains):
+    def _lay_terrains(self):
         for x in range(self._width):
             for y in range(self._height):
                 if (x,y) not in self._tiles:
-                    terrain = random.randint(0,len(terrains)-1)
-                    self._tiles[(x,y)] = Tile(terrains.pop(terrain))
+                    terrain = self.terrain_gen()
+                    self._tiles[(x,y)] = Tile(terrain)
     
     def insert_being(self,being=None,coords=None):
         """
@@ -361,10 +360,12 @@ class Tile:
     """
     
     def __init__(self,terrain):
-        if not (hasattr(terrain,'char') and hasattr(terrain,'style')):
-            raise AttributeError("Bad terrain object supplied to tile:"
+        try:
+            self._terrain = terrain
+            self._terrain_viz = gameobject.Terrain.visualize(terrain)
+        except KeyError:
+            raise AttributeError("Bad terrain id supplied to tile:"
                                  f" {terrain}.")
-        self._terrain = terrain
         self._being = None
         self._pixel = None
         
@@ -402,7 +403,7 @@ class Tile:
         if self.being is not None:
             return self.being.char
         elif self._terrain is not None:
-            return self._terrain.char
+            return self._terrain_viz['char']
         else:
             raise ValueError("Tile has no terrain to present!")
         
@@ -411,6 +412,6 @@ class Tile:
         if self.being is not None:
             return self.being.style
         elif self._terrain is not None:
-            return self._terrain.style
+            return self._terrain_viz['style']
         else:
             raise ValueError("Tile has no terrain to present!")

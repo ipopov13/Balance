@@ -22,6 +22,15 @@ import gameobject
 import config
 import constants as const
 
+test_area_themes = {'nature':10,
+                    'chaos':10,
+                    'order':10,
+                    'temperature':10,
+                    'water':10,
+                    'altitude':10,}
+_test_char = 'a'
+_test_style = 8
+
 class BalanceTest(unittest.TestCase):
     
     def test_main_loop_runs_and_breaks(self):
@@ -91,7 +100,7 @@ class TerminalTest(unittest.TestCase):
     def test_attach_raises_on_bad_coords(self):
         with patch('terminal.Terminal._console') as console:
             screen = Terminal()
-            scene = world.Scene({'Nature':35})
+            scene = world.Scene(test_area_themes)
             with self.assertRaises(ValueError):
                 screen.attach_scene(x=0,scene=scene)
             with self.assertRaises(ValueError):
@@ -107,15 +116,16 @@ class TerminalTest(unittest.TestCase):
     
     def test_attach_scene(self):
         with patch('terminal.Terminal._console') as console:
-            screen = Terminal()
-            terrain = mock.Mock()
-            terrain.char = 'a'
-            terrain.style = 8
-            tile = world.Tile(terrain)
-            scene = mock.Mock()
-            scene.tiles.return_value = {(i,i):tile for i in range(10)}.items()
-            screen.attach_scene(x=0,y=0,scene=scene)
-            assert len(screen._text)==10
+            with patch('gameobject.Terrain.visualize') as viz_patch:
+                viz_patch.return_value = {'char':_test_char,
+                                          'style':_test_style}
+                screen = Terminal()
+                tile = world.Tile(0)
+                scene = mock.Mock()
+                scene.tiles.return_value = \
+                    {(i,i):tile for i in range(10)}.items()
+                screen.attach_scene(x=0,y=0,scene=scene)
+                assert len(screen._text)==10
         
     def test_raise_on_bad_input(self):
         screen = Terminal()
@@ -161,16 +171,16 @@ class WorldTest(unittest.TestCase):
     def test_start_world(self):
         with patch('gameobject.PlayableCharacter') as getter:
             my_world = world.World()
-            # test race call
+            # test character creation call
             getter.assert_called_once()
             # test world creation
             my_world.start()
             assert my_world._theme_peaks != {}
             pairs = list(my_world._theme_peaks.keys())
-            assert max([i[0] for i in pairs])<=my_world._columns
-            assert max([i[1] for i in pairs])<=my_world._rows
-            assert min([i[0] for i in pairs])>=0
-            assert min([i[1] for i in pairs])>=0
+            assert min([i[0] for i in pairs]) >= 0
+            assert min([i[1] for i in pairs]) >= 0
+            assert max([i[0] for i in pairs]) < my_world._columns
+            assert max([i[1] for i in pairs]) < my_world._rows
             # test starting coordinates are set
             assert my_world._current_scene_key is not None
             # test starting scene is created
@@ -258,7 +268,7 @@ class WorldTest(unittest.TestCase):
 class SceneTest(unittest.TestCase):
     
     def test_remove_being(self):
-        scene = world.Scene({'Nature':35})
+        scene = world.Scene(test_area_themes)
         being = gameobject.PlayableCharacter()
         x = scene._width-1
         y = scene._height-1
@@ -280,7 +290,7 @@ class SceneTest(unittest.TestCase):
     
     def test_insert_being(self):
         """Also tests Tile.being"""
-        scene = world.Scene({'Nature':35})
+        scene = world.Scene(test_area_themes)
         being = gameobject.PlayableCharacter()
         with self.assertRaises(ValueError):
             scene.insert_being()
@@ -299,7 +309,7 @@ class SceneTest(unittest.TestCase):
         assert scene._tiles[(x,y)].being is being
         
     def test_move_being(self):
-        scene = world.Scene({'Nature':35})
+        scene = world.Scene(test_area_themes)
         being = gameobject.PlayableCharacter()
         scene.insert_being(coords=(0,0),being=being)
         result = scene.move_being(being=being,direction='5')
@@ -344,32 +354,30 @@ class SceneTest(unittest.TestCase):
 class TileTest(unittest.TestCase):
     
     def test_pixel(self):
-        terrain = mock.Mock()
-        terrain.char = 'a'
-        terrain.style = 8
-        tile = world.Tile(terrain)
-        pixel = mock.Mock()
-        with self.assertRaises(AttributeError):
-            tile.pixel = 1
-        tile.pixel = pixel
-        pixel.update.assert_called_once_with({'text':terrain.char,
-                                              'style':terrain.style})
+        with patch('gameobject.Terrain.visualize') as viz_patch:
+            viz_patch.return_value = {'char':_test_char,
+                                      'style':_test_style}
+            tile = world.Tile(0)
+            pixel = mock.Mock()
+            with self.assertRaises(AttributeError):
+                tile.pixel = 1
+            tile.pixel = pixel
+            pixel.update.assert_called_once_with({'text':_test_char,
+                                                  'style':_test_style})
     
     def test_char_and_style(self):
-        terrain = mock.Mock()
-        terrain.char = 'a'
-        terrain.style = 8
-        with self.assertRaises(AttributeError):
-            tile = world.Tile(1)
-        tile = world.Tile(terrain)
-        assert tile.char == terrain.char
-        assert tile.style == terrain.style
-        being = mock.Mock()
-        being.char = 'b'
-        being.style = 9
-        tile.being = being
-        assert tile.char == being.char
-        assert tile.style == being.style
+        with patch('gameobject.Terrain.visualize') as viz_patch:
+            viz_patch.return_value = {'char':_test_char,
+                                      'style':_test_style}
+            tile = world.Tile(0)
+            assert tile.char == _test_char
+            assert tile.style == _test_style
+            being = mock.Mock()
+            being.char = 'b'
+            being.style = 9
+            tile.being = being
+            assert tile.char == being.char
+            assert tile.style == being.style
         
 class PlayableCharacterTest(unittest.TestCase):
         
@@ -444,9 +452,9 @@ class TerrainsTest(unittest.TestCase):
                len(config.get_config(section='terrains'))
 
     def test_get_terrains(self):
-        num = 10
-        assert len(gameobject.Terrain.generate_terrains({'Nature':10},num)) \
-            == num
+        terrain_names = [t.name for t in config.get_config(section='terrains')]
+        gen = gameobject.Terrain.terrain_generator(test_area_themes)
+        assert gen() in terrain_names
 
     def test_get_structures(self):
         assert gameobject.Terrain.get_structures({}) == 'structures'

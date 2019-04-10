@@ -12,6 +12,7 @@ Each subfamily has a metaclass that handles automatic registration of
 @author: IvanPopov
 """
 import random
+from collections import namedtuple
 import config
 import constants as const
 
@@ -257,7 +258,7 @@ class TerrainLoader(type):
         for theme in config.get_config(section='terrain_distribution'):
             cls._terrain_odds[theme.name] = config.simplify(theme)
         for theme in config.get_config(section='terrain_modifiers'):
-            cls._terrain_modifiers[theme.name] = 
+            cls._terrain_modifiers[theme.name] = theme
         return cls
 
     
@@ -275,20 +276,47 @@ class Terrain(Environment, metaclass=TerrainLoader):
     def terrain_generator(cls, area_themes):
         # Get terrain probabilities from the distribution
         terrain_probabilities = {}
-        for theme in cls._terrain_odds:
-            for id_ in theme:
-                terrain_probabilities.setdefault(id_, 0) += \
-                    cls._terrain_odds[theme][id_]/area_themes[theme]
-        # TODO: Get available modifications
-        modifications = {}
+        for theme, distrib in cls._terrain_odds.items():
+            for id_ in distrib:
+                terrain_probabilities[id_] = \
+                    terrain_probabilities.get(id_, 0) \
+                    + distrib[id_]/area_themes[theme]
         ids = list(terrain_probabilities.keys())
         probs = [terrain_probabilities[k] for k in ids]
         cummulative_probs = [sum(probs[0:i]) for i in range(1, len(probs)+1)]
+        # Get available modifications
+        modifications = {}
+        Mod = namedtuple('Mod',['probability','new_terrain'])
+        for group in cls._terrain_modifiers:
+            theme, threshold = group.split(':')
+            threshold = int(threshold)
+            prob = 0
+            if threshold > 0 and area_themes[theme] > threshold:
+                prob = (area_themes[theme] - threshold)/(100 - threshold)
+            elif threshold < 0 and area_themes[theme] <= abs(threshold):
+                threshold = abs(threshold)
+                prob = (threshold - area_themes[theme])/threshold
+            if prob:
+                for old_terrain, new_terrain in \
+                    cls._terrain_modifiers[group].items():
+                    modifications.setdefault(old_terrain, []) \
+                        .append(Mod(probability=prob,
+                                    new_terrain=new_terrain))
+        for changes in modifications.values():
+            changes.sort()
         # Define terrain id generator
         def generator ():
             # Select terrain id
             choice = random.uniform(0, cummulative_probs[-1])
             id_ = ids[len([x for x in cummulative_probs if x < choice])]
-            # TODO: Modify id
+            # Modify id
+            for mod in modifications.get(id_, []):
+                if random.random() <= mod.probability:
+                    id_ = mod.new_terrain
+                    break
             return id_
         return generator
+    
+    @classmethod
+    def visualize(cls, terrain_id):
+        return cls._terrains[terrain_id]
