@@ -229,7 +229,7 @@ class WorldTest(unittest.TestCase):
                 my_world.move_player(direction=d)
                 scene.remove_being.assert_called_once_with(pc.return_value,
                                     direction=scene.move_being.return_value,
-                                    keep_y=False)
+                                    traversed_pole=False)
                 assert my_world._current_scene_key == (1,0)
                 scene.move_being.return_value = const.GOING_WEST
                 my_world.move_player(direction=d)
@@ -260,7 +260,7 @@ class WorldTest(unittest.TestCase):
                     (my_world._columns//2,0)
                 scene.remove_being.assert_called_once_with(pc.return_value,
                                     direction=scene.move_being.return_value,
-                                    keep_y=True)
+                                    traversed_pole=True)
                 my_world.move_player(direction=d)
                 assert my_world._current_scene_key == (0,0)
                 

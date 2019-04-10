@@ -66,6 +66,10 @@ class World:
         self._controlled_being = gameobject.PlayableCharacter()
         self._theme_peaks = {}
         self._themes = config.get_config(section='themes')
+        groups = {}
+        for theme in self._themes:
+            groups.setdefault(theme['group'], []).append(theme)
+        self._theme_groups = [groups[g] for g in groups if g]
         self._settings = config.simplify(config.get_settings(key='world'))
         self._rows = self._settings['size']
         self._columns = self._rows * (2 if \
@@ -119,11 +123,7 @@ class World:
                                                             {theme.name:level})
     
     def _scale_themes(self, themes):
-        groups = {}
-        for theme in self._themes:
-            groups.setdefault(theme['group'], []).append(theme)
-        groups = [groups[g] for g in groups if g]
-        for group in groups:
+        for group in self._theme_groups:
             group_total = sum([themes[t.name] for t in group])
             if group_total > 100:
                 scaling_factor = group_total/100
@@ -152,6 +152,19 @@ class World:
         for x in range(x0-max_distance, x0+max_distance+1):
             y_delta = max_distance - abs(x0-x)
             for y in range(y0-y_delta, y0+y_delta+1):
+                # Modify x,y so that they wrap around globe worlds
+                if self._settings['is_globe']:
+                    if y < 0:
+                        y = abs(y) - 1
+                        x += self._columns//2
+                    elif y >= self._rows:
+                        y = 2*self._rows - y - 1
+                        x += self._columns//2
+                    if x < 0:
+                        x += self._columns
+                    elif x >= self._columns:
+                        x -= self._columns
+                # Evaluate the effect of nearby peaks
                 if (x,y) in self._theme_peaks:
                     dist = sum([abs(x0-x),abs(y0-y)])
                     for theme,value in self._theme_peaks[(x,y)].items():
@@ -171,7 +184,7 @@ class World:
         x,y = self._current_scene_key
         x = x + directions[direction][0]
         y = y + directions[direction][1]
-        keep_scene_y = False
+        traversed_pole = False
         if not self._settings['is_globe']:
             x = max(0,x)
             x = min(x,self._columns)
@@ -181,16 +194,16 @@ class World:
             if y == -1:
                 y = 0
                 x += self._columns//2
-                keep_scene_y = True
+                traversed_pole = True
             elif y == self._rows:
                 y = self._rows-1
                 x += self._columns//2
-                keep_scene_y = True
+                traversed_pole = True
             if x == -1:
                 x = self._columns-1
             elif x >= self._columns:
                 x -= self._columns
-        return ((x,y), keep_scene_y)
+        return ((x,y), traversed_pole)
     
     def move_player(self,direction):
         """
@@ -201,14 +214,14 @@ class World:
         move = self.current_scene.move_being(direction=direction,
                                              being=self.player)
         if move is not const.SUCCESSFUL:
-            new_coords,keep_scene_y = self._change_coords(direction=move)
+            new_coords,traversed_pole = self._change_coords(direction=move)
             if new_coords == self._current_scene_key:
                 return False
             self._ready_scene(new_coords)
             player_position = \
                 self.current_scene.remove_being(self.player,
                                                 direction=move,
-                                                keep_y=keep_scene_y)
+                                                traversed_pole=traversed_pole)
             self._current_scene_key = new_coords
             self.current_scene.insert_being(being=self.player,
                                             coords=player_position)
@@ -291,7 +304,7 @@ class Scene:
         else:
             return self._compass(new_coords)
                 
-    def remove_being(self,being=None,direction=None,keep_y=False):
+    def remove_being(self,being=None,direction=None,traversed_pole=False):
         """
         Remove a being and returns its last position
         
@@ -311,10 +324,11 @@ class Scene:
                 x = self._width-1
             elif x == self._width-1 and direction == const.GOING_EAST:
                 x = 0
-            if y == 0 and direction == const.GOING_NORTH and not keep_y:
+            if y == 0 and direction == const.GOING_NORTH \
+                and not traversed_pole:
                 y = self._height-1
             elif y == self._height-1 and direction == const.GOING_SOUTH \
-                and not keep_y:
+                and not traversed_pole:
                 y = 0
         return (x,y)
                 
