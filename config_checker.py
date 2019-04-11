@@ -65,9 +65,8 @@ Requirements checked:
         Only one group per theme
         Groups should have more than one member
         Only one limited_by per theme
-        limited_by should be a valid different theme
-        No circular limited_by chains are allowed: there should always be a
-            theme that is not limited on one end of the chain
+        All limited_by values must be unique to prevent branching chains!
+        Limited_by should be a valid different theme
     Terrain/structure distributions:
         All sections are valid theme names
         All keys are valid terrain/structure names

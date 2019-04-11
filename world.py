@@ -65,17 +65,31 @@ class World:
     def __init__(self):
         self._controlled_being = gameobject.PlayableCharacter()
         self._theme_peaks = {}
-        self._themes = config.get_config(section='themes')
-        groups = {}
-        for theme in self._themes:
-            groups.setdefault(theme['group'], []).append(theme)
-        self._theme_groups = [groups[g] for g in groups if g]
         self._settings = config.simplify(config.get_settings(key='world'))
         self._rows = self._settings['size']
         self._columns = self._rows * (2 if \
                                 self._settings['is_globe'] else 1)
         self._current_scene_key = None
         self._scenes = {}
+        self._themes = config.get_config(section='themes')
+        # Create theme groups
+        groups = {}
+        for theme in self._themes:
+            groups.setdefault(theme['group'], []).append(theme)
+        self._theme_groups = [groups[g] for g in groups if g]
+        # Create limitation chains
+        self.limit_chains = []
+        limits = {}
+        for theme in self._themes:
+            if theme['limited_by']:
+                limits[theme['limited_by']] = theme.name
+        root_limiters = set(limits.keys())-set(limits.values())
+        for root in root_limiters:
+            chain = [root]
+            while root in limits:
+                chain.append(limits.pop(root))
+                root = chain[-1]
+            self.limit_chains.append(chain[:])
         
     @property
     def player(self):
@@ -131,6 +145,14 @@ class World:
                     themes[theme.name] = \
                         round(themes[theme.name]/scaling_factor)
         return themes
+    
+    @classmethod
+    def _limit_themes(cls, themes):
+        for chain in cls.limit_chains:
+            for i, limiter in enumerate(chain[:-1], 1):
+                limit = 100 - themes[limiter]
+                themes[chain[i]] = min([themes[chain[i]], limit])
+        return themes
                     
     def _calculate_themes(self,coords):
         x0, y0 = coords
@@ -153,17 +175,7 @@ class World:
             y_delta = max_distance - abs(x0-x)
             for y in range(y0-y_delta, y0+y_delta+1):
                 # Modify x,y so that they wrap around globe worlds
-                if self._settings['is_globe']:
-                    if y < 0:
-                        y = abs(y) - 1
-                        x += self._columns//2
-                    elif y >= self._rows:
-                        y = 2*self._rows - y - 1
-                        x += self._columns//2
-                    if x < 0:
-                        x += self._columns
-                    elif x >= self._columns:
-                        x -= self._columns
+                x, y = self._apply_world_shape(x=x, y=y)
                 # Evaluate the effect of nearby peaks
                 if (x,y) in self._theme_peaks:
                     dist = sum([abs(x0-x),abs(y0-y)])
@@ -178,32 +190,31 @@ class World:
     def current_scene(self):
         return self._scenes[self._current_scene_key]
     
-    def _change_coords(self,direction=None):
+    def _travel(self,direction=None):
         directions = {const.GOING_SOUTH:(0,1),const.GOING_WEST:(-1,0),
                       const.GOING_EAST:(1,0),const.GOING_NORTH:(0,-1),}
         x,y = self._current_scene_key
         x = x + directions[direction][0]
         y = y + directions[direction][1]
-        traversed_pole = False
+        traversed_pole = not (0 <= y < self._rows)
+        x, y = self._apply_world_shape(x=x, y=y)
+        return ((x,y), traversed_pole)
+    
+    def _apply_world_shape(self, *, x=None, y=None):
         if not self._settings['is_globe']:
             x = max(0,x)
             x = min(x,self._columns)
             y = max(0,y)
             y = min(y,self._rows)
         else:
-            if y == -1:
-                y = 0
+            if not (0 <= y < self._rows):
                 x += self._columns//2
-                traversed_pole = True
-            elif y == self._rows:
-                y = self._rows-1
-                x += self._columns//2
-                traversed_pole = True
-            if x == -1:
-                x = self._columns-1
+                y = (abs(y) - 1) if y < 0 else (2*self._rows - y - 1)
+            if x < 0:
+                x += self._columns
             elif x >= self._columns:
                 x -= self._columns
-        return ((x,y), traversed_pole)
+        return (x, y)
     
     def move_player(self,direction):
         """
@@ -214,7 +225,7 @@ class World:
         move = self.current_scene.move_being(direction=direction,
                                              being=self.player)
         if move is not const.SUCCESSFUL:
-            new_coords,traversed_pole = self._change_coords(direction=move)
+            new_coords,traversed_pole = self._travel(direction=move)
             if new_coords == self._current_scene_key:
                 return False
             self._ready_scene(new_coords)
