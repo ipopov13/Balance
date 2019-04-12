@@ -278,12 +278,14 @@ class Terrain(Environment, metaclass=TerrainLoader):
         terrain_probabilities = {}
         for theme, distrib in cls._terrain_odds.items():
             for id_ in distrib:
+                id_probability = \
+                    max([0, 
+                         (area_themes[theme] - distrib[id_])/area_themes[theme]])
                 terrain_probabilities[id_] = \
-                    terrain_probabilities.get(id_, 0) \
-                    + distrib[id_]/area_themes[theme]
+                    terrain_probabilities.get(id_, 0) + id_probability
         ids = list(terrain_probabilities.keys())
         probs = [terrain_probabilities[k] for k in ids]
-        cummulative_probs = [sum(probs[0:i]) for i in range(1, len(probs)+1)]
+        cummulative_probs = [sum(probs[0:i+1]) for i in range(len(probs))]
         # Get available modifications
         modifications = {}
         Mod = namedtuple('Mod',['probability','new_terrain'])

@@ -1,16 +1,19 @@
 **Terrain and structure distribution**
 
-Each theme that causes specific terrains to appear in the game has a distribution that specifies how likely these terrains are to appear relative to one another, e.g.:
+Each theme that causes specific terrains to appear in the game has a list of requirements that specify when terrains start to appear and how likely they are to appear relative to one another, e.g.:
 
 # From terrain_distribution.ini
 [nature]
-grass:15
+grass:1
 bush:30
 tree:50
 
-The odds to generate a terrain for the current scene are defined after the distribution for the theme is scaled by the level of the theme for the current area. This way terrains of high-level themes have a higher probability of appearance than those of low- or zero-level themes. The scaled distributions for all themes are concatenated and a random roll from 0 to the total sum of odds gives the chosen terrain.
+Each theme distribution should have at least one level 1 terrain defined, one that appears whenever the theme is present. The Terrain relative strength is (theme - requirement), and only terrains with a positive strength appear in an area (so the minimum requirement must be exceeded).
+After relative strength is calculated for the area the distribution list for the theme is divided by the theme value to scale against the other themes in the area. This way terrains of high-level themes have a higher probability of appearance than those of low- or zero-level themes. The scaled distributions for all themes are concatenated and a random roll from 0 to the total sum of odds gives the chosen terrain.
 
-Unlike terrains, structures cannot appear if the minimum requirement is not met:
+Example: With nature distribution of (grass:1, tree:45) a scene with a nature of 20 will only have grass as a nature terrain. A scene with 50 will have relative strengths of (grass:44, tree:5), so trees are about 10% of natural terrains. One with 90 will have (grass:89, tree:45), which is 30% trees, and the max of 100 would give 55/(99+55) = 35.7% trees.
+
+Just like terrains, structures cannot appear if the minimum requirement is not met:
 
 # From structure_distribution.ini
 [DEFAULT]
