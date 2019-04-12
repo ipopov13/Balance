@@ -78,7 +78,7 @@ class World:
             groups.setdefault(theme['group'], []).append(theme)
         self._theme_groups = [groups[g] for g in groups if g]
         # Create limitation chains
-        self.limit_chains = []
+        self._limit_chains = []
         limits = {}
         for theme in self._themes:
             if theme['limited_by']:
@@ -89,7 +89,7 @@ class World:
             while root in limits:
                 chain.append(limits.pop(root))
                 root = chain[-1]
-            self.limit_chains.append(chain[:])
+            self._limit_chains.append(chain[:])
         
     @property
     def player(self):
@@ -146,9 +146,8 @@ class World:
                         round(themes[theme.name]/scaling_factor)
         return themes
     
-    @classmethod
-    def _limit_themes(cls, themes):
-        for chain in cls.limit_chains:
+    def _limit_themes(self, themes):
+        for chain in self._limit_chains:
             for i, limiter in enumerate(chain[:-1], 1):
                 limit = 100 - themes[limiter]
                 themes[chain[i]] = min([themes[chain[i]], limit])
@@ -184,6 +183,7 @@ class World:
                         if effective_value > themes[theme]:
                             themes[theme] = effective_value
         themes = self._scale_themes(themes)
+        themes = self._limit_themes(themes)
         return themes
     
     @property
