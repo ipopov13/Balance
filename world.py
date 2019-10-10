@@ -39,28 +39,6 @@ class World:
     .current_scene property returning the current active scene
     Game load/save
     """
-#    _game_list = {}
-#    
-#    @classmethod
-#    def save(cls, game):
-#        """Store the data to file using the controlled being name"""
-#        filename = game._controlled_being.name+str(random.randint(100,999))
-#        with open(f'{filename}.bal','wb') as outfile:
-#            pickle.dump(outfile, game)
-#    
-#    @classmethod
-#    def get_saved_games(cls):
-#        """Return a list of found saved games and keep it"""
-#        for f in glob('*.bal'):
-#            with open(f,'rb') as infile:
-#                game = pickle.load(infile)
-#                cls._game_list[game._controlled_being.name] = game
-#        return cls._game_list
-#    
-#    @classmethod
-#    def load(cls, index):
-#        """Return the GameData object at that index"""
-#        return cls._game_list[index]
     
     def __init__(self):
         self._controlled_being = gameobject.PlayableCharacter()
